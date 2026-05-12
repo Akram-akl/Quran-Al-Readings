@@ -7,73 +7,63 @@ const App = {
     currentSurah: 1,
 
     async init() {
-        console.log("App Initializing...");
-        AudioPlayer.init();
-        UI.init();
-        
-        // تحميل القوائم
-        if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
-        if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
+        console.log("App Starting...");
+        try {
+            if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
+            if (typeof UI !== 'undefined') UI.init();
+            
+            if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
+            if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
 
-        // ربط أحداث التغيير
-        this._bindEvents();
-
-        // تحميل الصفحة الأولى
-        await this.loadPage(1);
+            this._bindEvents();
+            await this.loadPage(1);
+        } catch (e) {
+            console.error("Critical Init Error:", e);
+        }
     },
 
     _bindEvents() {
-        const readingSelect = document.getElementById('readingSelect');
-        const surahSelect = document.getElementById('surahSelect');
-        const jozzSelect = document.getElementById('jozzSelect');
-
-        if (readingSelect) {
-            readingSelect.onchange = (e) => {
-                this.currentReading = e.target.value;
-                this.loadPage(this.currentPage);
-            };
-        }
-
-        if (surahSelect) {
-            surahSelect.onchange = (e) => {
-                const surahNo = parseInt(e.target.value);
-                const surah = SURAHS.find(s => s.number === surahNo);
-                if (surah) this.loadPage(surah.startPage);
-            };
-        }
-
-        if (jozzSelect) {
-            jozzSelect.onchange = (e) => {
-                const jozzNo = parseInt(e.target.value);
-                // تبسيط منطق الجزء للنماذج الأولية
-                const page = (jozzNo - 1) * 20 + 1; 
-                this.loadPage(page);
-            };
-        }
+        const ids = ['readingSelect', 'surahSelect', 'jozzSelect'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.onchange = (e) => {
+                    const val = e.target.value;
+                    if (id === 'readingSelect') {
+                        this.currentReading = val;
+                        this.loadPage(this.currentPage);
+                    } else if (id === 'surahSelect') {
+                        const s = SURAHS.find(x => x.number == val);
+                        if (s) this.loadPage(s.startPage);
+                    } else if (id === 'jozzSelect') {
+                        this.loadPage((val - 1) * 20 + 1);
+                    }
+                };
+            }
+        });
     },
 
     async loadPage(pageNo) {
         if (pageNo < 1 || pageNo > 604) return;
-        
         this.currentPage = pageNo;
+        
         UI.showLoader();
-        AudioPlayer.stop();
+        if (typeof AudioPlayer !== 'undefined') AudioPlayer.stop();
 
         try {
             const ayahs = await DataHandler.getPageAyahs(this.currentReading, pageNo);
             if (ayahs && ayahs.length > 0) {
                 this.currentSurah = ayahs[0].sura_no;
                 UI.renderAyahs(ayahs, this.currentReading);
-                UI.updatePageInfo(pageNo, 604);
+                UI.updatePageInfo(pageNo);
                 
-                const surahSelect = document.getElementById('surahSelect');
-                if (surahSelect) surahSelect.value = this.currentSurah;
+                const sSelect = document.getElementById('surahSelect');
+                if (sSelect) sSelect.value = this.currentSurah;
             }
         } catch (error) {
-            console.error("Error loading page:", error);
-            document.getElementById('readingArea').innerHTML = `<div class="error">خطأ في تحميل الصفحة: ${error.message}</div>`;
+            console.error("Load Error:", error);
         }
     }
 };
 
-document.addEventListener('DOMContentLoaded', () => App.init());
+window.onload = () => App.init();
