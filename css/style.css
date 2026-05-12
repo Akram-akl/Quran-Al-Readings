@@ -1,7 +1,7 @@
 :root {
     --primary: #10b981;
     --primary-dark: #059669;
-    --bg: #f1f5f9;
+    --bg: #f8fafc;
     --surface: #ffffff;
     --text: #0f172a;
     --border: #e2e8f0;
@@ -32,32 +32,28 @@ body {
     overflow: hidden;
 }
 
-/* Layout */
 .app-layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
     height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
     background: var(--surface);
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    height: 100vh;
     z-index: 100;
 }
 
-.sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); }
-.app-logo { width: 60px; height: 60px; border-radius: 10px; margin-bottom: 10px; }
-.sidebar-content { flex: 1; padding: 20px; overflow-y: auto; }
-.sidebar-footer { padding: 15px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #666; }
+.sidebar-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); }
+.app-logo { width: 50px; height: 50px; border-radius: 8px; margin-bottom: 5px; }
+.sidebar-content { flex: 1; padding: 15px; overflow-y: auto; }
+.sidebar-footer { padding: 10px; border-top: 1px solid var(--border); font-size: 0.75rem; text-align: center; }
 
-/* Main Body */
 .main-body {
     display: grid;
-    grid-template-rows: 60px 1fr 50px 90px; /* Header, Reading, Nav, Player */
+    grid-template-rows: 50px 1fr 45px 85px;
     height: 100vh;
     overflow: hidden;
 }
@@ -68,55 +64,57 @@ body {
     padding: 0 20px;
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 .reading-container {
-    padding: 40px;
+    padding: 20px 40px;
     overflow-y: auto;
+    background: var(--surface);
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--surface);
 }
 
 .quran-text-block {
     width: 100%;
-    max-width: 850px;
+    max-width: 800px;
     direction: rtl;
-    line-height: 2.2;
+    line-height: 1.8; /* تقليل التباعد بين السطور */
     text-align: justify;
+    word-spacing: 2px;
 }
 
 .ayah-container {
     display: inline;
-    font-size: 2.4rem;
-    padding: 2px 5px;
+    font-size: 2.1rem; /* تصغير طفيف لتناسب السطر */
     transition: background 0.3s;
+    cursor: pointer;
 }
 
-.ayah-container.active { background: rgba(16, 185, 129, 0.2); border-radius: 5px; }
+.ayah-container.active { background: rgba(16, 185, 129, 0.15); border-radius: 4px; }
+
+.ayah-text { padding: 0 2px; }
 
 .bismillah, .istiazah {
     display: block;
     text-align: center;
-    font-size: 2.8rem;
+    font-size: 2.2rem;
     color: var(--primary);
-    margin: 25px 0;
-    cursor: pointer;
+    margin: 10px 0; /* تقليل الفراغات العمودية */
 }
-
-.istiazah { font-size: 1.8rem; color: #666; }
 
 .surah-header-inline {
     display: block;
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: var(--primary);
-    padding: 15px;
-    margin: 20px 0;
-    border: 2px solid var(--primary);
-    border-radius: 10px;
+    padding: 8px;
+    margin: 15px 0;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    background: var(--bg);
 }
 
 /* Page Navigation */
@@ -126,59 +124,39 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 30px;
+    gap: 20px;
 }
 
-.page-indicator { display: flex; align-items: center; gap: 8px; font-weight: bold; }
-.page-indicator input { width: 60px; text-align: center; padding: 4px; border: 1px solid var(--border); border-radius: 5px; }
+.page-indicator input { width: 50px; text-align: center; border: 1px solid var(--border); border-radius: 4px; padding: 2px; }
 
-.btn-nav {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 6px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: bold;
-}
+.btn-nav { background: var(--bg); border: 1px solid var(--border); padding: 4px 12px; border-radius: 15px; cursor: pointer; font-size: 0.9rem; }
 
 /* Player */
 .player-container {
     background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: grid;
-    grid-template-columns: 200px 1fr 200px;
-    align-items: center;
-    padding: 0 20px;
+    border-top: 2px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    padding: 5px 20px;
 }
 
-.player-controls { display: flex; align-items: center; justify-content: center; gap: 20px; }
-.btn-play-pause { width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.4rem; cursor: pointer; }
+.player-controls { display: flex; align-items: center; justify-content: center; gap: 15px; flex: 1; }
+.btn-play-pause { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.2rem; cursor: pointer; }
 
-.progress-area { grid-column: 1 / 4; padding-bottom: 10px; }
-.progress-area input { width: 100%; cursor: pointer; accent-color: var(--primary); }
+.progress-area input { width: 100%; cursor: pointer; accent-color: var(--primary); height: 4px; }
 
-/* Forms & UI */
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.85rem; }
-.form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
+.btn-icon { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--text); padding: 5px; }
 
-.btn { padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
-.btn-primary { background: var(--primary); color: white; }
-.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-.btn-accent { background: #6366f1; color: white; }
+/* Forms */
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 0.8rem; }
+.form-control { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 0.9rem; }
 
-.btn-icon { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text); }
-
-/* Modals */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
-.modal.active { display: flex; }
-.modal-content { background: var(--surface); padding: 25px; border-radius: 15px; width: 90%; max-width: 500px; }
+.btn-accent { background: #6366f1; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; }
 
 /* Responsive */
 @media (max-width: 768px) {
     .app-layout { grid-template-columns: 1fr; }
-    .sidebar { position: fixed; right: -280px; transition: 0.3s; }
+    .sidebar { position: fixed; right: -280px; height: 100%; transition: 0.3s; }
     .sidebar.open { right: 0; }
-    .player-container { grid-template-columns: 1fr; grid-template-rows: auto auto; padding: 10px; }
-    .player-info { display: none; }
 }

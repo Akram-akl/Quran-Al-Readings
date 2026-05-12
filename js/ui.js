@@ -1,12 +1,11 @@
 /**
- * ui.js - النسخة المستقرة (v2.1)
+ * ui.js - تحسين التباعد ودقة الآيات
  */
 const UI = {
     currentPage: 1,
     totalPages: 604,
 
     init() {
-        console.log("UI Init Start...");
         this._initSidebar();
         this._initTheme();
         this._initPlayerControls();
@@ -18,41 +17,39 @@ const UI = {
         const sidebar = document.getElementById('sidebar');
         const openBtn = document.getElementById('openSidebarBtn');
         const closeBtn = document.getElementById('closeSidebarBtn');
-
         if (openBtn && sidebar) openBtn.onclick = () => sidebar.classList.add('open');
         if (closeBtn && sidebar) closeBtn.onclick = () => sidebar.classList.remove('open');
     },
 
     _initTheme() {
         const btn = document.getElementById('themeToggleBtn');
-        if (btn) {
-            btn.onclick = () => {
-                const isDark = document.documentElement.hasAttribute('data-theme');
-                if (isDark) document.documentElement.removeAttribute('data-theme');
-                else document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('quran-theme', isDark ? 'light' : 'dark');
-            };
-        }
+        if (btn) btn.onclick = () => {
+            const isDark = document.documentElement.hasAttribute('data-theme');
+            document.documentElement.toggleAttribute('data-theme', !isDark);
+            btn.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        };
     },
 
     _initPlayerControls() {
-        const ids = {
-            'playPauseBtn': () => AudioPlayer.togglePlayPause(),
-            'nextAyahBtn': () => AudioPlayer.next(),
-            'prevAyahBtn': () => AudioPlayer.prev(),
-            'repeatBtn': () => AudioPlayer.toggleRepeat()
-        };
-        for (const id in ids) {
-            const el = document.getElementById(id);
-            if (el) el.onclick = ids[id];
-        }
+        const playBtn = document.getElementById('playPauseBtn');
+        if (playBtn) playBtn.onclick = () => AudioPlayer.togglePlayPause();
+        const nextBtn = document.getElementById('nextAyahBtn');
+        if (nextBtn) nextBtn.onclick = () => AudioPlayer.next();
+        const prevBtn = document.getElementById('prevAyahBtn');
+        if (prevBtn) prevBtn.onclick = () => AudioPlayer.prev();
+        
+        const searchOpen = document.getElementById('searchOpenBtn');
+        if (searchOpen) searchOpen.onclick = () => document.getElementById('searchModal').classList.add('active');
+        
+        document.querySelectorAll('.close-modal').forEach(b => {
+            b.onclick = () => b.closest('.modal').classList.remove('active');
+        });
     },
 
     _initPageNav() {
         const prev = document.getElementById('prevPageBtn');
         const next = document.getElementById('nextPageBtn');
         const input = document.getElementById('pageInput');
-
         if (prev) prev.onclick = () => { if (this.currentPage > 1) App.loadPage(this.currentPage - 1); };
         if (next) next.onclick = () => { if (this.currentPage < this.totalPages) App.loadPage(this.currentPage + 1); };
         if (input) input.onchange = (e) => App.loadPage(parseInt(e.target.value));
@@ -60,14 +57,12 @@ const UI = {
 
     populateSurahs(surahs) {
         const sel = document.getElementById('surahSelect');
-        if (!sel) return;
-        sel.innerHTML = surahs.map(s => `<option value="${s.number}">${s.number}. ${s.nameAr}</option>`).join('');
+        if (sel) sel.innerHTML = surahs.map(s => `<option value="${s.number}">${s.number}. ${s.nameAr}</option>`).join('');
     },
 
     populateJozzList(jozz) {
         const sel = document.getElementById('jozzSelect');
-        if (!sel) return;
-        sel.innerHTML = '<option value="">-- اختر جزءاً --</option>' + jozz.map(j => `<option value="${j}">الجزء ${j}</option>`).join('');
+        if (sel) sel.innerHTML = '<option value="">-- اختر جزءاً --</option>' + jozz.map(j => `<option value="${j}">الجزء ${j}</option>`).join('');
     },
 
     updatePageInfo(page) {
@@ -78,16 +73,20 @@ const UI = {
 
     renderAyahs(ayahs, reading) {
         const area = document.getElementById('readingArea');
-        if (!area) return;
+        if (!area || !ayahs.length) return;
+        
         area.innerHTML = '';
         const config = READINGS_CONFIG[reading];
-        
         const block = document.createElement('div');
         block.className = 'quran-text-block';
         block.style.fontFamily = config.fontFamily;
 
         let lastS = null;
-        ayahs.forEach(a => {
+
+        // فرز الآيات لضمان الترتيب الصحيح حسب aya_no
+        const sortedAyahs = ayahs.sort((a, b) => a.aya_no - b.aya_no);
+
+        sortedAyahs.forEach(a => {
             if (a.sura_no !== lastS) {
                 lastS = a.sura_no;
                 const h = document.createElement('div');
@@ -95,6 +94,7 @@ const UI = {
                 h.textContent = `سورة ${a.sura_name_ar}`;
                 block.appendChild(h);
                 
+                // الاستعاذة والبسملة قبل الآية الأولى
                 if (a.aya_no === 1) {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
@@ -102,7 +102,7 @@ const UI = {
                     ist.onclick = () => AudioPlayer.playIstiazah();
                     block.appendChild(ist);
                     
-                    if (a.sura_no !== 9 && !((a.aya_text_emlaey || a.aya_text).includes('بِسۡمِ ٱللَّهِ'))) {
+                    if (a.sura_no !== 9 && !this._isBismillah(a)) {
                         const bas = document.createElement('div');
                         bas.className = 'bismillah';
                         bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
@@ -111,13 +111,27 @@ const UI = {
                     }
                 }
             }
+
+            const isB = this._isBismillah(a);
             const span = document.createElement('span');
-            span.className = 'ayah-container';
+            span.className = isB ? 'bismillah' : 'ayah-container';
+            // إزالة display: block للبسملة إذا كانت جزء من الآيات لتقليل الفراغات
+            if (isB && a.sura_no !== 1) span.style.display = 'block'; 
+
+            span.setAttribute('data-ayah', a.aya_no);
+            span.setAttribute('data-surah', a.sura_no);
             span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no})">${a.aya_text}</span> `;
             block.appendChild(span);
         });
+
         area.appendChild(block);
-        document.getElementById('currentSurahTitle').textContent = `سورة ${ayahs[0].sura_name_ar}`;
+        area.scrollTop = 0;
+        const title = document.getElementById('currentSurahTitle');
+        if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
+    },
+
+    _isBismillah(a) {
+        return a.aya_no === 1 && (a.aya_text_emlaey || a.aya_text || '').includes('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ');
     },
 
     showLoader() {
