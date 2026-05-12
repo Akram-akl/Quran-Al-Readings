@@ -3,28 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>القرآن الكريم - القراءات</title>
+    <title>القرآن الكريم - القراءات (Akram-akl)</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#064e3b">
     <link rel="icon" href="assets/logo.png">
-    <link rel="apple-touch-icon" href="assets/logo.png">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.3">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="app-layout">
-        <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <img src="assets/logo.png" alt="شعار القرآن الكريم" class="app-logo">
+                <img src="assets/logo.png" alt="logo" class="app-logo">
                 <h2>القرآن الكريم</h2>
-                <button id="closeSidebarBtn" class="btn-icon mobile-only" title="إغلاق القائمة"><i class="fas fa-times"></i></button>
+                <button id="closeSidebarBtn" class="btn-icon mobile-only" title="إغلاق"><i class="fas fa-times"></i></button>
             </div>
-            
             <div class="sidebar-content">
                 <div class="form-group">
                     <label for="readingSelect">الرواية</label>
-                    <select id="readingSelect" class="form-control" title="اختر الرواية">
+                    <select id="readingSelect" class="form-control" title="الرواية">
                         <option value="Hafs">حفص عن عاصم</option>
                         <option value="Warsh">ورش عن نافع</option>
                         <option value="Qaloun">قالون عن نافع</option>
@@ -33,97 +30,66 @@
                         <option value="Shubah">شعبة عن عاصم</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label for="surahSelect">السورة</label>
-                    <select id="surahSelect" class="form-control" title="اختر السورة"></select>
+                    <select id="surahSelect" class="form-control" title="السورة"></select>
                 </div>
-
                 <div class="form-group">
                     <label for="jozzSelect">الجزء</label>
-                    <select id="jozzSelect" class="form-control" title="اختر الجزء"></select>
+                    <select id="jozzSelect" class="form-control" title="الجزء"></select>
                 </div>
-
-                <hr class="divider">
-
-                <button id="searchOpenBtn" class="btn btn-accent w-100" title="فتح نافذة البحث">
-                    <i class="fas fa-search"></i> بحث في القراءات
-                </button>
-
-                <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2" title="فتح نافذة التحميل">
-                    <i class="fas fa-download"></i> تحميل الصوت
-                </button>
+                <hr>
+                <button id="searchOpenBtn" class="btn btn-accent w-100" title="بحث"><i class="fas fa-search"></i> بحث</button>
             </div>
-
             <div class="sidebar-footer">
-                <button id="themeToggleBtn" class="btn-icon" title="تغيير المظهر (ليلي/نهاري)"><i class="fas fa-moon"></i></button>
+                <button id="themeToggleBtn" class="btn-icon" title="مظهر"><i class="fas fa-moon"></i></button>
                 <span>النسخة akram-akl</span>
             </div>
         </aside>
 
-        <!-- Main Body -->
         <main class="main-body">
             <header class="header">
-                <button id="openSidebarBtn" class="btn-icon mobile-only" title="فتح القائمة"><i class="fas fa-bars"></i></button>
-                <div class="header-info">
-                    <h1 id="currentSurahTitle">سورة الفاتحة</h1>
-                </div>
+                <button id="openSidebarBtn" class="btn-icon mobile-only" title="فتح"><i class="fas fa-bars"></i></button>
+                <h1 id="currentSurahTitle">سورة الفاتحة</h1>
             </header>
-
-            <div class="reading-container" id="readingArea" aria-live="polite">
-                <!-- Ayahs will be injected here -->
-            </div>
-
-            <nav class="page-navigation" aria-label="تنقل الصفحات">
-                <button id="prevPageBtn" class="btn-nav" title="الصفحة السابقة"><i class="fas fa-chevron-right"></i> الصفحة السابقة</button>
+            <div class="reading-container" id="readingArea"></div>
+            <nav class="page-navigation">
+                <button id="prevPageBtn" class="btn-nav" title="السابقة"><i class="fas fa-chevron-right"></i></button>
                 <div class="page-indicator">
-                    <span>صفحة</span>
-                    <input type="number" id="pageInput" value="1" min="1" max="604" title="رقم الصفحة الحالية">
-                    <span>من 604</span>
+                    <input type="number" id="pageInput" value="1" min="1" max="604" title="صفحة"> من 604
                 </div>
-                <button id="nextPageBtn" class="btn-nav" title="الصفحة التالية">الصفحة التالية <i class="fas fa-chevron-left"></i></button>
+                <button id="nextPageBtn" class="btn-nav" title="التالية"><i class="fas fa-chevron-left"></i></button>
             </nav>
-
             <footer class="player-container">
-                <div class="player-info">
-                    <span id="currentAyahInfo">آية 1</span>
-                </div>
                 <div class="player-controls">
-                    <button id="prevAyahBtn" class="btn-icon" title="الآية السابقة"><i class="fas fa-step-backward"></i></button>
-                    <button id="playPauseBtn" class="btn-play-pause" title="تشغيل/إيقاف"><i class="fas fa-play"></i></button>
-                    <button id="nextAyahBtn" class="btn-icon" title="الآية التالية"><i class="fas fa-step-forward"></i></button>
-                    <button id="repeatBtn" class="btn-icon" title="تكرار الآية"><i class="fas fa-redo"></i></button>
+                    <button id="prevAyahBtn" class="btn-icon" title="سابق"><i class="fas fa-step-backward"></i></button>
+                    <button id="playPauseBtn" class="btn-play-pause" title="تشغيل"><i class="fas fa-play"></i></button>
+                    <button id="nextAyahBtn" class="btn-icon" title="لاحق"><i class="fas fa-step-forward"></i></button>
+                    <button id="repeatBtn" class="btn-icon" title="تكرار"><i class="fas fa-redo"></i></button>
                 </div>
                 <div class="progress-area">
-                    <input type="range" id="audioSeek" value="0" step="0.1" title="شريط تقدم الصوت" aria-label="تقدم الصوت">
+                    <input type="range" id="audioSeek" value="0" step="0.1" title="تقدم">
                 </div>
             </footer>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="searchModal" class="modal" role="dialog" aria-labelledby="searchTitle">
+    <div id="searchModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="searchTitle">بحث متقدم</h3>
-                <button class="close-modal" title="إغلاق">&times;</button>
-            </div>
+            <div class="modal-header"><h3>بحث</h3><button class="close-modal">&times;</button></div>
             <div class="modal-body">
-                <div class="row">
-                    <input type="text" id="searchInput" class="form-control col" placeholder="اكتب الكلمة أو الآية..." title="مربع البحث" aria-label="ابحث عن آية">
-                    <button id="searchBtn" class="btn btn-primary" title="بدء البحث">بحث</button>
-                </div>
-                <div id="searchResults" class="search-results mt-3"></div>
+                <input type="text" id="searchInput" class="form-control" placeholder="ابحث...">
+                <button id="searchBtn" class="btn btn-primary mt-2">بحث</button>
+                <div id="searchResults" class="mt-3"></div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/dataHandler.js"></script>
-    <script src="js/audioPlayer.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/config.js?v=2.3"></script>
+    <script src="js/dataHandler.js?v=2.3"></script>
+    <script src="js/audioPlayer.js?v=2.3"></script>
+    <script src="js/search.js?v=2.3"></script>
+    <script src="js/ui.js?v=2.3"></script>
+    <script src="js/app.js?v=2.3"></script>
 </body>
 </html>
