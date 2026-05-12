@@ -1,21 +1,17 @@
 /**
- * ui.js - واجهة المستخدم
+ * ui.js - النسخة المستقرة (v2.1)
  */
 const UI = {
     currentPage: 1,
     totalPages: 604,
 
     init() {
-        console.log("UI Initializing...");
-        try {
-            this._initSidebar();
-            this._initTheme();
-            this._initPlayerControls();
-            this._initPageNav();
-            if (typeof Search !== 'undefined' && Search.init) Search.init();
-        } catch (e) {
-            console.warn("UI Init partial failure:", e);
-        }
+        console.log("UI Init Start...");
+        this._initSidebar();
+        this._initTheme();
+        this._initPlayerControls();
+        this._initPageNav();
+        if (typeof Search !== 'undefined') Search.init();
     },
 
     _initSidebar() {
@@ -29,38 +25,27 @@ const UI = {
 
     _initTheme() {
         const btn = document.getElementById('themeToggleBtn');
-        if (!btn) return;
-        btn.onclick = () => {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.toggleAttribute('data-theme', !isDark);
-            btn.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-            localStorage.setItem('quran-theme', isDark ? 'light' : 'dark');
-        };
+        if (btn) {
+            btn.onclick = () => {
+                const isDark = document.documentElement.hasAttribute('data-theme');
+                if (isDark) document.documentElement.removeAttribute('data-theme');
+                else document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('quran-theme', isDark ? 'light' : 'dark');
+            };
+        }
     },
 
     _initPlayerControls() {
-        const map = {
+        const ids = {
             'playPauseBtn': () => AudioPlayer.togglePlayPause(),
             'nextAyahBtn': () => AudioPlayer.next(),
             'prevAyahBtn': () => AudioPlayer.prev(),
-            'repeatBtn': () => AudioPlayer.toggleRepeat(),
-            'searchOpenBtn': () => {
-                const m = document.getElementById('searchModal');
-                if (m) m.classList.add('active');
-            }
+            'repeatBtn': () => AudioPlayer.toggleRepeat()
         };
-
-        for (const [id, fn] of Object.entries(map)) {
+        for (const id in ids) {
             const el = document.getElementById(id);
-            if (el) el.onclick = fn;
+            if (el) el.onclick = ids[id];
         }
-
-        document.querySelectorAll('.close-modal').forEach(b => {
-            b.onclick = () => {
-                const modal = b.closest('.modal');
-                if (modal) modal.classList.remove('active');
-            };
-        });
     },
 
     _initPageNav() {
@@ -75,15 +60,14 @@ const UI = {
 
     populateSurahs(surahs) {
         const sel = document.getElementById('surahSelect');
-        if (!sel || !surahs) return;
+        if (!sel) return;
         sel.innerHTML = surahs.map(s => `<option value="${s.number}">${s.number}. ${s.nameAr}</option>`).join('');
     },
 
-    populateJozzList(jozzList) {
+    populateJozzList(jozz) {
         const sel = document.getElementById('jozzSelect');
-        if (!sel || !jozzList) return;
-        sel.innerHTML = '<option value="">-- اختر جزءاً --</option>' + 
-                        jozzList.map(j => `<option value="${j}">الجزء ${j}</option>`).join('');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- اختر جزءاً --</option>' + jozz.map(j => `<option value="${j}">الجزء ${j}</option>`).join('');
     },
 
     updatePageInfo(page) {
@@ -92,61 +76,48 @@ const UI = {
         if (input) input.value = page;
     },
 
-    renderAyahs(ayahs, readingKey) {
+    renderAyahs(ayahs, reading) {
         const area = document.getElementById('readingArea');
-        if (!area || !ayahs.length) return;
-        
-        const config = READINGS_CONFIG[readingKey];
+        if (!area) return;
         area.innerHTML = '';
+        const config = READINGS_CONFIG[reading];
+        
+        const block = document.createElement('div');
+        block.className = 'quran-text-block';
+        block.style.fontFamily = config.fontFamily;
 
-        const textBlock = document.createElement('div');
-        textBlock.className = 'quran-text-block';
-        textBlock.style.fontFamily = `'${config.fontFamily}', serif`;
-
-        let lastSura = null;
-
+        let lastS = null;
         ayahs.forEach(a => {
-            if (a.sura_no !== lastSura) {
-                lastSura = a.sura_no;
+            if (a.sura_no !== lastS) {
+                lastS = a.sura_no;
                 const h = document.createElement('div');
                 h.className = 'surah-header-inline';
                 h.textContent = `سورة ${a.sura_name_ar}`;
-                textBlock.appendChild(h);
-
+                block.appendChild(h);
+                
                 if (a.aya_no === 1) {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
                     ist.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
                     ist.onclick = () => AudioPlayer.playIstiazah();
-                    textBlock.appendChild(ist);
-
-                    if (!this._isBismillah(a) && a.sura_no !== 9) {
+                    block.appendChild(ist);
+                    
+                    if (a.sura_no !== 9 && !((a.aya_text_emlaey || a.aya_text).includes('بِسۡمِ ٱللَّهِ'))) {
                         const bas = document.createElement('div');
                         bas.className = 'bismillah';
                         bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
                         bas.onclick = () => AudioPlayer.playBasmalah();
-                        textBlock.appendChild(bas);
+                        block.appendChild(bas);
                     }
                 }
             }
-
-            const isB = this._isBismillah(a);
             const span = document.createElement('span');
-            span.className = isB ? 'bismillah' : 'ayah-container';
-            if (isB) span.style.display = 'block';
-            span.setAttribute('data-ayah', a.aya_no);
+            span.className = 'ayah-container';
             span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no})">${a.aya_text}</span> `;
-            textBlock.appendChild(span);
+            block.appendChild(span);
         });
-
-        area.appendChild(textBlock);
-        area.scrollTop = 0;
-        const title = document.getElementById('currentSurahTitle');
-        if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
-    },
-
-    _isBismillah(a) {
-        return a.aya_no === 1 && (a.aya_text_emlaey || a.aya_text || '').includes('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ');
+        area.appendChild(block);
+        document.getElementById('currentSurahTitle').textContent = `سورة ${ayahs[0].sura_name_ar}`;
     },
 
     showLoader() {

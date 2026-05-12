@@ -1,5 +1,5 @@
 /**
- * app.js - المحرك الرئيسي
+ * app.js - النسخة المستقرة
  */
 const App = {
     currentReading: 'Hafs',
@@ -7,61 +7,47 @@ const App = {
     currentSurah: 1,
 
     async init() {
-        console.log("App Starting...");
-        try {
-            if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
-            if (typeof UI !== 'undefined') UI.init();
-            
-            if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
-            if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
-
-            this._bindEvents();
-            await this.loadPage(1);
-        } catch (e) {
-            console.error("Critical Init Error:", e);
-        }
-    },
-
-    _bindEvents() {
-        const ids = ['readingSelect', 'surahSelect', 'jozzSelect'];
-        ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.onchange = (e) => {
-                    const val = e.target.value;
-                    if (id === 'readingSelect') {
-                        this.currentReading = val;
-                        this.loadPage(this.currentPage);
-                    } else if (id === 'surahSelect') {
-                        const s = SURAHS.find(x => x.number == val);
-                        if (s) this.loadPage(s.startPage);
-                    } else if (id === 'jozzSelect') {
-                        this.loadPage((val - 1) * 20 + 1);
-                    }
-                };
-            }
-        });
-    },
-
-    async loadPage(pageNo) {
-        if (pageNo < 1 || pageNo > 604) return;
-        this.currentPage = pageNo;
+        console.log("App Init Start...");
+        if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
+        if (typeof UI !== 'undefined') UI.init();
         
+        if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
+        if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
+
+        this._bind();
+        await this.loadPage(1);
+    },
+
+    _bind() {
+        const r = document.getElementById('readingSelect');
+        const s = document.getElementById('surahSelect');
+        const j = document.getElementById('jozzSelect');
+
+        if (r) r.onchange = (e) => { this.currentReading = e.target.value; this.loadPage(this.currentPage); };
+        if (s) s.onchange = (e) => { 
+            const surah = SURAHS.find(x => x.number == e.target.value);
+            if (surah) this.loadPage(surah.startPage);
+        };
+        if (j) j.onchange = (e) => this.loadPage((e.target.value - 1) * 20 + 1);
+    },
+
+    async loadPage(page) {
+        if (page < 1 || page > 604) return;
+        this.currentPage = page;
         UI.showLoader();
         if (typeof AudioPlayer !== 'undefined') AudioPlayer.stop();
 
         try {
-            const ayahs = await DataHandler.getPageAyahs(this.currentReading, pageNo);
+            const ayahs = await DataHandler.getPageAyahs(this.currentReading, page);
             if (ayahs && ayahs.length > 0) {
                 this.currentSurah = ayahs[0].sura_no;
                 UI.renderAyahs(ayahs, this.currentReading);
-                UI.updatePageInfo(pageNo);
-                
-                const sSelect = document.getElementById('surahSelect');
-                if (sSelect) sSelect.value = this.currentSurah;
+                UI.updatePageInfo(page);
+                const sSel = document.getElementById('surahSelect');
+                if (sSel) sSel.value = this.currentSurah;
             }
-        } catch (error) {
-            console.error("Load Error:", error);
+        } catch (e) {
+            console.error("Load Error:", e);
         }
     }
 };
