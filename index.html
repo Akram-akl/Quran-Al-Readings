@@ -16,15 +16,15 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <img src="assets/logo.png" alt="شعار" class="app-logo">
+                <img src="assets/logo.png" alt="شعار القرآن الكريم" class="app-logo">
                 <h2>القرآن الكريم</h2>
-                <button id="closeSidebarBtn" class="btn-icon mobile-only"><i class="fas fa-times"></i></button>
+                <button id="closeSidebarBtn" class="btn-icon mobile-only" title="إغلاق القائمة"><i class="fas fa-times"></i></button>
             </div>
             
             <div class="sidebar-content">
                 <div class="form-group">
-                    <label>الرواية</label>
-                    <select id="readingSelect" class="form-control">
+                    <label for="readingSelect">الرواية</label>
+                    <select id="readingSelect" class="form-control" title="اختر الرواية">
                         <option value="Hafs">حفص عن عاصم</option>
                         <option value="Warsh">ورش عن نافع</option>
                         <option value="Qaloun">قالون عن نافع</option>
@@ -35,28 +35,28 @@
                 </div>
 
                 <div class="form-group">
-                    <label>السورة</label>
-                    <select id="surahSelect" class="form-control"></select>
+                    <label for="surahSelect">السورة</label>
+                    <select id="surahSelect" class="form-control" title="اختر السورة"></select>
                 </div>
 
                 <div class="form-group">
-                    <label>الجزء</label>
-                    <select id="jozzSelect" class="form-control"></select>
+                    <label for="jozzSelect">الجزء</label>
+                    <select id="jozzSelect" class="form-control" title="اختر الجزء"></select>
                 </div>
 
                 <hr class="divider">
 
-                <button id="searchOpenBtn" class="btn btn-accent w-100">
+                <button id="searchOpenBtn" class="btn btn-accent w-100" title="فتح نافذة البحث">
                     <i class="fas fa-search"></i> بحث في القراءات
                 </button>
 
-                <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2">
+                <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2" title="فتح نافذة التحميل">
                     <i class="fas fa-download"></i> تحميل الصوت
                 </button>
             </div>
 
             <div class="sidebar-footer">
-                <button id="themeToggleBtn" class="btn-icon"><i class="fas fa-moon"></i></button>
+                <button id="themeToggleBtn" class="btn-icon" title="تغيير المظهر (ليلي/نهاري)"><i class="fas fa-moon"></i></button>
                 <span>النسخة akram-akl</span>
             </div>
         </aside>
@@ -64,22 +64,24 @@
         <!-- Main Body -->
         <main class="main-body">
             <header class="header">
-                <button id="openSidebarBtn" class="btn-icon mobile-only"><i class="fas fa-bars"></i></button>
+                <button id="openSidebarBtn" class="btn-icon mobile-only" title="فتح القائمة"><i class="fas fa-bars"></i></button>
                 <div class="header-info">
                     <h1 id="currentSurahTitle">سورة الفاتحة</h1>
                 </div>
             </header>
 
-            <div class="reading-container" id="readingArea">
+            <div class="reading-container" id="readingArea" aria-live="polite">
                 <!-- Ayahs will be injected here -->
             </div>
 
-            <nav class="page-navigation">
-                <button id="prevPageBtn" class="btn-nav"><i class="fas fa-chevron-right"></i> الصفحة السابقة</button>
+            <nav class="page-navigation" aria-label="تنقل الصفحات">
+                <button id="prevPageBtn" class="btn-nav" title="الصفحة السابقة"><i class="fas fa-chevron-right"></i> الصفحة السابقة</button>
                 <div class="page-indicator">
-                    صفحة <input type="number" id="pageInput" value="1" min="1" max="604"> من 604
+                    <span>صفحة</span>
+                    <input type="number" id="pageInput" value="1" min="1" max="604" title="رقم الصفحة الحالية">
+                    <span>من 604</span>
                 </div>
-                <button id="nextPageBtn" class="btn-nav">الصفحة التالية <i class="fas fa-chevron-left"></i></button>
+                <button id="nextPageBtn" class="btn-nav" title="الصفحة التالية">الصفحة التالية <i class="fas fa-chevron-left"></i></button>
             </nav>
 
             <footer class="player-container">
@@ -87,29 +89,29 @@
                     <span id="currentAyahInfo">آية 1</span>
                 </div>
                 <div class="player-controls">
-                    <button id="prevAyahBtn" class="btn-icon"><i class="fas fa-step-backward"></i></button>
-                    <button id="playPauseBtn" class="btn-play-pause"><i class="fas fa-play"></i></button>
-                    <button id="nextAyahBtn" class="btn-icon"><i class="fas fa-step-forward"></i></button>
-                    <button id="repeatBtn" class="btn-icon"><i class="fas fa-redo"></i></button>
+                    <button id="prevAyahBtn" class="btn-icon" title="الآية السابقة"><i class="fas fa-step-backward"></i></button>
+                    <button id="playPauseBtn" class="btn-play-pause" title="تشغيل/إيقاف"><i class="fas fa-play"></i></button>
+                    <button id="nextAyahBtn" class="btn-icon" title="الآية التالية"><i class="fas fa-step-forward"></i></button>
+                    <button id="repeatBtn" class="btn-icon" title="تكرار الآية"><i class="fas fa-redo"></i></button>
                 </div>
                 <div class="progress-area">
-                    <input type="range" id="audioSeek" value="0" step="0.1">
+                    <input type="range" id="audioSeek" value="0" step="0.1" title="شريط تقدم الصوت" aria-label="تقدم الصوت">
                 </div>
             </footer>
         </main>
     </div>
 
     <!-- Modals -->
-    <div id="searchModal" class="modal">
+    <div id="searchModal" class="modal" role="dialog" aria-labelledby="searchTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>بحث متقدم</h3>
-                <button class="close-modal">&times;</button>
+                <h3 id="searchTitle">بحث متقدم</h3>
+                <button class="close-modal" title="إغلاق">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <input type="text" id="searchInput" class="form-control col" placeholder="اكتب الكلمة أو الآية...">
-                    <button id="searchBtn" class="btn btn-primary">بحث</button>
+                    <input type="text" id="searchInput" class="form-control col" placeholder="اكتب الكلمة أو الآية..." title="مربع البحث" aria-label="ابحث عن آية">
+                    <button id="searchBtn" class="btn btn-primary" title="بدء البحث">بحث</button>
                 </div>
                 <div id="searchResults" class="search-results mt-3"></div>
             </div>

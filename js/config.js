@@ -1,5 +1,5 @@
 /**
- * config.js - الإعدادات حسب ملاحظات PWA Notes
+ * config.js - الإعدادات والبيانات الثابتة
  */
 const IS_ELECTRON = (typeof process !== 'undefined' && process.versions && process.versions.electron);
 
@@ -23,8 +23,7 @@ const READINGS_CONFIG = {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
             if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Hafs}${sss}${aaa}.mp3`;
-            const folder = SURAH_FOLDERS[s];
-            return `${this.audioBasePath}${folder}/10-${sss}${aaa}-${s===1?'A01':'001'}.mp3`;
+            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/10-${sss}${aaa}-${s===1?'A01':'001'}.mp3`;
         },
         getIstiazahPath() { return `${WEB_AUDIO_BASE.Hafs}001000.mp3`; },
         getBasmalahPath() { return `${WEB_AUDIO_BASE.Hafs}001001.mp3`; }
@@ -105,6 +104,49 @@ const READINGS_CONFIG = {
         getBasmalahPath() { return `${WEB_AUDIO_BASE.Shubah}001001.mp3`; }
     }
 };
+
+const SURAHS = [
+    {number:1, nameAr:"الفاتحة", startPage:1}, {number:2, nameAr:"البقرة", startPage:2}, {number:3, nameAr:"آل عمران", startPage:50},
+    {number:4, nameAr:"النساء", startPage:77}, {number:5, nameAr:"المائدة", startPage:106}, {number:6, nameAr:"الأنعام", startPage:128},
+    {number:7, nameAr:"الأعراف", startPage:151}, {number:8, nameAr:"الأنفال", startPage:177}, {number:9, nameAr:"التوبة", startPage:187},
+    {number:10, nameAr:"يونس", startPage:208}, {number:11, nameAr:"هود", startPage:221}, {number:12, nameAr:"يوسف", startPage:235},
+    {number:13, nameAr:"الرعد", startPage:249}, {number:14, nameAr:"إبراهيم", startPage:255}, {number:15, nameAr:"الحجر", startPage:262},
+    {number:16, nameAr:"النحل", startPage:267}, {number:17, nameAr:"الإسراء", startPage:282}, {number:18, nameAr:"الكهف", startPage:293},
+    {number:19, nameAr:"مريم", startPage:305}, {number:20, nameAr:"طه", startPage:312}, {number:21, nameAr:"الأنبياء", startPage:322},
+    {number:22, nameAr:"الحج", startPage:332}, {number:23, nameAr:"المؤمنون", startPage:342}, {number:24, nameAr:"النور", startPage:350},
+    {number:25, nameAr:"الفرقان", startPage:359}, {number:26, nameAr:"الشعراء", startPage:367}, {number:27, nameAr:"النمل", startPage:377},
+    {number:28, nameAr:"القصص", startPage:385}, {number:29, nameAr:"العنكبوت", startPage:396}, {number:30, nameAr:"الروم", startPage:404},
+    {number:31, nameAr:"لقمان", startPage:411}, {number:32, nameAr:"السجدة", startPage:415}, {number:33, nameAr:"الأحزاب", startPage:418},
+    {number:34, nameAr:"سبأ", startPage:428}, {number:35, nameAr:"فاطر", startPage:434}, {number:36, nameAr:"يس", startPage:440},
+    {number:37, nameAr:"الصافات", startPage:446}, {number:38, nameAr:"ص", startPage:453}, {number:39, nameAr:"الزمر", startPage:458},
+    {number:40, nameAr:"غافر", startPage:467}, {number:41, nameAr:"فصلت", startPage:477}, {number:42, nameAr:"الشورى", startPage:483},
+    {number:43, nameAr:"الزخرف", startPage:489}, {number:44, nameAr:"الدخان", startPage:496}, {number:45, nameAr:"الجاثية", startPage:499},
+    {number:46, nameAr:"الأحقاف", startPage:502}, {number:47, nameAr:"محمد", startPage:507}, {number:48, nameAr:"الفتح", startPage:511},
+    {number:49, nameAr:"الحجرات", startPage:515}, {number:50, nameAr:"ق", startPage:518}, {number:51, nameAr:"الذاريات", startPage:520},
+    {number:52, nameAr:"الطور", startPage:523}, {number:53, nameAr:"النجم", startPage:526}, {number:54, nameAr:"القمر", startPage:528},
+    {number:55, nameAr:"الرحمن", startPage:531}, {number:56, nameAr:"الواقعة", startPage:534}, {number:57, nameAr:"الحديد", startPage:537},
+    {number:58, nameAr:"المجادلة", startPage:542}, {number:59, nameAr:"الحشر", startPage:545}, {number:60, nameAr:"الممتحنة", startPage:549},
+    {number:61, nameAr:"الصف", startPage:551}, {number:62, nameAr:"الجمعة", startPage:553}, {number:63, nameAr:"المنافقون", startPage:554},
+    {number:64, nameAr:"التغابن", startPage:556}, {number:65, nameAr:"الطلاق", startPage:558}, {number:66, nameAr:"التحريم", startPage:560},
+    {number:67, nameAr:"الملك", startPage:562}, {number:68, nameAr:"القلم", startPage:564}, {number:69, nameAr:"الحاقة", startPage:566},
+    {number:70, nameAr:"المعارج", startPage:568}, {number:71, nameAr:"نوح", startPage:570}, {number:72, nameAr:"الجن", startPage:572},
+    {number:73, nameAr:"المزمل", startPage:574}, {number:74, nameAr:"المدثر", startPage:575}, {number:75, nameAr:"القيامة", startPage:577},
+    {number:76, nameAr:"الإنسان", startPage:578}, {number:77, nameAr:"المرسلات", startPage:580}, {number:78, nameAr:"النبأ", startPage:582},
+    {number:79, nameAr:"النازعات", startPage:583}, {number:80, nameAr:"عبس", startPage:585}, {number:81, nameAr:"التكوير", startPage:586},
+    {number:82, nameAr:"الانفطار", startPage:587}, {number:83, nameAr:"المطففين", startPage:587}, {number:84, nameAr:"الانشقاق", startPage:589},
+    {number:85, nameAr:"البروج", startPage:590}, {number:86, nameAr:"الطارق", startPage:591}, {number:87, nameAr:"الأعلى", startPage:591},
+    {number:88, nameAr:"الغاشية", startPage:592}, {number:89, nameAr:"الفجر", startPage:593}, {number:90, nameAr:"البلد", startPage:594},
+    {number:91, nameAr:"الشمس", startPage:595}, {number:92, nameAr:"الليل", startPage:595}, {number:93, nameAr:"الضحى", startPage:596},
+    {number:94, nameAr:"الشرح", startPage:596}, {number:95, nameAr:"التين", startPage:597}, {number:96, nameAr:"العلق", startPage:597},
+    {number:97, nameAr:"القدر", startPage:598}, {number:98, nameAr:"البينة", startPage:599}, {number:99, nameAr:"الزلزلة", startPage:599},
+    {number:100, nameAr:"العاديات", startPage:600}, {number:101, nameAr:"القارعة", startPage:600}, {number:102, nameAr:"التكاثر", startPage:601},
+    {number:103, nameAr:"العصر", startPage:601}, {number:104, nameAr:"الهمزة", startPage:601}, {number:105, nameAr:"الفيل", startPage:602},
+    {number:106, nameAr:"قريش", startPage:602}, {number:107, nameAr:"الماعون", startPage:603}, {number:108, nameAr:"الكوثر", startPage:603},
+    {number:109, nameAr:"الكافرون", startPage:603}, {number:110, nameAr:"النصر", startPage:604}, {number:111, nameAr:"المسد", startPage:604},
+    {number:112, nameAr:"الإخلاص", startPage:604}, {number:113, nameAr:"الفلق", startPage:604}, {number:114, nameAr:"الناس", startPage:604}
+];
+
+const JOZZ_LIST = Array.from({length: 30}, (_, i) => i + 1);
 
 const SURAH_FOLDERS = {
     1: "001 Al-Fatihah الفاتحة", 2: "002 Al-Baqarah البقرة", 3: "003 Al-'Imran آل عمران",

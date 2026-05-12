@@ -1,6 +1,5 @@
 /**
- * ui.js - إدارة واجهة المستخدم
- * تم تعديل المنطق ليتوافق مع ملاحظات PWA Notes الصارمة
+ * ui.js - واجهة المستخدم
  */
 const UI = {
     currentPage: 1,
@@ -11,7 +10,7 @@ const UI = {
         this._initTheme();
         this._initPlayerControls();
         this._initPageNav();
-        Search.init();
+        if (typeof Search !== 'undefined') Search.init();
     },
 
     _initSidebar() {
@@ -19,12 +18,14 @@ const UI = {
         const openBtn = document.getElementById('openSidebarBtn');
         const closeBtn = document.getElementById('closeSidebarBtn');
 
-        if (openBtn) openBtn.onclick = () => sidebar.classList.add('open');
-        if (closeBtn) closeBtn.onclick = () => sidebar.classList.remove('open');
+        if (openBtn && sidebar) openBtn.onclick = () => sidebar.classList.add('open');
+        if (closeBtn && sidebar) closeBtn.onclick = () => sidebar.classList.remove('open');
     },
 
     _initTheme() {
         const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        
         btn.onclick = () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             if (isDark) {
@@ -40,33 +41,58 @@ const UI = {
     },
 
     _initPlayerControls() {
-        document.getElementById('playPauseBtn').onclick = () => AudioPlayer.togglePlayPause();
-        document.getElementById('nextAyahBtn').onclick = () => AudioPlayer.next();
-        document.getElementById('prevAyahBtn').onclick = () => AudioPlayer.prev();
-        document.getElementById('repeatBtn').onclick = () => AudioPlayer.toggleRepeat();
+        const playBtn = document.getElementById('playPauseBtn');
+        const nextBtn = document.getElementById('nextAyahBtn');
+        const prevBtn = document.getElementById('prevAyahBtn');
+        const repeatBtn = document.getElementById('repeatBtn');
+        
+        if (playBtn) playBtn.onclick = () => AudioPlayer.togglePlayPause();
+        if (nextBtn) nextBtn.onclick = () => AudioPlayer.next();
+        if (prevBtn) prevBtn.onclick = () => AudioPlayer.prev();
+        if (repeatBtn) repeatBtn.onclick = () => AudioPlayer.toggleRepeat();
         
         document.querySelectorAll('.close-modal').forEach(b => {
-            b.onclick = () => b.closest('.modal').classList.remove('active');
+            b.onclick = () => {
+                const modal = b.closest('.modal');
+                if (modal) modal.classList.remove('active');
+            };
         });
         
-        document.getElementById('searchOpenBtn').onclick = () => document.getElementById('searchModal').classList.add('active');
+        const searchOpen = document.getElementById('searchOpenBtn');
+        if (searchOpen) {
+            searchOpen.onclick = () => {
+                const modal = document.getElementById('searchModal');
+                if (modal) modal.classList.add('active');
+            };
+        }
     },
 
     _initPageNav() {
-        document.getElementById('prevPageBtn').onclick = () => {
-            if (this.currentPage > 1) App.loadPage(this.currentPage - 1);
-        };
-        document.getElementById('nextPageBtn').onclick = () => {
-            if (this.currentPage < this.totalPages) App.loadPage(this.currentPage + 1);
-        };
-        document.getElementById('pageInput').onchange = (e) => {
-            const p = parseInt(e.target.value);
-            if (p >= 1 && p <= this.totalPages) App.loadPage(p);
-        };
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        const pageInput = document.getElementById('pageInput');
+
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                if (this.currentPage > 1) App.loadPage(this.currentPage - 1);
+            };
+        }
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                if (this.currentPage < this.totalPages) App.loadPage(this.currentPage + 1);
+            };
+        }
+        if (pageInput) {
+            pageInput.onchange = (e) => {
+                const p = parseInt(e.target.value);
+                if (p >= 1 && p <= this.totalPages) App.loadPage(p);
+            };
+        }
     },
 
     populateSurahs(surahs) {
         const sel = document.getElementById('surahSelect');
+        if (!sel) return;
         sel.innerHTML = '';
         surahs.forEach(s => {
             const opt = document.createElement('option');
@@ -78,6 +104,7 @@ const UI = {
 
     populateJozzList(jozzList) {
         const sel = document.getElementById('jozzSelect');
+        if (!sel) return;
         sel.innerHTML = '<option value="">-- اختر جزءاً --</option>';
         jozzList.forEach(j => {
             const opt = document.createElement('option');
@@ -90,12 +117,10 @@ const UI = {
     updatePageInfo(page, totalPages) {
         this.currentPage = page;
         this.totalPages = totalPages;
-        document.getElementById('pageInput').value = page;
+        const input = document.getElementById('pageInput');
+        if (input) input.value = page;
     },
 
-    /**
-     * كشف هل الآية 1 هي البسملة
-     */
     _isBismillahAyah(ayah) {
         if (ayah.aya_no !== 1) return false;
         const text = ayah.aya_text_emlaey || ayah.aya_text || '';
@@ -104,6 +129,8 @@ const UI = {
 
     renderAyahs(ayahs, readingKey) {
         const area = document.getElementById('readingArea');
+        if (!area) return;
+        
         const config = READINGS_CONFIG[readingKey];
         area.innerHTML = '';
 
@@ -112,28 +139,22 @@ const UI = {
         textBlock.style.fontFamily = `'${config.fontFamily}', serif`;
 
         let lastSurahNo = null;
-        let isFirstInPage = true;
 
         ayahs.forEach(ayah => {
-            // عند بداية سورة جديدة
             if (ayah.sura_no !== lastSurahNo) {
                 lastSurahNo = ayah.sura_no;
-
                 const header = document.createElement('div');
                 header.className = 'surah-header-inline';
                 header.textContent = `سورة ${ayah.sura_name_ar}`;
                 textBlock.appendChild(header);
 
-                // إضافة الاستعاذة والبسملة كإضافات (الملاحظة 16 و 22)
                 if (ayah.aya_no === 1) {
-                    // الاستعاذة
                     const istiazah = document.createElement('div');
                     istiazah.className = 'istiazah';
                     istiazah.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
                     istiazah.onclick = () => AudioPlayer.playIstiazah();
                     textBlock.appendChild(istiazah);
 
-                    // البسملة (إلا إذا كانت هي الآية 1 أصلاً لمنع التكرار)
                     if (!this._isBismillahAyah(ayah) && !NO_BASMALAH_SURAHS.includes(ayah.sura_no)) {
                         const bismillah = document.createElement('div');
                         bismillah.className = 'bismillah';
@@ -144,7 +165,6 @@ const UI = {
                 }
             }
 
-            // عرض الآية (الملاحظة 22: جميع الآيات يجب أن تظهر)
             const isBismillah = this._isBismillahAyah(ayah);
             const span = document.createElement('span');
             span.className = isBismillah ? 'bismillah' : 'ayah-container';
@@ -159,6 +179,12 @@ const UI = {
 
         area.appendChild(textBlock);
         area.scrollTop = 0;
-        document.getElementById('currentSurahTitle').textContent = `سورة ${ayahs[0].sura_name_ar}`;
+        const title = document.getElementById('currentSurahTitle');
+        if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
+    },
+
+    showLoader() {
+        const area = document.getElementById('readingArea');
+        if (area) area.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
     }
 };

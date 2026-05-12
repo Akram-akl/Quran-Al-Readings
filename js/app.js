@@ -1,6 +1,5 @@
 /**
- * app.js - المحرك الرئيسي للتطبيق
- * يربط بين البيانات والواجهة والصوت
+ * app.js - المحرك الرئيسي
  */
 const App = {
     currentReading: 'Hafs',
@@ -13,36 +12,44 @@ const App = {
         UI.init();
         
         // تحميل القوائم
-        UI.populateSurahs(SURAHS);
-        UI.populateJozzList(JOZZ_LIST);
+        if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
+        if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
 
         // ربط أحداث التغيير
         this._bindEvents();
 
-        // تحميل الصفحة الأولى افتراضياً
+        // تحميل الصفحة الأولى
         await this.loadPage(1);
     },
 
     _bindEvents() {
-        // تغيير الرواية
-        document.getElementById('readingSelect').addEventListener('change', (e) => {
-            this.currentReading = e.target.value;
-            this.loadPage(this.currentPage);
-        });
+        const readingSelect = document.getElementById('readingSelect');
+        const surahSelect = document.getElementById('surahSelect');
+        const jozzSelect = document.getElementById('jozzSelect');
 
-        // تغيير السورة
-        document.getElementById('surahSelect').addEventListener('change', (e) => {
-            const surahNo = parseInt(e.target.value);
-            const surah = SURAHS.find(s => s.number === surahNo);
-            if (surah) this.loadPage(surah.startPage);
-        });
+        if (readingSelect) {
+            readingSelect.onchange = (e) => {
+                this.currentReading = e.target.value;
+                this.loadPage(this.currentPage);
+            };
+        }
 
-        // تغيير الجزء
-        document.getElementById('jozzSelect').addEventListener('change', (e) => {
-            const jozzNo = parseInt(e.target.value);
-            const page = JOZZ_TO_PAGE[jozzNo];
-            if (page) this.loadPage(page);
-        });
+        if (surahSelect) {
+            surahSelect.onchange = (e) => {
+                const surahNo = parseInt(e.target.value);
+                const surah = SURAHS.find(s => s.number === surahNo);
+                if (surah) this.loadPage(surah.startPage);
+            };
+        }
+
+        if (jozzSelect) {
+            jozzSelect.onchange = (e) => {
+                const jozzNo = parseInt(e.target.value);
+                // تبسيط منطق الجزء للنماذج الأولية
+                const page = (jozzNo - 1) * 20 + 1; 
+                this.loadPage(page);
+            };
+        }
     },
 
     async loadPage(pageNo) {
@@ -50,23 +57,23 @@ const App = {
         
         this.currentPage = pageNo;
         UI.showLoader();
-        AudioPlayer.stop(); // إيقاف الصوت عند الانتقال لمنع التداخل
+        AudioPlayer.stop();
 
         try {
             const ayahs = await DataHandler.getPageAyahs(this.currentReading, pageNo);
             if (ayahs && ayahs.length > 0) {
                 this.currentSurah = ayahs[0].sura_no;
-                UI.renderAyahs(ayahs, this.currentReading, this.currentSurah);
+                UI.renderAyahs(ayahs, this.currentReading);
                 UI.updatePageInfo(pageNo, 604);
                 
-                // تحديث اختيار السورة في القائمة
-                document.getElementById('surahSelect').value = this.currentSurah;
+                const surahSelect = document.getElementById('surahSelect');
+                if (surahSelect) surahSelect.value = this.currentSurah;
             }
         } catch (error) {
             console.error("Error loading page:", error);
+            document.getElementById('readingArea').innerHTML = `<div class="error">خطأ في تحميل الصفحة: ${error.message}</div>`;
         }
     }
 };
 
-// تشغيل التطبيق عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => App.init());
