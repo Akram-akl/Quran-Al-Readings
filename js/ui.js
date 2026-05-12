@@ -1,6 +1,6 @@
 /**
  * ui.js - إدارة واجهة المستخدم
- * عرض صفحات القرآن حسب الرواية
+ * تم تحديث المنطق لضمان مزامنة القوائم والتنقل الصحيح
  */
 const UI = {
     currentPage: 1,
@@ -11,6 +11,7 @@ const UI = {
         this._initTheme();
         this._initPlayerControls();
         this._initPageNav();
+        Search.init();
     },
 
     _initSidebar() {
@@ -21,8 +22,10 @@ const UI = {
         openBtn.addEventListener('click', () => sidebar.classList.add('open'));
         closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
 
-        document.querySelector('.main-content').addEventListener('click', () => {
-            if (window.innerWidth <= 768) sidebar.classList.remove('open');
+        document.querySelector('.main-content').addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && !sidebar.contains(e.target) && e.target !== openBtn) {
+                sidebar.classList.remove('open');
+            }
         });
     },
 
@@ -53,6 +56,13 @@ const UI = {
         document.getElementById('prevAyahBtn').addEventListener('click', () => AudioPlayer.prev());
         document.getElementById('repeatBtn').addEventListener('click', () => AudioPlayer.toggleRepeat());
         document.getElementById('audioSeek').addEventListener('input', (e) => AudioPlayer.seek(e.target.value));
+        
+        // إغلاق المودالات عند الضغط خارجها
+        window.onclick = (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        };
     },
 
     _initPageNav() {
@@ -94,68 +104,43 @@ const UI = {
         this.currentPage = page;
         this.totalPages = totalPages;
         document.getElementById('pageInput').value = page;
-        document.getElementById('pageInput').max = totalPages;
         document.getElementById('totalPages').textContent = totalPages;
+        
+        // تحديث الجزء تلقائياً
+        const jozz = PAGE_TO_JOZZ[page];
+        if (jozz) document.getElementById('jozzSelect').value = jozz;
     },
 
-    /**
-     * كشف ما إذا كانت الآية الأولى في البيانات هي البسملة
-     * حفص وشعبة: الآية 1 = البسملة (تعتبر آية)
-     * ورش، قالون، الدوري، السوسي: الآية 1 = الحمد لله (البسملة ليست آية)
-     */
     _isBismillahInData(readingKey) {
         const data = DataHandler.cache[readingKey];
         if (!data) return false;
-        const firstAyah = data.find(a => a.sura_no === 1 && a.aya_no === 1);
-        if (!firstAyah) return false;
-        // إذا كانت الآية 1 تحتوي على "بسم" فالبسملة جزء من البيانات
-        const text = firstAyah.aya_text_emlaey || firstAyah.aya_text || '';
-        return text.includes('بسم');
+        const fatihah1 = data.find(a => a.sura_no === 1 && a.aya_no === 1);
+        return fatihah1 && (fatihah1.aya_text_emlaey || fatihah1.aya_text || '').includes('بسم');
     },
 
-    /**
-     * عرض آيات صفحة كاملة
-     * القواعد:
-     * - أرقام الآيات موجودة في aya_text (لا نضيفها)
-     * - الاستعاذة: تظهر مرة واحدة فقط قبل أول سورة في الصفحة
-     * - البسملة: تظهر قبل أول آية من كل سورة (عدا التوبة)
-     *   لكن في حفص/شعبة الآية 1 هي البسملة (لا نكررها)
-     *   وفي ورش/قالون/الدوري/السوسي الآية 1 = "الحمد لله" (نضيف بسملة)
-     * - لا نحذف أي آية أبداً
-     */
     renderAyahs(ayahs, readingKey, surahNo) {
         const area = document.getElementById('readingArea');
         const config = READINGS_CONFIG[readingKey];
         area.innerHTML = '';
 
-        if (!ayahs || ayahs.length === 0) {
-            area.innerHTML = '<div class="loader">لا توجد آيات</div>';
-            return;
-        }
-
         const textBlock = document.createElement('div');
         textBlock.className = 'quran-text-block';
         textBlock.style.fontFamily = `'${config.fontFamily}', serif`;
 
-        // كشف هل البسملة جزء من بيانات الآيات (حفص/شعبة) أم لا
         const bismillahInData = this._isBismillahInData(readingKey);
-
-        // تتبع السورة الحالية
         let lastSurahNo = null;
         let isFirstSurahInPage = true;
 
         ayahs.forEach(ayah => {
-            // عند بداية سورة جديدة في الصفحة
             if (ayah.sura_no !== lastSurahNo) {
                 lastSurahNo = ayah.sura_no;
 
-                // عنوان السورة
                 const surahHeader = document.createElement('div');
                 surahHeader.className = 'surah-header-inline';
                 surahHeader.textContent = `سورة ${ayah.sura_name_ar}`;
                 textBlock.appendChild(surahHeader);
 
-                // الاستعاذة: فقط قبل أول سورة في الصفحة
+                // الاستعاذة: فقط في أول سورة في الصفحة إذا كانت صفحة 1 أو بداية سورة
                 if (isFirstSurahInPage && ayah.aya_no === 1) {
                     const istiazah = document.createElement('div');
                     istiazah.className = 'istiazah';
@@ -165,19 +150,9 @@ const UI = {
                     textBlock.appendChild(istiazah);
                 }
 
-                // البسملة: قبل أول آية من كل سورة
+                // البسملة
                 if (ayah.aya_no === 1 && !NO_BASMALAH_SURAHS.includes(ayah.sura_no)) {
-                    if (!bismillahInData) {
-                        // ورش/قالون/الدوري/السوسي: البسملة ليست آية - نضيفها كرأس موضوع
-                        const bismillah = document.createElement('div');
-                        bismillah.className = 'bismillah';
-                        bismillah.style.cursor = 'pointer';
-                        bismillah.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
-                        bismillah.onclick = () => AudioPlayer.playBasmalah(ayah.sura_no);
-                        textBlock.appendChild(bismillah);
-                    } else if (ayah.sura_no !== 1) {
-                        // حفص/شعبة في السور غير الفاتحة: الآية 1 ليست هي البسملة
-                        // لذا نحتاج إضافة البسملة كرأس موضوع (حتى لو كانت مسجلة مع الآية 1 في بعض المصاحف، هنا نفصلها للعرض الجمالي)
+                    if (!bismillahInData || ayah.sura_no !== 1) {
                         const bismillah = document.createElement('div');
                         bismillah.className = 'bismillah';
                         bismillah.style.cursor = 'pointer';
@@ -186,17 +161,13 @@ const UI = {
                         textBlock.appendChild(bismillah);
                     }
                 }
-
                 isFirstSurahInPage = false;
             }
 
-            // إذا كانت الآية 1 هي البسملة (كما في فاتحة حفص)
-            // نتحقق إذا كان النص هو البسملة فقط لتمييزها بصرياً
             const isBismillahAyah = bismillahInData && ayah.sura_no === 1 && ayah.aya_no === 1;
-
             const span = document.createElement('span');
             span.className = isBismillahAyah ? 'bismillah' : 'ayah-container';
-            if (isBismillahAyah) span.style.display = 'block'; // جعل بسملة الفاتحة في سطر منفصل
+            if (isBismillahAyah) span.style.display = 'block';
 
             span.setAttribute('data-ayah', ayah.aya_no);
             span.setAttribute('data-surah', ayah.sura_no);
@@ -204,10 +175,7 @@ const UI = {
             const textSpan = document.createElement('span');
             textSpan.className = 'ayah-text';
             textSpan.textContent = ayah.aya_text + ' ';
-
-            textSpan.addEventListener('click', () => {
-                AudioPlayer.playAyah(ayah.aya_no);
-            });
+            textSpan.onclick = () => AudioPlayer.playAyah(ayah.aya_no);
 
             span.appendChild(textSpan);
             textBlock.appendChild(span);
@@ -215,10 +183,7 @@ const UI = {
 
         area.appendChild(textBlock);
         area.scrollTop = 0;
-
-        // تحديث العنوان
-        const firstAyah = ayahs[0];
-        document.getElementById('currentSurahTitle').textContent = `سورة ${firstAyah.sura_name_ar}`;
+        document.getElementById('currentSurahTitle').textContent = `سورة ${ayahs[0].sura_name_ar}`;
     },
 
     showLoader() {
