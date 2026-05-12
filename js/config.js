@@ -1,16 +1,12 @@
 /**
- * إعدادات الروايات الست
- * كل رواية لها مسار JSON، مسار الصوت، صيغة اسم الملف الصوتي، اسم الخط، واسم القارئ
- * يدعم التشغيل المحلي (EXE) والويب (GitHub Pages)
+ * config.js - إعدادات الروايات
+ * تم تصحيح مسارات ورش والروابط الاحتياطية
  */
-
-// كشف ما إذا كنا في Electron أو متصفح
 const IS_ELECTRON = (typeof process !== 'undefined' && process.versions && process.versions.electron);
 
-// روابط صوت الويب (everyayah.com)
 const WEB_AUDIO_BASE = {
     Hafs: 'https://everyayah.com/data/Alafasy_128kbps/',
-    Warsh: 'https://everyayah.com/data/Warsh_Abdul_Basit_128kbps/',
+    Warsh: 'https://everyayah.com/data/Warsh_Husary_64kbps/',
     Qaloun: 'https://everyayah.com/data/Hudhaify_128kbps/',
     Duri: 'https://everyayah.com/data/Hudhaify_128kbps/',
     Susi: 'https://everyayah.com/data/Hudhaify_128kbps/',
@@ -24,14 +20,11 @@ const READINGS_CONFIG = {
         jsonPath: 'data/hafsData.json',
         fontFamily: 'UthmanicHafs',
         audioBasePath: '../Hafs/huthify-ayat/الحذيفي-ايات/',
-        // صيغة: 10-SSSAAA-XXX.mp3 (الفاتحة A01، باقي السور 001)
         getAudioPath(surahNo, ayahNo) {
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Hafs}${String(surahNo).padStart(3,'0')}${String(ayahNo).padStart(3,'0')}.mp3`;
-            }
             const sss = String(surahNo).padStart(3, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Hafs}${sss}${aaa}.mp3`;
+            const surahFolder = SURAH_FOLDERS[surahNo];
             const suffix = surahNo === 1 ? 'A01' : '001';
             return `${this.audioBasePath}${surahFolder}/10-${sss}${aaa}-${suffix}.mp3`;
         },
@@ -42,11 +35,10 @@ const READINGS_CONFIG = {
         getBasmalahPath(surahNo) {
             if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Hafs}001001.mp3`;
             const sss = String(surahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            const surahFolder = SURAH_FOLDERS[surahNo];
             const suffix = surahNo === 1 ? 'A01' : '001';
             return `${this.audioBasePath}${surahFolder}/10-${sss}C00-${suffix}.mp3`;
-        },
-        _surahFolders: null,
+        }
     },
     Warsh: {
         name: 'ورش عن نافع',
@@ -57,20 +49,11 @@ const READINGS_CONFIG = {
         getAudioPath(surahNo, ayahNo) {
             const sss = String(surahNo).padStart(3, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Warsh}${sss}${aaa}.mp3`;
-            }
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Warsh}${sss}${aaa}.mp3`;
             return `${this.audioBasePath}${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Warsh}001000.mp3`;
-            return READINGS_CONFIG.Hafs.getIstiazahPath();
-        },
-        getBasmalahPath(surahNo) {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Warsh}001001.mp3`;
-            return READINGS_CONFIG.Hafs.getBasmalahPath(surahNo);
-        },
-        _surahFolders: null,
+        getIstiazahPath() { return `${WEB_AUDIO_BASE.Warsh}001000.mp3`; },
+        getBasmalahPath() { return `${WEB_AUDIO_BASE.Warsh}001001.mp3`; }
     },
     Qaloun: {
         name: 'قالون عن نافع',
@@ -79,25 +62,14 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicQaloun',
         audioBasePath: '../Qaloun/ayat/ayat/',
         getAudioPath(surahNo, ayahNo) {
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Qaloun}${String(surahNo).padStart(3,'0')}${String(ayahNo).padStart(3,'0')}.mp3`;
-            }
             const sss = String(surahNo).padStart(3, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Qaloun}${sss}${aaa}.mp3`;
+            const surahFolder = SURAH_FOLDERS[surahNo];
             return `${this.audioBasePath}${surahFolder}/01-${sss}${aaa}-A01.mp3`;
         },
-        getIstiazahPath() {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Qaloun}001000.mp3`;
-            return `${this.audioBasePath}00B Al-Istiazah الإستعاذة/01-000B00-A01.mp3`;
-        },
-        getBasmalahPath(surahNo) {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Qaloun}001001.mp3`;
-            const sss = String(surahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
-            return `${this.audioBasePath}${surahFolder}/01-${sss}C00-A01.mp3`;
-        },
-        _surahFolders: null,
+        getIstiazahPath() { return `${WEB_AUDIO_BASE.Qaloun}001000.mp3`; },
+        getBasmalahPath() { return `${WEB_AUDIO_BASE.Qaloun}001001.mp3`; }
     },
     Duri: {
         name: 'الدوري عن أبي عمرو',
@@ -106,25 +78,14 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicDuri',
         audioBasePath: '../Duri/ayat/ayat/',
         getAudioPath(surahNo, ayahNo) {
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Duri}${String(surahNo).padStart(3,'0')}${String(ayahNo).padStart(3,'0')}.mp3`;
-            }
             const sss = String(surahNo).padStart(3, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Duri}${sss}${aaa}.mp3`;
+            const surahFolder = SURAH_FOLDERS[surahNo];
             return `${this.audioBasePath}${surahFolder}/05-${sss}${aaa}-A09.mp3`;
         },
-        getIstiazahPath() {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Duri}001000.mp3`;
-            return `${this.audioBasePath}001 Al-Fatihah الفاتحة/05-000B00-A09.mp3`;
-        },
-        getBasmalahPath(surahNo) {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Duri}001001.mp3`;
-            const sss = String(surahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
-            return `${this.audioBasePath}${surahFolder}/05-${sss}C00-A09.mp3`;
-        },
-        _surahFolders: null,
+        getIstiazahPath() { return `${WEB_AUDIO_BASE.Duri}001000.mp3`; },
+        getBasmalahPath() { return `${WEB_AUDIO_BASE.Duri}001001.mp3`; }
     },
     Susi: {
         name: 'السوسي عن أبي عمرو',
@@ -132,27 +93,15 @@ const READINGS_CONFIG = {
         jsonPath: 'data/susiData.json',
         fontFamily: 'UthmanicSusi',
         audioBasePath: '../Susi/sediki-ayat/ayat/',
-        // صيغة مختلفة: 06-SSAAAA10.wav.mp3 (رقم السورة حرفين، الآية 3 أرقام)
         getAudioPath(surahNo, ayahNo) {
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Susi}${String(surahNo).padStart(3,'0')}${String(ayahNo).padStart(3,'0')}.mp3`;
-            }
             const ss = String(surahNo).padStart(2, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Susi}${String(surahNo).padStart(3,'0')}${aaa}.mp3`;
+            const surahFolder = SURAH_FOLDERS[surahNo];
             return `${this.audioBasePath}${surahFolder}/06-${ss}${aaa}A10.wav.mp3`;
         },
-        getIstiazahPath() {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Susi}001000.mp3`;
-            return `${this.audioBasePath}00B Al-Istiazah الإستعاذة/06-0B000A10.wav.mp3`;
-        },
-        getBasmalahPath(surahNo) {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Susi}001001.mp3`;
-            const ss = String(surahNo).padStart(2, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
-            return `${this.audioBasePath}${surahFolder}/06-${ss}C00A10.wav.mp3`;
-        },
-        _surahFolders: null,
+        getIstiazahPath() { return `${WEB_AUDIO_BASE.Susi}001000.mp3`; },
+        getBasmalahPath() { return `${WEB_AUDIO_BASE.Susi}001001.mp3`; }
     },
     Shubah: {
         name: 'شعبة عن عاصم',
@@ -161,29 +110,17 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicShubah',
         audioBasePath: '../Shubah/huthify-shuba-ayat/آيات - 2020.1.19/',
         getAudioPath(surahNo, ayahNo) {
-            if (!IS_ELECTRON) {
-                return `${WEB_AUDIO_BASE.Shubah}${String(surahNo).padStart(3,'0')}${String(ayahNo).padStart(3,'0')}.mp3`;
-            }
             const sss = String(surahNo).padStart(3, '0');
             const aaa = String(ayahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
+            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Shubah}${sss}${aaa}.mp3`;
+            const surahFolder = SURAH_FOLDERS[surahNo];
             return `${this.audioBasePath}${surahFolder}/09-${sss}${aaa}-A01.mp3`;
         },
-        getIstiazahPath() {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Shubah}001000.mp3`;
-            return `${this.audioBasePath}00B Al-Istiazah الإستعاذة/09-000B00-A01.mp3`;
-        },
-        getBasmalahPath(surahNo) {
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Shubah}001001.mp3`;
-            const sss = String(surahNo).padStart(3, '0');
-            const surahFolder = this._getSurahFolder(surahNo);
-            return `${this.audioBasePath}${surahFolder}/09-${sss}C00-A01.mp3`;
-        },
-        _surahFolders: null,
+        getIstiazahPath() { return `${WEB_AUDIO_BASE.Shubah}001000.mp3`; },
+        getBasmalahPath() { return `${WEB_AUDIO_BASE.Shubah}001001.mp3`; }
     }
 };
 
-// أسماء مجلدات السور (مشتركة بين معظم الروايات)
 const SURAH_FOLDERS = {
     1: "001 Al-Fatihah الفاتحة", 2: "002 Al-Baqarah البقرة", 3: "003 Al-'Imran آل عمران",
     4: "004 An-Nisa' النساء", 5: "005 Al-Ma'idah المائدة", 6: "006 Al-An'am الأنعام",
@@ -195,7 +132,7 @@ const SURAH_FOLDERS = {
     22: "022 Al-Hajj الحج", 23: "023 Al-Mu'minun المؤمنون", 24: "024 An-Nur النور",
     25: "025 Al-Furqan الفرقان", 26: "026 Ash-Shu'ara' الشعراء", 27: "027 An-Naml النمل",
     28: "028 Al-Qasas القصص", 29: "029 Al-'Ankabut العنكبوت", 30: "030 Ar-Rum الروم",
-    31: "031 Luqman لقمان", 32: "032 As-Sajdah السجدة", 33: "033 Al-Ahzab الأحزاب",
+    31: "031 Luقman لقمان", 32: "032 As-Sajdah السجدة", 33: "033 Al-Ahzab الأحزاب",
     34: "034 Saba' سبأ", 35: "035 Fatir فاطر", 36: "036 Ya-Sin يس",
     37: "037 As-Saffat الصافات", 38: "038 Sad ص", 39: "039 Az-Zumar الزمر",
     40: "040 Ghafir غافر", 41: "041 Fussilat فصلت", 42: "042 Ash-Shura الشورى",
@@ -225,12 +162,4 @@ const SURAH_FOLDERS = {
     112: "112 Al-Ikhlas الإخلاص", 113: "113 Al-Falaq الفلق", 114: "114 An-Nas الناس"
 };
 
-// إضافة دالة _getSurahFolder لكل رواية
-Object.values(READINGS_CONFIG).forEach(config => {
-    config._getSurahFolder = function(surahNo) {
-        return SURAH_FOLDERS[surahNo] || '';
-    };
-});
-
-// سورة التوبة ليس فيها بسملة
 const NO_BASMALAH_SURAHS = [9];
