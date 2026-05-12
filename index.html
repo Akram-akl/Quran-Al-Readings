@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="تطبيق القرآن الكريم بالروايات الست - حفص، ورش، قالون، الدوري، السوسي، شعبة">
+    <title>القرآن الكريم - القراءات</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#064e3b">
+    <link rel="icon" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/logo.png" alt="شعار التطبيق" class="app-logo">
+                <h2>القرآن الكريم</h2>
+                <button id="closeSidebarBtn" class="btn-icon mobile-only" title="إغلاق القائمة" aria-label="إغلاق القائمة"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="form-group">
+                    <label for="readingSelect">الرواية:</label>
+                    <select id="readingSelect" class="form-control" title="اختيار الرواية">
+                        <option value="Hafs">حفص عن عاصم (الحذيفي)</option>
+                        <option value="Warsh">ورش عن نافع (عبد الباسط)</option>
+                        <option value="Qaloun">قالون عن نافع (الحذيفي)</option>
+                        <option value="Duri">الدوري عن أبي عمرو (الجهني)</option>
+                        <option value="Susi">السوسي عن أبي عمرو (الصديقي)</option>
+                        <option value="Shubah">شعبة عن عاصم (الحذيفي)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="surahSelect">السورة:</label>
+                    <select id="surahSelect" class="form-control" title="اختيار السورة"></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="jozzSelect">الجزء:</label>
+                    <select id="jozzSelect" class="form-control" title="اختيار الجزء"></select>
+                </div>
+
+                <hr class="divider">
+
+                <button id="searchBtn" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> بحث متقدم
+                </button>
+                
+                <button id="listenRangeBtn" class="btn btn-accent w-100 mt-2">
+                    <i class="fas fa-headphones"></i> استماع من-إلى
+                </button>
+
+                <button id="downloadBtn" class="btn btn-secondary w-100 mt-2">
+                    <i class="fas fa-download"></i> تحميل مقطع
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <button id="openSidebarBtn" class="btn-icon" title="فتح القائمة" aria-label="فتح القائمة"><i class="fas fa-bars"></i></button>
+                <div class="header-title">
+                    <h1 id="currentSurahTitle">سورة الفاتحة</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggleBtn" class="btn-icon" title="تبديل الوضع" aria-label="تبديل الوضع الليلي"><i class="fas fa-moon"></i></button>
+                </div>
+            </header>
+
+            <div class="reading-area" id="readingArea">
+                <div class="loader">
+                    <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
+                </div>
+            </div>
+
+            <!-- Page Navigation -->
+            <div class="page-nav">
+                <button id="nextPageBtn" class="btn-icon" title="الصفحة التالية" aria-label="الصفحة التالية"><i class="fas fa-chevron-right"></i></button>
+                <div class="page-info">
+                    <span>صفحة</span>
+                    <input type="number" id="pageInput" min="1" max="604" value="1" title="رقم الصفحة" aria-label="رقم الصفحة">
+                    <span>من <span id="totalPages">604</span></span>
+                </div>
+                <button id="prevPageBtn" class="btn-icon" title="الصفحة السابقة" aria-label="الصفحة السابقة"><i class="fas fa-chevron-left"></i></button>
+            </div>
+
+            <!-- Audio Player Fixed Bottom -->
+            <footer class="audio-player-container">
+                <audio id="quranAudio" preload="auto"></audio>
+                <div class="audio-controls">
+                    <div class="ayah-info">
+                        <span id="playingSurahName">الفاتحة</span> - آية <span id="playingAyahNumber">1</span>
+                    </div>
+                    <div class="player-buttons">
+                        <button id="prevAyahBtn" class="btn-icon" title="الآية السابقة" aria-label="الآية السابقة"><i class="fas fa-step-forward"></i></button>
+                        <button id="playPauseBtn" class="btn-play-pause" title="تشغيل/إيقاف" aria-label="تشغيل أو إيقاف"><i class="fas fa-play"></i></button>
+                        <button id="nextAyahBtn" class="btn-icon" title="الآية التالية" aria-label="الآية التالية"><i class="fas fa-step-backward"></i></button>
+                    </div>
+                    <div class="player-options">
+                        <button id="repeatBtn" class="btn-icon" title="تكرار الآية" aria-label="تكرار الآية"><i class="fas fa-redo"></i></button>
+                    </div>
+                </div>
+                <div class="audio-progress">
+                    <input type="range" id="audioSeek" min="0" max="100" value="0" title="شريط التقدم" aria-label="شريط التقدم">
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Search Modal -->
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>البحث في الروايات الست</h2>
+                <button class="close-modal btn-icon" title="إغلاق" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <label for="searchInput" class="sr-only">نص البحث</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="اكتب كلمة أو آية للبحث...">
+                <button id="doSearchBtn" class="btn btn-primary mt-2 w-100">بحث</button>
+                <div id="searchResults" class="search-results mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div id="downloadModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>تحميل واستماع</h2>
+                <button class="close-modal btn-icon" title="إغلاق" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="downloadType">تحميل كـ:</label>
+                    <select id="downloadType" class="form-control" title="نوع التحميل">
+                        <option value="image">صورة (نص الآيات)</option>
+                        <option value="audio">ملف صوتي مدمج (MP3)</option>
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col">
+                        <label for="dlSurahFrom">من سورة:</label>
+                        <select id="dlSurahFrom" class="form-control" title="سورة البداية"></select>
+                    </div>
+                    <div class="col">
+                        <label for="dlAyahFrom">آية:</label>
+                        <input type="number" id="dlAyahFrom" class="form-control" min="1" value="1" title="رقم الآية" placeholder="1">
+                    </div>
+                </div>
+                
+                <div class="row mt-2">
+                    <div class="col">
+                        <label for="dlSurahTo">إلى سورة:</label>
+                        <select id="dlSurahTo" class="form-control" title="سورة النهاية"></select>
+                    </div>
+                    <div class="col">
+                        <label for="dlAyahTo">آية:</label>
+                        <input type="number" id="dlAyahTo" class="form-control" min="1" value="1" title="رقم الآية" placeholder="1">
+                    </div>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label for="dlReading">الرواية / القارئ:</label>
+                    <select id="dlReading" class="form-control" title="اختيار الرواية للتحميل">
+                        <option value="Hafs">حفص عن عاصم (الحذيفي)</option>
+                        <option value="Warsh">ورش عن نافع (عبد الباسط)</option>
+                        <option value="Qaloun">قالون عن نافع (الحذيفي)</option>
+                        <option value="Duri">الدوري عن أبي عمرو (الجهني)</option>
+                        <option value="Susi">السوسي عن أبي عمرو (الصديقي)</option>
+                        <option value="Shubah">شعبة عن عاصم (الحذيفي)</option>
+                    </select>
+                </div>
+
+                <button id="executeDownloadBtn" class="btn btn-primary w-100 mt-3">
+                    <i class="fas fa-download"></i> تحميل
+                </button>
+                <div id="dlStatus" class="mt-2 text-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listen Range Modal -->
+    <div id="listenModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-headphones"></i> استماع من-إلى</h2>
+                <button class="close-modal btn-icon" title="إغلاق" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="listenReading">الرواية:</label>
+                    <select id="listenReading" class="form-control" title="اختيار الرواية">
+                        <option value="Hafs">حفص عن عاصم (الحذيفي)</option>
+                        <option value="Warsh">ورش عن نافع (عبد الباسط)</option>
+                        <option value="Qaloun">قالون عن نافع (الحذيفي)</option>
+                        <option value="Duri">الدوري عن أبي عمرو (الجهني)</option>
+                        <option value="Susi">السوسي عن أبي عمرو (الصديقي)</option>
+                        <option value="Shubah">شعبة عن عاصم (الحذيفي)</option>
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <label for="lsSurahFrom">من سورة:</label>
+                        <select id="lsSurahFrom" class="form-control" title="سورة البداية"></select>
+                    </div>
+                    <div class="col">
+                        <label for="lsAyahFrom">آية:</label>
+                        <input type="number" id="lsAyahFrom" class="form-control" min="1" value="1" title="آية البداية">
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col">
+                        <label for="lsSurahTo">إلى سورة:</label>
+                        <select id="lsSurahTo" class="form-control" title="سورة النهاية"></select>
+                    </div>
+                    <div class="col">
+                        <label for="lsAyahTo">آية:</label>
+                        <input type="number" id="lsAyahTo" class="form-control" min="1" value="1" title="آية النهاية">
+                    </div>
+                </div>
+                <button id="executeListenBtn" class="btn btn-accent w-100 mt-3">
+                    <i class="fas fa-play"></i> ابدأ الاستماع
+                </button>
+                <div id="lsStatus" class="mt-2 text-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden area for image capture -->
+    <div id="imageCaptureArea" class="image-capture-area"></div>
+
+    <!-- External Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <!-- App Scripts (order matters) -->
+    <script src="js/config.js"></script>
+    <script src="js/dataHandler.js"></script>
+    <script src="js/audioPlayer.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/download.js"></script>
+    <script src="js/listen.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
