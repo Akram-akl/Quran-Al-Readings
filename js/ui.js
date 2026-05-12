@@ -1,6 +1,6 @@
 /**
  * ui.js - إدارة واجهة المستخدم
- * تم تحديث المنطق لضمان مزامنة القوائم والتنقل الصحيح
+ * تم تعديل المنطق ليتوافق مع ملاحظات PWA Notes الصارمة
  */
 const UI = {
     currentPage: 1,
@@ -19,63 +19,50 @@ const UI = {
         const openBtn = document.getElementById('openSidebarBtn');
         const closeBtn = document.getElementById('closeSidebarBtn');
 
-        openBtn.addEventListener('click', () => sidebar.classList.add('open'));
-        closeBtn.addEventListener('click', () => sidebar.classList.remove('open'));
-
-        document.querySelector('.main-content').addEventListener('click', (e) => {
-            if (window.innerWidth <= 768 && !sidebar.contains(e.target) && e.target !== openBtn) {
-                sidebar.classList.remove('open');
-            }
-        });
+        if (openBtn) openBtn.onclick = () => sidebar.classList.add('open');
+        if (closeBtn) closeBtn.onclick = () => sidebar.classList.remove('open');
     },
 
     _initTheme() {
         const btn = document.getElementById('themeToggleBtn');
-        const saved = localStorage.getItem('quran-theme');
-        if (saved === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            btn.querySelector('i').className = 'fas fa-sun';
-        }
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
             if (isDark) {
                 document.documentElement.removeAttribute('data-theme');
-                btn.querySelector('i').className = 'fas fa-moon';
+                btn.innerHTML = '<i class="fas fa-moon"></i>';
                 localStorage.setItem('quran-theme', 'light');
             } else {
                 document.documentElement.setAttribute('data-theme', 'dark');
-                btn.querySelector('i').className = 'fas fa-sun';
+                btn.innerHTML = '<i class="fas fa-sun"></i>';
                 localStorage.setItem('quran-theme', 'dark');
-            }
-        });
-    },
-
-    _initPlayerControls() {
-        document.getElementById('playPauseBtn').addEventListener('click', () => AudioPlayer.togglePlayPause());
-        document.getElementById('nextAyahBtn').addEventListener('click', () => AudioPlayer.next());
-        document.getElementById('prevAyahBtn').addEventListener('click', () => AudioPlayer.prev());
-        document.getElementById('repeatBtn').addEventListener('click', () => AudioPlayer.toggleRepeat());
-        document.getElementById('audioSeek').addEventListener('input', (e) => AudioPlayer.seek(e.target.value));
-        
-        // إغلاق المودالات عند الضغط خارجها
-        window.onclick = (event) => {
-            if (event.target.classList.contains('modal')) {
-                event.target.classList.remove('active');
             }
         };
     },
 
+    _initPlayerControls() {
+        document.getElementById('playPauseBtn').onclick = () => AudioPlayer.togglePlayPause();
+        document.getElementById('nextAyahBtn').onclick = () => AudioPlayer.next();
+        document.getElementById('prevAyahBtn').onclick = () => AudioPlayer.prev();
+        document.getElementById('repeatBtn').onclick = () => AudioPlayer.toggleRepeat();
+        
+        document.querySelectorAll('.close-modal').forEach(b => {
+            b.onclick = () => b.closest('.modal').classList.remove('active');
+        });
+        
+        document.getElementById('searchOpenBtn').onclick = () => document.getElementById('searchModal').classList.add('active');
+    },
+
     _initPageNav() {
-        document.getElementById('prevPageBtn').addEventListener('click', () => {
+        document.getElementById('prevPageBtn').onclick = () => {
             if (this.currentPage > 1) App.loadPage(this.currentPage - 1);
-        });
-        document.getElementById('nextPageBtn').addEventListener('click', () => {
+        };
+        document.getElementById('nextPageBtn').onclick = () => {
             if (this.currentPage < this.totalPages) App.loadPage(this.currentPage + 1);
-        });
-        document.getElementById('pageInput').addEventListener('change', (e) => {
+        };
+        document.getElementById('pageInput').onchange = (e) => {
             const p = parseInt(e.target.value);
             if (p >= 1 && p <= this.totalPages) App.loadPage(p);
-        });
+        };
     },
 
     populateSurahs(surahs) {
@@ -104,21 +91,18 @@ const UI = {
         this.currentPage = page;
         this.totalPages = totalPages;
         document.getElementById('pageInput').value = page;
-        document.getElementById('totalPages').textContent = totalPages;
-        
-        // تحديث الجزء تلقائياً
-        const jozz = PAGE_TO_JOZZ[page];
-        if (jozz) document.getElementById('jozzSelect').value = jozz;
     },
 
-    _isBismillahInData(readingKey) {
-        const data = DataHandler.cache[readingKey];
-        if (!data) return false;
-        const fatihah1 = data.find(a => a.sura_no === 1 && a.aya_no === 1);
-        return fatihah1 && (fatihah1.aya_text_emlaey || fatihah1.aya_text || '').includes('بسم');
+    /**
+     * كشف هل الآية 1 هي البسملة
+     */
+    _isBismillahAyah(ayah) {
+        if (ayah.aya_no !== 1) return false;
+        const text = ayah.aya_text_emlaey || ayah.aya_text || '';
+        return text.includes('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ');
     },
 
-    renderAyahs(ayahs, readingKey, surahNo) {
+    renderAyahs(ayahs, readingKey) {
         const area = document.getElementById('readingArea');
         const config = READINGS_CONFIG[readingKey];
         area.innerHTML = '';
@@ -127,66 +111,54 @@ const UI = {
         textBlock.className = 'quran-text-block';
         textBlock.style.fontFamily = `'${config.fontFamily}', serif`;
 
-        const bismillahInData = this._isBismillahInData(readingKey);
         let lastSurahNo = null;
-        let isFirstSurahInPage = true;
+        let isFirstInPage = true;
 
         ayahs.forEach(ayah => {
+            // عند بداية سورة جديدة
             if (ayah.sura_no !== lastSurahNo) {
                 lastSurahNo = ayah.sura_no;
 
-                const surahHeader = document.createElement('div');
-                surahHeader.className = 'surah-header-inline';
-                surahHeader.textContent = `سورة ${ayah.sura_name_ar}`;
-                textBlock.appendChild(surahHeader);
+                const header = document.createElement('div');
+                header.className = 'surah-header-inline';
+                header.textContent = `سورة ${ayah.sura_name_ar}`;
+                textBlock.appendChild(header);
 
-                // الاستعاذة: فقط في أول سورة في الصفحة إذا كانت صفحة 1 أو بداية سورة
-                if (isFirstSurahInPage && ayah.aya_no === 1) {
+                // إضافة الاستعاذة والبسملة كإضافات (الملاحظة 16 و 22)
+                if (ayah.aya_no === 1) {
+                    // الاستعاذة
                     const istiazah = document.createElement('div');
                     istiazah.className = 'istiazah';
-                    istiazah.style.cursor = 'pointer';
                     istiazah.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
                     istiazah.onclick = () => AudioPlayer.playIstiazah();
                     textBlock.appendChild(istiazah);
-                }
 
-                // البسملة
-                if (ayah.aya_no === 1 && !NO_BASMALAH_SURAHS.includes(ayah.sura_no)) {
-                    if (!bismillahInData || ayah.sura_no !== 1) {
+                    // البسملة (إلا إذا كانت هي الآية 1 أصلاً لمنع التكرار)
+                    if (!this._isBismillahAyah(ayah) && !NO_BASMALAH_SURAHS.includes(ayah.sura_no)) {
                         const bismillah = document.createElement('div');
                         bismillah.className = 'bismillah';
-                        bismillah.style.cursor = 'pointer';
                         bismillah.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
                         bismillah.onclick = () => AudioPlayer.playBasmalah(ayah.sura_no);
                         textBlock.appendChild(bismillah);
                     }
                 }
-                isFirstSurahInPage = false;
             }
 
-            const isBismillahAyah = bismillahInData && ayah.sura_no === 1 && ayah.aya_no === 1;
+            // عرض الآية (الملاحظة 22: جميع الآيات يجب أن تظهر)
+            const isBismillah = this._isBismillahAyah(ayah);
             const span = document.createElement('span');
-            span.className = isBismillahAyah ? 'bismillah' : 'ayah-container';
-            if (isBismillahAyah) span.style.display = 'block';
+            span.className = isBismillah ? 'bismillah' : 'ayah-container';
+            if (isBismillah) span.style.display = 'block';
 
             span.setAttribute('data-ayah', ayah.aya_no);
             span.setAttribute('data-surah', ayah.sura_no);
+            span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${ayah.aya_no})">${ayah.aya_text}</span> `;
 
-            const textSpan = document.createElement('span');
-            textSpan.className = 'ayah-text';
-            textSpan.textContent = ayah.aya_text + ' ';
-            textSpan.onclick = () => AudioPlayer.playAyah(ayah.aya_no);
-
-            span.appendChild(textSpan);
             textBlock.appendChild(span);
         });
 
         area.appendChild(textBlock);
         area.scrollTop = 0;
         document.getElementById('currentSurahTitle').textContent = `سورة ${ayahs[0].sura_name_ar}`;
-    },
-
-    showLoader() {
-        document.getElementById('readingArea').innerHTML = '<div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
     }
 };
