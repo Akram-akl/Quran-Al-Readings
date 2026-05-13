@@ -1,107 +1,94 @@
 /**
- * config.js - الإعدادات والبيانات الثابتة
+ * config.js - توحيد منطق الصوت (SSS AAA)
  */
 const IS_ELECTRON = (typeof process !== 'undefined' && process.versions && process.versions.electron);
 
-const WEB_AUDIO_BASE = {
-    Hafs: 'https://everyayah.com/data/Alafasy_128kbps/',
-    Warsh: 'https://everyayah.com/data/Warsh_Abdul_Basit_128kbps/',
-    Qaloun: 'https://everyayah.com/data/Hudhaify_128kbps/',
-    Duri: 'https://everyayah.com/data/Hudhaify_128kbps/',
-    Susi: 'https://everyayah.com/data/Hudhaify_128kbps/',
-    Shubah: 'https://everyayah.com/data/Hudhaify_128kbps/'
-};
+const ARCHIVE_BASE = 'https://archive.org/download/';
 
 const READINGS_CONFIG = {
     Hafs: {
         name: 'حفص عن عاصم',
-        reader: 'الشيخ علي الحذيفي',
-        jsonPath: 'data/hafsData.json',
+        reader: 'الشيخ محمود خليل الحصري (مجود)',
+        jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        audioBasePath: '../Hafs/huthify-ayat/الحذيفي-ايات/',
+        archiveItem: 'full___quran-6236-ayah-by--alhosary-mogawwad--128kb--verse-by-verse',
         getAudioPath(s, a) {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Hafs}${sss}${aaa}.mp3`;
-            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/10-${sss}${aaa}-${s===1?'A01':'001'}.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Hafs}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Hafs}001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
     },
     Warsh: {
         name: 'ورش عن نافع',
-        reader: 'الشيخ عبد الباسط عبد الصمد',
-        jsonPath: 'data/warshData.json',
+        reader: 'الشيخ إبراهيم الدوسري',
+        jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        audioBasePath: '../Warsh/000_versebyverse/',
+        archiveItem: '6236--aya---ayat---128kb---ibraheem---aldosry--by---warsh---by--verse--by--ver',
         getAudioPath(s, a) {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Warsh}${sss}${aaa}.mp3`;
-            return `${this.audioBasePath}${sss}${aaa}.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Warsh}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Warsh}001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
     },
     Qaloun: {
         name: 'قالون عن نافع',
-        reader: 'الشيخ علي الحذيفي',
-        jsonPath: 'data/qalounData.json',
+        reader: 'الشيخ أحمد خضر الطرابلسي',
+        jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
-        audioBasePath: '../Qaloun/ayat/ayat/',
+        archiveItem: '128kb--quran--ahmad--khedr--altrabolsy---by---qaloon-----6236---ayaat-----__ve',
         getAudioPath(s, a) {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Qaloun}${sss}${aaa}.mp3`;
-            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/01-${sss}${aaa}-A01.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Qaloun}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Qaloun}001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
     },
     Duri: {
         name: 'الدوري عن أبي عمرو',
-        reader: 'الشيخ د. عبد الله الجهني',
-        jsonPath: 'data/duriData.json',
+        reader: 'الشيخ مفتاح السلطني',
+        jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
-        audioBasePath: '../Duri/ayat/ayat/',
+        archiveItem: '96kb___--quran--by---mefta7--alsaltany--by--aldory--an---aby---amr-----6236---',
         getAudioPath(s, a) {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Duri}${sss}${aaa}.mp3`;
-            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/05-${sss}${aaa}-A09.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Duri}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Duri}001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
     },
     Susi: {
         name: 'السوسي عن أبي عمرو',
-        reader: 'الشيخ د. عثمان الصديقي',
-        jsonPath: 'data/susiData.json',
+        reader: 'الشيخ محمد صوفي',
+        jsonPath: 'data/SousiData_v2-0.json',
         fontFamily: 'UthmanicSusi',
-        audioBasePath: '../Susi/sediki-ayat/ayat/',
-        getAudioPath(s, a) {
-            const ss = String(s).padStart(2, '0');
-            const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Susi}${String(s).padStart(3,'0')}${aaa}.mp3`;
-            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/06-${ss}${aaa}A10.wav.mp3`;
-        },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Susi}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Susi}001001.mp3`; }
-    },
-    Shubah: {
-        name: 'شعبة عن عاصم',
-        reader: 'الشيخ علي الحذيفي',
-        jsonPath: 'data/shubahData.json',
-        fontFamily: 'UthmanicShubah',
-        audioBasePath: '../Shubah/huthify-shuba-ayat/آيات - 2020.1.19/',
+        archiveItem: '24577424224247427457y__soosy__96kb',
         getAudioPath(s, a) {
             const sss = String(s).padStart(3, '0');
             const aaa = String(a).padStart(3, '0');
-            if (!IS_ELECTRON) return `${WEB_AUDIO_BASE.Shubah}${sss}${aaa}.mp3`;
-            return `${this.audioBasePath}${SURAH_FOLDERS[s]}/09-${sss}${aaa}-A01.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${WEB_AUDIO_BASE.Shubah}001000.mp3`; },
-        getBasmalahPath() { return `${WEB_AUDIO_BASE.Shubah}001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+    },
+    Shubah: {
+        name: 'شعبة عن عاصم',
+        reader: 'الشيخ فؤاد الخامري',
+        jsonPath: 'data/shubaData_v2-0.json',
+        fontFamily: 'UthmanicShubah',
+        archiveItem: '96kb--quran--by--foad--alkhamry---by--sho3bah--6236---ayaat-----__verse--by---',
+        getAudioPath(s, a) {
+            const sss = String(s).padStart(3, '0');
+            const aaa = String(a).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
     }
 };
 
@@ -138,11 +125,11 @@ const SURAHS = [
     {number:88, nameAr:"الغاشية", startPage:592}, {number:89, nameAr:"الفجر", startPage:593}, {number:90, nameAr:"البلد", startPage:594},
     {number:91, nameAr:"الشمس", startPage:595}, {number:92, nameAr:"الليل", startPage:595}, {number:93, nameAr:"الضحى", startPage:596},
     {number:94, nameAr:"الشرح", startPage:596}, {number:95, nameAr:"التين", startPage:597}, {number:96, nameAr:"العلق", startPage:597},
-    {number:97, nameAr:"القدر", startPage:598}, {number:98, nameAr:"البينة", startPage:599}, {number:99, nameAr:"الزلزلة", startPage:599},
-    {number:100, nameAr:"العاديات", startPage:600}, {number:101, nameAr:"القارعة", startPage:600}, {number:102, nameAr:"التكاثر", startPage:601},
-    {number:103, nameAr:"العصر", startPage:601}, {number:104, nameAr:"الهمزة", startPage:601}, {number:105, nameAr:"الفيل", startPage:602},
-    {number:106, nameAr:"قريش", startPage:602}, {number:107, nameAr:"الماعون", startPage:603}, {number:108, nameAr:"الكوثر", startPage:603},
-    {number:109, nameAr:"الكافرون", startPage:603}, {number:110, nameAr:"النصر", startPage:604}, {number:111, nameAr:"المسد", startPage:604},
+    {number:97, nameAr:"القدر", startPage:598}, {number:98, nameAr:"البينة", startPage:598}, {number:99, nameAr:"الزلزلة", startPage:599},
+    {number:100, nameAr:"العاديات", startPage:599}, {number:101, nameAr:"القارعة", startPage:600}, {number:102, nameAr:"التكاثر", startPage:600},
+    {number:103, nameAr:"العصر", startPage:601}, {number:104, nameAr:"الهمزة", startPage:601}, {number:105, nameAr:"الفيل", startPage:601},
+    {number:106, nameAr:"قريش", startPage:602}, {number:107, nameAr:"الماعون", startPage:602}, {number:108, nameAr:"الكوثر", startPage:602},
+    {number:109, nameAr:"الكافرون", startPage:603}, {number:110, nameAr:"النصر", startPage:603}, {number:111, nameAr:"المسد", startPage:603},
     {number:112, nameAr:"الإخلاص", startPage:604}, {number:113, nameAr:"الفلق", startPage:604}, {number:114, nameAr:"الناس", startPage:604}
 ];
 
@@ -173,7 +160,7 @@ const SURAH_FOLDERS = {
     64: "064 At-Taghabun التغابن", 65: "065 At-Talaq الطلاق", 66: "066 At-Tahrim التحريم",
     67: "067 Al-Mulk الملك", 68: "068 Al-Qalam القلم", 69: "069 Al-Haqqah الحاقة",
     70: "070 Al-Ma'arij المعارج", 71: "071 Nuh نوح", 72: "072 Al-Jinn الجن",
-    73: "073 Al-Muzzammil المزمل", 74: "074 Al-Muddaththir المد ثر", 75: "075 Al-Qiyamah القيامة",
+    73: "073 Al-Muzzammil المزمل", 74: "074 Al-Muddaththir المدثر", 75: "075 Al-Qiyamah القيامة",
     76: "076 Al-Insan الإنسان", 77: "077 Al-Mursalat المرسلات", 78: "078 An-Naba' النبأ",
     79: "079 An-Nazi'at النازعات", 80: "080 'Abasa عبس", 81: "081 At-Takwir التكوير",
     82: "082 Al-Infitar الانفطار", 83: "083 Al-Mutaffifin المطففين", 84: "084 Al-Inshiqaq الانشقاق",

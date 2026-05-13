@@ -7,7 +7,8 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#064e3b">
     <link rel="icon" href="assets/logo.png">
-    <link rel="stylesheet" href="css/style.css?v=2.3">
+    <link rel="apple-touch-icon" href="assets/logo.png"> <!-- إضافة الأيقونة المفقودة -->
+    <link rel="stylesheet" href="css/style.css?v=2.4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -39,7 +40,10 @@
                     <select id="jozzSelect" class="form-control" title="الجزء"></select>
                 </div>
                 <hr>
-                <button id="searchOpenBtn" class="btn btn-accent w-100" title="بحث"><i class="fas fa-search"></i> بحث</button>
+                <!-- تم إزالة زر البحث من هنا بناءً على طلبك -->
+                <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2" title="تحميل">
+                    <i class="fas fa-download"></i> تحميل الصوت
+                </button>
             </div>
             <div class="sidebar-footer">
                 <button id="themeToggleBtn" class="btn-icon" title="مظهر"><i class="fas fa-moon"></i></button>
@@ -74,22 +78,11 @@
         </main>
     </div>
 
-    <div id="searchModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"><h3>بحث</h3><button class="close-modal">&times;</button></div>
-            <div class="modal-body">
-                <input type="text" id="searchInput" class="form-control" placeholder="ابحث...">
-                <button id="searchBtn" class="btn btn-primary mt-2">بحث</button>
-                <div id="searchResults" class="mt-3"></div>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/config.js?v=2.3"></script>
-    <script src="js/dataHandler.js?v=2.3"></script>
-    <script src="js/audioPlayer.js?v=2.3"></script>
-    <script src="js/search.js?v=2.3"></script>
-    <script src="js/ui.js?v=2.3"></script>
-    <script src="js/app.js?v=2.3"></script>
+    <!-- Scripts -->
+    <script src="js/config.js?v=2.4"></script>
+    <script src="js/dataHandler.js?v=2.4"></script>
+    <script src="js/audioPlayer.js?v=2.4"></script>
+    <script src="js/ui.js?v=2.4"></script>
+    <script src="js/app.js?v=2.4"></script>
 </body>
 </html>
