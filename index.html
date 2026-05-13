@@ -100,8 +100,13 @@
     <div id="downloadModal" class="modal">
         <div class="modal-content">
             <span class="close-modal"><i class="fas fa-times"></i></span>
-            <h2>تحميل الصوتيات</h2>
+            <h2>تحميل الصوتيات والصور</h2>
             <div class="form-group">
+                <label>نوع التحميل</label>
+                <select id="downloadType" class="form-control mb-2" style="margin-bottom: 10px;">
+                    <option value="audio">ملف صوتي (MP3)</option>
+                    <option value="image">صورة للآيات (PNG)</option>
+                </select>
                 <label>نطاق التحميل</label>
                 <div class="input-row">
                     <input type="number" id="dlFromSurah" class="form-control" placeholder="سورة من">
@@ -116,8 +121,12 @@
             <div id="downloadStatus" class="status-text"></div>
         </div>
     </div>
+    
+    <!-- منطقة مخفية لرسم الصورة قبل تحميلها -->
+    <div id="imageCaptureArea" style="position: absolute; left: -9999px; top: -9999px; z-index: -1;"></div>
 
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/config.js?v=2.4"></script>
     <script src="js/dataHandler.js?v=2.4"></script>
     <script src="js/audioPlayer.js?v=2.4"></script>

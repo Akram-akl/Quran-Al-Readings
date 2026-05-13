@@ -141,8 +141,14 @@ const DownloadManager = {
             return;
         }
 
+        const type = document.getElementById('downloadType').value;
+
         // Remove image download logic, keep only audio
-        await this._downloadAsMergedAudio(ayahs, readingKey, statusEl);
+        if (type === 'image') {
+            await this._downloadAsImage(ayahs, readingKey, statusEl);
+        } else {
+            await this._downloadAsMergedAudio(ayahs, readingKey, statusEl);
+        }
     },
 
     /** استخراج الآيات في النطاق المحدد */
@@ -178,6 +184,11 @@ const DownloadManager = {
         captureArea.innerHTML = html;
 
         try {
+            // Check if html2canvas is loaded
+            if (typeof html2canvas === 'undefined') {
+                statusEl.textContent = 'مكتبة الصور لم يتم تحميلها بشكل صحيح!';
+                return;
+            }
             const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true });
             canvas.toBlob(blob => {
                 const url = URL.createObjectURL(blob);
