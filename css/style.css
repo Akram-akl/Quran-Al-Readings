@@ -160,3 +160,7 @@ body {
     .sidebar { position: fixed; right: -280px; height: 100%; transition: 0.3s; }
     .sidebar.open { right: 0; }
 }
+
+.input-row { display: flex; gap: 10px; }
+.mt-10 { margin-top: 10px; }
+.status-text { margin-top: 15px; font-size: 0.9rem; }

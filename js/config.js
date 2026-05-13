@@ -12,9 +12,9 @@ const READINGS_CONFIG = {
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
         archiveItem: 'full___quran-6236-ayah-by--alhosary-mogawwad--128kb--verse-by-verse',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
         getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
@@ -26,9 +26,9 @@ const READINGS_CONFIG = {
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
         archiveItem: '6236--aya---ayat---128kb---ibraheem---aldosry--by---warsh---by--verse--by--ver',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
         },
         getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
@@ -40,13 +40,14 @@ const READINGS_CONFIG = {
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
         archiveItem: '128kb--quran--ahmad--khedr--altrabolsy---by---qaloon-----6236---ayaat-----__ve',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            const jj = String(ayah.jozz).padStart(2, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
     },
     Duri: {
         name: 'الدوري عن أبي عمرو',
@@ -54,13 +55,14 @@ const READINGS_CONFIG = {
         jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
         archiveItem: '96kb___--quran--by---mefta7--alsaltany--by--aldory--an---aby---amr-----6236---',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            const jj = String(ayah.jozz).padStart(2, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
     },
     Susi: {
         name: 'السوسي عن أبي عمرو',
@@ -68,13 +70,13 @@ const READINGS_CONFIG = {
         jsonPath: 'data/SousiData_v2-0.json',
         fontFamily: 'UthmanicSusi',
         archiveItem: '24577424224247427457y__soosy__96kb',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/001001.mp3`; }
     },
     Shubah: {
         name: 'شعبة عن عاصم',
@@ -82,13 +84,14 @@ const READINGS_CONFIG = {
         jsonPath: 'data/shubaData_v2-0.json',
         fontFamily: 'UthmanicShubah',
         archiveItem: '96kb--quran--by--foad--alkhamry---by--sho3bah--6236---ayaat-----__verse--by---',
-        getAudioPath(s, a) {
-            const sss = String(s).padStart(3, '0');
-            const aaa = String(a).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            const jj = String(ayah.jozz).padStart(2, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
     }
 };
 

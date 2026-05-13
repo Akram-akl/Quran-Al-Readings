@@ -7,15 +7,16 @@ const DownloadManager = {
 
     init() {
         this.modal = document.getElementById('downloadModal');
-        document.getElementById('downloadBtn').addEventListener('click', () => this.open());
+        const dlOpenBtn = document.getElementById('downloadOpenBtn');
+        if (dlOpenBtn) dlOpenBtn.addEventListener('click', () => this.open());
         this.modal.querySelector('.close-modal').addEventListener('click', () => this.close());
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.close();
         });
-        document.getElementById('executeDownloadBtn').addEventListener('click', () => this.execute());
+        document.getElementById('startDownloadBtn').addEventListener('click', () => this.execute());
 
-        document.getElementById('dlSurahFrom').addEventListener('change', () => this._updateAyahLimit('dlSurahFrom', 'dlAyahFrom'));
-        document.getElementById('dlSurahTo').addEventListener('change', () => this._updateAyahLimit('dlSurahTo', 'dlAyahTo'));
+        document.getElementById('dlFromSurah').addEventListener('change', () => this._updateAyahLimit('dlFromSurah', 'dlFromAyah'));
+        document.getElementById('dlToSurah').addEventListener('change', () => this._updateAyahLimit('dlToSurah', 'dlToAyah'));
     },
 
     open() {
@@ -25,7 +26,7 @@ const DownloadManager = {
 
     close() {
         this.modal.classList.remove('active');
-        document.getElementById('dlStatus').textContent = '';
+        document.getElementById('downloadStatus').textContent = '';
     },
 
     _populateSurahSelects() {
@@ -33,24 +34,27 @@ const DownloadManager = {
         if (!currentData) return;
         this._surahsCache = DataHandler.getSurahs(currentData);
 
-        ['dlSurahFrom', 'dlSurahTo'].forEach(id => {
+        ['dlFromSurah', 'dlToSurah'].forEach(id => {
             const sel = document.getElementById(id);
-            sel.innerHTML = '';
-            this._surahsCache.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.number;
-                opt.textContent = `${s.number}. ${s.nameAr}`;
-                sel.appendChild(opt);
-            });
+            // It's an input type=number now, not a select!
+            // Wait, in my HTML I made them inputs! Let's change them back to selects or handle inputs.
+            // Oh, I will handle them as inputs. Wait, the user has to type Surah number.
+            // That's fine, I don't need to populate them. 
         });
+        // Since we changed them to inputs in HTML, no need to populate options.
+        // We just set min, max.
+        const dlFrom = document.getElementById('dlFromSurah');
+        const dlTo = document.getElementById('dlToSurah');
+        if (dlFrom) { dlFrom.min = 1; dlFrom.max = 114; }
+        if (dlTo) { dlTo.min = 1; dlTo.max = 114; }
 
         if (App.currentSurah) {
-            document.getElementById('dlSurahFrom').value = App.currentSurah;
-            document.getElementById('dlSurahTo').value = App.currentSurah;
+            document.getElementById('dlFromSurah').value = App.currentSurah;
+            document.getElementById('dlToSurah').value = App.currentSurah;
         }
 
-        this._updateAyahLimit('dlSurahFrom', 'dlAyahFrom');
-        this._updateAyahLimit('dlSurahTo', 'dlAyahTo');
+        this._updateAyahLimit('dlFromSurah', 'dlFromAyah');
+        this._updateAyahLimit('dlToSurah', 'dlToAyah');
     },
 
     /** تحديث الحد الأقصى لرقم الآية بناء على السورة المختارة */
@@ -72,11 +76,11 @@ const DownloadManager = {
 
     /** التحقق من صحة النطاق */
     _validateRange() {
-        const surahFrom = parseInt(document.getElementById('dlSurahFrom').value);
-        const ayahFrom = parseInt(document.getElementById('dlAyahFrom').value);
-        const surahTo = parseInt(document.getElementById('dlSurahTo').value);
-        const ayahTo = parseInt(document.getElementById('dlAyahTo').value);
-        const statusEl = document.getElementById('dlStatus');
+        const surahFrom = parseInt(document.getElementById('dlFromSurah').value);
+        const ayahFrom = parseInt(document.getElementById('dlFromAyah').value);
+        const surahTo = parseInt(document.getElementById('dlToSurah').value);
+        const ayahTo = parseInt(document.getElementById('dlToAyah').value);
+        const statusEl = document.getElementById('downloadStatus');
 
         if (surahTo < surahFrom) {
             statusEl.textContent = '⚠️ لا يمكن أن تكون سورة النهاية قبل سورة البداية';
@@ -93,8 +97,8 @@ const DownloadManager = {
     async playRange() {
         const range = this._validateRange();
         if (!range) return;
-        const statusEl = document.getElementById('dlStatus');
-        const readingKey = document.getElementById('dlReading').value;
+        const statusEl = document.getElementById('downloadStatus');
+        const readingKey = App.currentReading;
 
         const data = await DataHandler.loadReading(readingKey);
         if (!data || data.length === 0) {
@@ -120,9 +124,8 @@ const DownloadManager = {
     async execute() {
         const range = this._validateRange();
         if (!range) return;
-        const type = document.getElementById('downloadType').value;
-        const readingKey = document.getElementById('dlReading').value;
-        const statusEl = document.getElementById('dlStatus');
+        const readingKey = App.currentReading;
+        const statusEl = document.getElementById('downloadStatus');
 
         statusEl.textContent = 'جاري التجهيز...';
 
@@ -138,11 +141,8 @@ const DownloadManager = {
             return;
         }
 
-        if (type === 'image') {
-            await this._downloadAsImage(ayahs, readingKey, statusEl);
-        } else {
-            await this._downloadAsMergedAudio(ayahs, readingKey, statusEl);
-        }
+        // Remove image download logic, keep only audio
+        await this._downloadAsMergedAudio(ayahs, readingKey, statusEl);
     },
 
     /** استخراج الآيات في النطاق المحدد */
@@ -203,7 +203,7 @@ const DownloadManager = {
 
         for (const ayah of ayahs) {
             statusEl.textContent = `جاري التحميل... ${++loaded}/${ayahs.length}`;
-            const url = config.getAudioPath(ayah.sura_no, ayah.aya_no);
+            const url = config.getAudioPath(ayah);
             try {
                 const resp = await fetch(url);
                 if (resp.ok) {

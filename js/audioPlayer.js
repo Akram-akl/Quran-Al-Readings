@@ -5,6 +5,7 @@ const AudioPlayer = {
     audio: new Audio(),
     isPlaying: false,
     currentAyah: null,
+    isRepeat: false,
 
     init() {
         this.audio.onended = () => this.next();
@@ -32,9 +33,19 @@ const AudioPlayer = {
         if (!ayah) return;
 
         this.currentAyah = ayah;
-        this.audio.src = config.getAudioPath(ayah.sura_no, ayah.aya_no);
-        this.audio.play();
+        // تم التعديل لتمرير كائن الآية بالكامل (للحصول على رقم الجزء)
+        this.audio.src = config.getAudioPath(ayah);
         
+        // منع تشغيل الآيات المخفية في وضع الاختبار
+        if (typeof TestingMode !== 'undefined' && TestingMode.isActive) {
+            const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"]`);
+            if (el && el.classList.contains('hidden-ayah')) {
+                this._updateBtn(false);
+                return; // لا تقم بتشغيل الصوت إذا كانت مخفية
+            }
+        }
+
+        this.audio.play();
         this._highlight(ayahNo);
     },
 
@@ -60,11 +71,24 @@ const AudioPlayer = {
     },
 
     next() {
-        if (this.currentAyah) this.playAyah(this.currentAyah.aya_no + 1);
+        if (!this.currentAyah) return;
+        if (this.isRepeat) {
+            this.playAyah(this.currentAyah.aya_no);
+        } else {
+            this.playAyah(this.currentAyah.aya_no + 1);
+        }
     },
 
     prev() {
         if (this.currentAyah) this.playAyah(Math.max(1, this.currentAyah.aya_no - 1));
+    },
+
+    toggleRepeat() {
+        this.isRepeat = !this.isRepeat;
+        const btn = document.getElementById('repeatBtn');
+        if (btn) {
+            btn.style.color = this.isRepeat ? 'var(--primary)' : '';
+        }
     },
 
     _updateBtn(playing) {

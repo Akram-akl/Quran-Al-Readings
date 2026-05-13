@@ -23,10 +23,22 @@ const UI = {
 
     _initTheme() {
         const btn = document.getElementById('themeToggleBtn');
+        // استرجاع الإعداد من المتصفح
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
+        }
         if (btn) btn.onclick = () => {
             const isDark = document.documentElement.hasAttribute('data-theme');
-            document.documentElement.toggleAttribute('data-theme', !isDark);
-            btn.innerHTML = isDark ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+                btn.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+                btn.innerHTML = '<i class="fas fa-sun"></i>';
+            }
         };
     },
 
@@ -119,8 +131,16 @@ const UI = {
             if (isB && a.sura_no !== 1) span.style.display = 'block'; 
 
             span.setAttribute('data-ayah', a.aya_no);
+            span.setAttribute('data-no', a.aya_no);
             span.setAttribute('data-surah', a.sura_no);
-            span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no})">${a.aya_text}</span> `;
+            
+            // تطبيق وضع الاختبار
+            if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
+                span.classList.add('hidden-ayah');
+                span.innerHTML = `<span class="ayah-text" style="filter: blur(7px); user-select: none; cursor: pointer;" onclick="this.parentElement.classList.remove('hidden-ayah'); this.style.filter='none'; AudioPlayer.playAyah(${a.aya_no});">${a.aya_text}</span> `;
+            } else {
+                span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no})">${a.aya_text}</span> `;
+            }
             block.appendChild(span);
         });
 
