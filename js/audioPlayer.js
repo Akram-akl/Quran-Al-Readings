@@ -48,12 +48,13 @@ const AudioPlayer = {
         
         // 1. Check if mapping exists
         let mappedHafsAyahs = [ayahNo]; // Fallback (1:1)
-        if (typeof AUDIO_MAP !== 'undefined' && AUDIO_MAP[App.currentReading]) {
-            // Note: AUDIO_MAP keys are strings/lowercase depending on how it was generated, we used lowercase 'warsh', 'qaloun' etc.
+        if (typeof AUDIO_MAP !== 'undefined') {
             const readingKey = App.currentReading.toLowerCase(); 
-            const suraMap = AUDIO_MAP[readingKey]?.[App.currentSurah];
-            if (suraMap && suraMap[ayahNo]) {
-                mappedHafsAyahs = suraMap[ayahNo];
+            if (AUDIO_MAP[readingKey]) {
+                const suraMap = AUDIO_MAP[readingKey][App.currentSurah];
+                if (suraMap && suraMap[ayahNo]) {
+                    mappedHafsAyahs = suraMap[ayahNo];
+                }
             }
         }
         
