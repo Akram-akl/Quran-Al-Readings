@@ -7,8 +7,19 @@ const AudioPlayer = {
     currentAyah: null,
     isRepeat: false,
 
+    audioQueue: [],
+    
     init() {
-        this.audio.onended = () => this.next();
+        this.audio.onended = () => {
+            if (this.audioQueue.length > 0) {
+                // Play next mapped audio file for the SAME ayah
+                this.audio.src = this.audioQueue.shift();
+                this.audio.play();
+            } else {
+                // Done with all audio files for this ayah, move to next
+                this.next();
+            }
+        };
         this.audio.ontimeupdate = () => {
             const seek = document.getElementById('audioSeek');
             if (this.audio.duration && seek) {
@@ -22,6 +33,7 @@ const AudioPlayer = {
     stop() {
         this.audio.pause();
         this.audio.src = "";
+        this.audioQueue = []; // Clear queue on stop
     },
 
     playAyah(ayahNo) {
@@ -33,8 +45,30 @@ const AudioPlayer = {
         if (!ayah) return;
 
         this.currentAyah = ayah;
-        // تم التعديل لتمرير كائن الآية بالكامل (للحصول على رقم الجزء)
-        this.audio.src = config.getAudioPath(ayah);
+        
+        // 1. Check if mapping exists
+        let mappedHafsAyahs = [ayahNo]; // Fallback (1:1)
+        if (typeof AUDIO_MAP !== 'undefined' && AUDIO_MAP[App.currentReading]) {
+            // Note: AUDIO_MAP keys are strings/lowercase depending on how it was generated, we used lowercase 'warsh', 'qaloun' etc.
+            const readingKey = App.currentReading.toLowerCase(); 
+            const suraMap = AUDIO_MAP[readingKey]?.[App.currentSurah];
+            if (suraMap && suraMap[ayahNo]) {
+                mappedHafsAyahs = suraMap[ayahNo];
+            }
+        }
+        
+        // 2. Generate URLs for the mapped ayahs (they follow Hafs numbering)
+        this.audioQueue = mappedHafsAyahs.map(hafsAyaNo => {
+            // Create a dummy ayah object for config.getAudioPath which expects {sura_no, aya_no, jozz}
+            return config.getAudioPath({
+                sura_no: ayah.sura_no,
+                aya_no: hafsAyaNo,
+                jozz: ayah.jozz // Assuming Jozz stays roughly same for path generation
+            });
+        });
+
+        // 3. Play the first file in queue
+        this.audio.src = this.audioQueue.shift();
         
         // منع تشغيل الآيات المخفية في وضع الاختبار
         if (typeof TestingMode !== 'undefined' && TestingMode.isActive) {

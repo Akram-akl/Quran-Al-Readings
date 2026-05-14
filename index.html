@@ -103,7 +103,7 @@
             <h2>تحميل الصوتيات والصور</h2>
             <div class="form-group">
                 <label>نوع التحميل</label>
-                <select id="downloadType" class="form-control mb-2" style="margin-bottom: 10px;">
+                <select id="downloadType" class="form-control mb-2" title="نوع التحميل">
                     <option value="audio">ملف صوتي (MP3)</option>
                     <option value="image">صورة للآيات (PNG)</option>
                 </select>
@@ -123,12 +123,14 @@
     </div>
     
     <!-- منطقة مخفية لرسم الصورة قبل تحميلها -->
-    <div id="imageCaptureArea" style="position: absolute; left: -9999px; top: -9999px; z-index: -1;"></div>
+    <div id="imageCaptureArea"></div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/config.js?v=2.4"></script>
     <script src="js/dataHandler.js?v=2.4"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/audioMap.js"></script>
     <script src="js/audioPlayer.js?v=2.4"></script>
     <script src="js/search.js?v=2.4"></script>
     <script src="js/download.js?v=2.4"></script>

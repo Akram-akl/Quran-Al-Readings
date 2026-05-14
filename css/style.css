@@ -173,3 +173,7 @@ body {
 .search-results-area { margin-top: 15px; max-height: 300px; overflow-y: auto; }
 .search-item { padding: 10px; border-bottom: 1px solid var(--border); margin-bottom:5px; }
 .search-item-meta { font-size: 0.85rem; color: var(--primary); display: flex; justify-content: space-between; margin-top: 5px; align-items: center; }
+
+/* Fixed Inline Styles */
+#downloadType { margin-bottom: 10px; }
+#imageCaptureArea { position: absolute; left: -9999px; top: -9999px; z-index: -1; }
