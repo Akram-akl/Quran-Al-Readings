@@ -1,9 +1,10 @@
-const CACHE_NAME = 'quran-readings-v3';
+const CACHE_NAME = 'quran-readings-v4';
 const STATIC_ASSETS = [
     'index.html',
     'css/style.css',
     'js/config.js',
     'js/dataHandler.js',
+    'js/audioMap.js',
     'js/audioPlayer.js',
     'js/search.js',
     'js/download.js',

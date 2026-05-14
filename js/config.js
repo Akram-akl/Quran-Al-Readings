@@ -7,91 +7,154 @@ const ARCHIVE_BASE = 'https://archive.org/download/';
 
 const READINGS_CONFIG = {
     Hafs: {
-        name: 'حفص عن عاصم',
-        reader: 'الشيخ محمود خليل الحصري (مجود)',
+        name: 'حفص عن عاصم (عبدالباسط)',
+        reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'full___quran-6236-ayah-by--alhosary-mogawwad--128kb--verse-by-verse',
+        archiveItem: 'YOUR_HAFS_ARCHIVE_ITEM_HERE', // استبدل هنا
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+    },
+    HafsMinshawi: {
+        name: 'حفص عن عاصم (المنشاوي)',
+        reader: 'الشيخ محمد صديق المنشاوي',
+        jsonPath: 'data/hafsData_v2-0.json',
+        fontFamily: 'UthmanicHafs',
+        archiveItem: 'YOUR_HAFS_MINSHAWI_ARCHIVE_ITEM_HERE', // استبدل هنا
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
     },
     Warsh: {
-        name: 'ورش عن نافع',
-        reader: 'الشيخ إبراهيم الدوسري',
+        name: 'ورش عن نافع (عبدالباسط)',
+        reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: '6236--aya---ayat---128kb---ibraheem---aldosry--by---warsh---by--verse--by--ver',
+        archiveItem: 'YOUR_WARSH_ARCHIVE_ITEM_HERE', // استبدل هنا
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.zip/${sss}${aaa}.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001.zip/001001.mp3`; }
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+    },
+    WarshHussary: {
+        name: 'ورش عن نافع (الحصري)',
+        reader: 'الشيخ محمود خليل الحصري',
+        jsonPath: 'data/warshData_v2-1.json',
+        fontFamily: 'UthmanicWarsh',
+        archiveItem: 'YOUR_WARSH_HUSSARY_ARCHIVE_ITEM_HERE', // استبدل هنا
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+    },
+    WarshJazairi: {
+        name: 'ورش عن نافع (ياسين الجزائري)',
+        reader: 'الشيخ ياسين الجزائري',
+        jsonPath: 'data/warshData_v2-1.json',
+        fontFamily: 'UthmanicWarsh',
+        archiveItem: 'YOUR_WARSH_JAZAIRI_ARCHIVE_ITEM_HERE', // استبدل هنا
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
     },
     Qaloun: {
-        name: 'قالون عن نافع',
-        reader: 'الشيخ أحمد خضر الطرابلسي',
+        name: 'قالون عن نافع (الحصري)',
+        reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
-        archiveItem: '128kb--quran--ahmad--khedr--altrabolsy---by---qaloon-----6236---ayaat-----__ve',
-        getAudioPath(ayah) {
-            const sss = String(ayah.sura_no).padStart(3, '0');
-            const aaa = String(ayah.aya_no).padStart(3, '0');
-            const jj = String(ayah.jozz).padStart(2, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
+        isMonolithic: true,
+        archiveItem: 'quran-qaloun-hussary-114', // تم التحديث
+        getAudioPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
+        getTimingPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `data/timings/Qaloun/${sss}.json`;
+        }
+    },
+    QalounHuthaify: {
+        name: 'قالون عن نافع (الحذيفي)',
+        reader: 'الشيخ علي بن عبدالرحمن الحذيفي',
+        jsonPath: 'data/QalounData_v2-1.json',
+        fontFamily: 'UthmanicQaloun',
+        isMonolithic: true,
+        archiveItem: 'qaloun_huthaifyali_al_huthaify', // تم التحديث
+        getAudioPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
+        },
+        getTimingPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `data/timings/Qaloun_Huthaify/${sss}.json`;
+        }
     },
     Duri: {
         name: 'الدوري عن أبي عمرو',
-        reader: 'الشيخ مفتاح السلطني',
+        reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
-        archiveItem: '96kb___--quran--by---mefta7--alsaltany--by--aldory--an---aby---amr-----6236---',
-        getAudioPath(ayah) {
-            const sss = String(ayah.sura_no).padStart(3, '0');
-            const aaa = String(ayah.aya_no).padStart(3, '0');
-            const jj = String(ayah.jozz).padStart(2, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
+        isMonolithic: true,
+        archiveItem: 'quran-duri-hussary-114', // تم التحديث
+        getAudioPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
+        getTimingPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `data/timings/Duri/${sss}.json`;
+        }
     },
     Susi: {
         name: 'السوسي عن أبي عمرو',
-        reader: 'الشيخ محمد صوفي',
+        reader: 'الشيخ عبدالرشيد صوفي',
         jsonPath: 'data/SousiData_v2-0.json',
         fontFamily: 'UthmanicSusi',
-        archiveItem: '24577424224247427457y__soosy__96kb',
-        getAudioPath(ayah) {
-            const sss = String(ayah.sura_no).padStart(3, '0');
-            const aaa = String(ayah.aya_no).padStart(3, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/${sss}${aaa}.mp3`;
+        isMonolithic: true,
+        archiveItem: 'quran-susi-sofi-114', // تم التحديث
+        getAudioPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/full--quran--6236-aya--by--soofy_by__soosy__96kb.zip/full--quran--6236-aya--by--soofy_by__soosy__96kb/001001.mp3`; }
+        getTimingPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `data/timings/Susi/${sss}.json`;
+        }
     },
     Shubah: {
         name: 'شعبة عن عاصم',
-        reader: 'الشيخ فؤاد الخامري',
+        reader: 'الشيخ علي بن عبدالرحمن الحذيفي',
         jsonPath: 'data/shubaData_v2-0.json',
         fontFamily: 'UthmanicShubah',
-        archiveItem: '96kb--quran--by--foad--alkhamry---by--sho3bah--6236---ayaat-----__verse--by---',
-        getAudioPath(ayah) {
-            const sss = String(ayah.sura_no).padStart(3, '0');
-            const aaa = String(ayah.aya_no).padStart(3, '0');
-            const jj = String(ayah.jozz).padStart(2, '0');
-            return `${ARCHIVE_BASE}${this.archiveItem}/${jj}.zip/${sss}${aaa}.mp3`;
+        isMonolithic: true,
+        archiveItem: 'quran-shubah-huthaify-114', // تم التحديث
+        getAudioPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/01.zip/001001.mp3`; }
+        getTimingPath(sura_no) {
+            const sss = String(sura_no).padStart(3, '0');
+            return `data/timings/Shubah/${sss}.json`;
+        }
     }
 };
 
