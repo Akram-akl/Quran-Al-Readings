@@ -90,6 +90,20 @@ const READINGS_CONFIG = {
         getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
         getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
     },
+    WarshDossari: {
+        name: 'ورش عن نافع (إبراهيم الدوسري)',
+        reader: 'الشيخ إبراهيم الدوسري',
+        jsonPath: 'data/warshData_v2-1.json',
+        fontFamily: 'UthmanicWarsh',
+        archiveItem: 'akram-quran-warsh-dossari', // الرابط الشخصي الجديد
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+    },
     Qaloun: {
         name: 'قالون عن نافع (الحصري)',
         reader: 'الشيخ محمود خليل الحصري',
