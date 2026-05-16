@@ -11,7 +11,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-abdelbasset-verse', // تم الربط بالرابط الحالي (قيد الإكمال من قبلك)
+        archiveItem: 'EveryAyah.com_Abdul_Basit_Murattal_192kbps', // جودة عالية 192kbps
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -25,7 +25,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمد صديق المنشاوي',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-minshawi-verse', // تم الربط بالرابط الحالي (قيد الإكمال من قبلك)
+        archiveItem: 'EveryAyah.com_Minshawi_Murattal_128kbps', // جودة عالية 128kbps
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -39,7 +39,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'quran-hafs-abdelbasset-verse', // يستخدم صوت حفص المقسم آيات
+        archiveItem: 'EveryAyah.com_Abdul_Basit_Murattal_192kbps', // يستخدم صوت حفص المقسم آيات
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
