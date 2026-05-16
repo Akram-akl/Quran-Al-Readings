@@ -53,7 +53,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'akram-quran-hafs-abdelbasset', // يستخدم صوت حفص المقسم آيات
+        archiveItem: 'akram-quran-warsh-abdelbasset', // الرابط الشخصي الجديد
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -67,7 +67,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'Hussary_64kbps', // تم التحديث لمصدر يعمل بنظام الآيات
+        archiveItem: 'akram-quran-warsh-hussary', // الرابط الشخصي الجديد
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -81,7 +81,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ ياسين الجزائري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'Yassin_Al_Jazaery_64kbps', // تم التحديث لمصدر يعمل بنظام الآيات
+        archiveItem: 'akram-quran-warsh-jazairi', // الرابط الشخصي الجديد
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
