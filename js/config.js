@@ -11,7 +11,21 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'EveryAyah.com_Abdul_Basit_Murattal_192kbps', // جودة عالية 192kbps
+        archiveItem: 'akram-quran-hafs-abdelbasset', // الرابط الشخصي الجديد
+        getAudioPath(ayah) {
+            const sss = String(ayah.sura_no).padStart(3, '0');
+            const aaa = String(ayah.aya_no).padStart(3, '0');
+            return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
+        },
+        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
+        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+    },
+    HafsHussary: {
+        name: 'حفص عن عاصم (الحصري)',
+        reader: 'الشيخ محمود خليل الحصري',
+        jsonPath: 'data/hafsData_v2-0.json',
+        fontFamily: 'UthmanicHafs',
+        archiveItem: 'akram-quran-hafs-hussary', // الرابط الشخصي الجديد
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -25,7 +39,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمد صديق المنشاوي',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'EveryAyah.com_Minshawi_Murattal_128kbps', // جودة عالية 128kbps
+        archiveItem: 'akram-quran-hafs-minshawi', // الرابط الشخصي الجديد
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -39,7 +53,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'EveryAyah.com_Abdul_Basit_Murattal_192kbps', // يستخدم صوت حفص المقسم آيات
+        archiveItem: 'akram-quran-hafs-abdelbasset', // يستخدم صوت حفص المقسم آيات
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
