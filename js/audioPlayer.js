@@ -52,7 +52,7 @@ const AudioPlayer = {
                 }
 
                 if (activeAyaData) {
-                    const activeAyaNo = activeAyaData.ayah;
+                    const activeAyaNo = activeAyaData.ayah + (config.ayahOffset || 0);
                     if (this.currentlyHighlighted !== activeAyaNo) {
                         this.currentlyHighlighted = activeAyaNo;
                         this.currentAyah = DataHandler.cache[App.currentReading].find(a => a.aya_no === activeAyaNo && a.sura_no === App.currentSurah);
@@ -125,10 +125,13 @@ const AudioPlayer = {
                 }
             }
 
-            // 2. إيجاد بيانات الآية الحالية من ملف التوقيت
-            const ayahTiming = this.currentTimingData.find(t => t.ayah === ayahNo);
+            // 2. إيجاد بيانات الآية الحالية من ملف التوقيت (مع مراعاة الإزاحة إذا وجدت)
+            const offset = config.ayahOffset || 0;
+            const targetAyah = Math.max(1, ayahNo - offset);
+            const ayahTiming = this.currentTimingData.find(t => t.ayah === targetAyah);
+            
             if (!ayahTiming) {
-                console.log("Ayah timing not found");
+                console.log("Ayah timing not found for target:", targetAyah);
                 return;
             }
 

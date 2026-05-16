@@ -82,6 +82,7 @@ const READINGS_CONFIG = {
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
         isMonolithic: true,
+        ayahOffset: 2, // الحصري يبدأ بالاستعاذة والبسملة (إزاحة آيتين)
         archiveItem: 'quran-qaloun-hussary-114', // تم التحديث
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
@@ -114,6 +115,7 @@ const READINGS_CONFIG = {
         jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
         isMonolithic: true,
+        ayahOffset: 2, // الحصري يبدأ بالاستعاذة والبسملة
         archiveItem: 'quran-duri-hussary-114', // تم التحديث
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
