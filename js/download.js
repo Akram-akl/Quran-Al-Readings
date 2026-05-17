@@ -1,5 +1,5 @@
 /**
- * download.js - تحميل الآيات كصورة أو صوت مدمج + تشغيل نطاق
+ * download.js - تحميل الآيات كصورة أو صوت مدمج مقارن
  */
 const DownloadManager = {
     modal: null,
@@ -9,7 +9,10 @@ const DownloadManager = {
         this.modal = document.getElementById('downloadModal');
         const dlOpenBtn = document.getElementById('downloadOpenBtn');
         if (dlOpenBtn) dlOpenBtn.addEventListener('click', () => this.open());
-        this.modal.querySelector('.close-modal').addEventListener('click', () => this.close());
+        
+        const closeBtn = this.modal.querySelector('.close-modal');
+        if (closeBtn) closeBtn.addEventListener('click', () => this.close());
+        
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.close();
         });
@@ -17,6 +20,10 @@ const DownloadManager = {
 
         document.getElementById('dlFromSurah').addEventListener('change', () => this._updateAyahLimit('dlFromSurah', 'dlFromAyah'));
         document.getElementById('dlToSurah').addEventListener('change', () => this._updateAyahLimit('dlToSurah', 'dlToAyah'));
+        
+        // إعادة قراءة حدود السور عند تغيير القارئ/الرواية بداخل مودال التحميل
+        const reciterSel = document.getElementById('dlReciter');
+        if (reciterSel) reciterSel.addEventListener('change', () => this._populateSurahSelects());
     },
 
     open() {
@@ -30,19 +37,11 @@ const DownloadManager = {
     },
 
     _populateSurahSelects() {
-        const currentData = DataHandler.cache[App.currentReading];
+        const readingKey = document.getElementById('dlReciter').value || App.currentReading;
+        const currentData = DataHandler.cache[readingKey] || DataHandler.cache[App.currentReading];
         if (!currentData) return;
         this._surahsCache = DataHandler.getSurahs(currentData);
 
-        ['dlFromSurah', 'dlToSurah'].forEach(id => {
-            const sel = document.getElementById(id);
-            // It's an input type=number now, not a select!
-            // Wait, in my HTML I made them inputs! Let's change them back to selects or handle inputs.
-            // Oh, I will handle them as inputs. Wait, the user has to type Surah number.
-            // That's fine, I don't need to populate them. 
-        });
-        // Since we changed them to inputs in HTML, no need to populate options.
-        // We just set min, max.
         const dlFrom = document.getElementById('dlFromSurah');
         const dlTo = document.getElementById('dlToSurah');
         if (dlFrom) { dlFrom.min = 1; dlFrom.max = 114; }
@@ -93,38 +92,10 @@ const DownloadManager = {
         return { surahFrom, ayahFrom, surahTo, ayahTo };
     },
 
-    /** تشغيل نطاق محدد */
-    async playRange() {
-        const range = this._validateRange();
-        if (!range) return;
-        const statusEl = document.getElementById('downloadStatus');
-        const readingKey = App.currentReading;
-
-        const data = await DataHandler.loadReading(readingKey);
-        if (!data || data.length === 0) {
-            statusEl.textContent = 'خطأ في تحميل البيانات';
-            return;
-        }
-
-        const ayahs = this._getAyahsInRange(data, range);
-        if (ayahs.length === 0) {
-            statusEl.textContent = 'لم يتم العثور على آيات';
-            return;
-        }
-
-        // بناء قائمة تشغيل كاملة
-        AudioPlayer.buildPlaylistFromRange(readingKey, ayahs);
-        AudioPlayer.currentIndex = 0;
-        AudioPlayer._playCurrentTrack();
-
-        statusEl.textContent = `▶ جاري تشغيل ${ayahs.length} آية`;
-        this.close();
-    },
-
     async execute() {
         const range = this._validateRange();
         if (!range) return;
-        const readingKey = App.currentReading;
+        const readingKey = document.getElementById('dlReciter').value;
         const statusEl = document.getElementById('downloadStatus');
 
         statusEl.textContent = 'جاري التجهيز...';
@@ -143,7 +114,6 @@ const DownloadManager = {
 
         const type = document.getElementById('downloadType').value;
 
-        // Remove image download logic, keep only audio
         if (type === 'image') {
             await this._downloadAsImage(ayahs, readingKey, statusEl);
         } else {
@@ -169,8 +139,11 @@ const DownloadManager = {
         const config = READINGS_CONFIG[readingKey];
         const captureArea = document.getElementById('imageCaptureArea');
 
+        // إزالة الجزء بين القوسين للحصول على تسمية نظيفة خالية من اسم القارئ في عنوان الصورة
+        const cleanName = config.name.replace(/\s*\(.*\)/g, '');
+
         let html = `<div style="direction:rtl;text-align:center;padding:40px 30px;max-width:800px;background:#fff;font-family:'${config.fontFamily}',serif;">`;
-        html += `<h2 style="color:#10b981;margin-bottom:20px;font-family:sans-serif;">${config.name}</h2>`;
+        html += `<h2 style="color:#10b981;margin-bottom:20px;font-family:sans-serif;">رواية ${cleanName}</h2>`;
 
         let currentSurah = null;
         ayahs.forEach(a => {
@@ -184,7 +157,6 @@ const DownloadManager = {
         captureArea.innerHTML = html;
 
         try {
-            // Check if html2canvas is loaded
             if (typeof html2canvas === 'undefined') {
                 statusEl.textContent = 'مكتبة الصور لم يتم تحميلها بشكل صحيح!';
                 return;
@@ -209,6 +181,13 @@ const DownloadManager = {
     /** تحميل صوت مدمج - كل الآيات في ملف واحد */
     async _downloadAsMergedAudio(ayahs, readingKey, statusEl) {
         const config = READINGS_CONFIG[readingKey];
+        
+        // التحقق مما إذا كانت الرواية مدمجة (Monolithic) فلا داعي للتحميل الفردي بل نمنع الدمج أو ندعم التحميل الكامل
+        if (config.isMonolithic) {
+            statusEl.textContent = '⚠️ الروايات المدمجة يتم تشغيلها مباشرة، لا تدعم الدمج المجزأ.';
+            return;
+        }
+
         const audioBlobs = [];
         let loaded = 0;
 
@@ -232,7 +211,6 @@ const DownloadManager = {
         }
 
         statusEl.textContent = 'جاري دمج الصوت...';
-        // دمج كل ملفات MP3 في ملف واحد (MP3 يدعم التسلسل المباشر)
         const mergedBlob = new Blob(audioBlobs, { type: 'audio/mpeg' });
         const url = URL.createObjectURL(mergedBlob);
         const a = document.createElement('a');

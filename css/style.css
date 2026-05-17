@@ -53,7 +53,7 @@ body {
 
 .main-body {
     display: grid;
-    grid-template-rows: 50px 1fr 45px 85px;
+    grid-template-rows: 50px 1fr 45px 50px;
     height: 100vh;
     overflow: hidden;
 }
@@ -74,6 +74,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
 }
 
 .quran-text-block {
@@ -157,8 +159,91 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .app-layout { grid-template-columns: 1fr; }
-    .sidebar { position: fixed; right: -280px; height: 100%; transition: 0.3s; }
-    .sidebar.open { right: 0; }
+    .sidebar { 
+        position: fixed; 
+        right: 0; 
+        width: 280px; 
+        height: 100%; 
+        transform: translateX(280px); 
+        transition: transform 0.3s ease-in-out; 
+        box-shadow: none;
+    }
+    .sidebar.open { 
+        transform: translateX(0); 
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15); 
+    }
+}
+
+/* Premium Custom Button Styling */
+.sidebar-content .btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+.sidebar-content .btn i {
+    font-size: 1.1rem;
+}
+
+/* Amber / Warning button for testing mode inactive */
+.sidebar-content .btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+/* Red / Danger button for testing mode active */
+.sidebar-content .btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+/* Green / Success button for listen mode */
+.sidebar-content .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+/* Blue / Info button for search */
+.sidebar-content .btn-info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+/* Indigo / Secondary button for download */
+.sidebar-content .btn-secondary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.sidebar-content .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    filter: brightness(1.05);
+}
+
+.sidebar-content .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Surah Section Container */
+.surah-section {
+    width: 100%;
+    max-width: 800px;
+    margin-bottom: 35px;
+    padding: 25px;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    transition: background 0.3s, border-color 0.3s;
+}
+
+[data-theme="dark"] .surah-section {
+    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(51, 65, 85, 0.5);
 }
 
 .input-row { display: flex; gap: 10px; }

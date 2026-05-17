@@ -44,13 +44,28 @@ const ListenRange = {
             });
         });
 
-        if (App.currentSurah) {
-            document.getElementById('lsSurahFrom').value = App.currentSurah;
-            document.getElementById('lsSurahTo').value = App.currentSurah;
-        }
+        // تعيين الحدود تلقائياً بناءً على الصفحة الحالية المعروضة
+        if (typeof UI !== 'undefined' && UI.currentPageAyahs && UI.currentPageAyahs.length > 0) {
+            const firstAyah = UI.currentPageAyahs[0];
+            const lastAyah = UI.currentPageAyahs[UI.currentPageAyahs.length - 1];
 
-        this._updateAyahLimit('lsSurahFrom', 'lsAyahFrom');
-        this._updateAyahLimit('lsSurahTo', 'lsAyahTo');
+            document.getElementById('lsSurahFrom').value = firstAyah.sura_no;
+            this._updateAyahLimit('lsSurahFrom', 'lsAyahFrom');
+            document.getElementById('lsAyahFrom').value = firstAyah.aya_no;
+
+            document.getElementById('lsSurahTo').value = lastAyah.sura_no;
+            this._updateAyahLimit('lsSurahTo', 'lsAyahTo');
+            document.getElementById('lsAyahTo').value = lastAyah.aya_no;
+        } else {
+            if (App.currentSurah) {
+                document.getElementById('lsSurahFrom').value = App.currentSurah;
+                document.getElementById('lsSurahTo').value = App.currentSurah;
+            }
+            this._updateAyahLimit('lsSurahFrom', 'lsAyahFrom');
+            this._updateAyahLimit('lsSurahTo', 'lsAyahTo');
+            document.getElementById('lsAyahFrom').value = 1;
+            document.getElementById('lsAyahTo').value = 1;
+        }
     },
 
     _updateAyahLimit(surahSelectId, ayahInputId) {
@@ -104,7 +119,7 @@ const ListenRange = {
         }
 
         AudioPlayer.buildPlaylistFromRange(readingKey, ayahs);
-        AudioPlayer.currentIndex = 0;
+        AudioPlayer.playlistIndex = 0;
         AudioPlayer._playCurrentTrack();
 
         statusEl.textContent = `▶ جاري تشغيل ${ayahs.length} آية`;

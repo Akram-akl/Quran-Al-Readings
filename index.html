@@ -51,6 +51,9 @@
                 <button id="testingModeBtn" class="btn btn-warning w-100 mt-2 mb-2" title="وضع الحفظ والاختبار">
                     <i class="fas fa-eye-slash"></i> وضع الاختبار
                 </button>
+                <button id="listenRangeBtn" class="btn btn-success w-100 mt-2 mb-2" title="استماع متتابع">
+                    <i class="fas fa-play-circle"></i> استماع متتابع
+                </button>
                 <button id="searchOpenBtn" class="btn btn-info w-100 mt-2 mb-2" title="البحث الشامل">
                     <i class="fas fa-search"></i> بحث في القراءات
                 </button>
@@ -83,9 +86,7 @@
                     <button id="nextAyahBtn" class="btn-icon" title="لاحق"><i class="fas fa-step-forward"></i></button>
                     <button id="repeatBtn" class="btn-icon" title="تكرار"><i class="fas fa-redo"></i></button>
                 </div>
-                <div class="progress-area">
-                    <input type="range" id="audioSeek" value="0" step="0.1" title="تقدم">
-                </div>
+
             </footer>
         </main>
     </div>
@@ -108,6 +109,21 @@
             <span class="close-modal"><i class="fas fa-times"></i></span>
             <h2>تحميل الصوتيات والصور</h2>
             <div class="form-group">
+                <label>القارئ / الرواية</label>
+                <select id="dlReciter" class="form-control mb-2" title="القارئ / الرواية">
+                    <option value="Hafs">حفص عن عاصم (عبدالباسط)</option>
+                    <option value="HafsHussary">حفص عن عاصم (الحصري)</option>
+                    <option value="HafsMinshawi">حفص عن عاصم (المنشاوي)</option>
+                    <option value="Warsh">ورش عن نافع (عبدالباسط)</option>
+                    <option value="WarshHussary">ورش عن نافع (الحصري)</option>
+                    <option value="WarshJazairi">ورش عن نافع (ياسين الجزائري)</option>
+                    <option value="WarshDossari">ورش عن نافع (إبراهيم الدوسري)</option>
+                    <option value="Qaloun">قالون عن نافع (الحصري)</option>
+                    <option value="QalounHuthaify">قالون عن نافع (الحذيفي)</option>
+                    <option value="Duri">الدوري عن أبي عمرو (الحصري)</option>
+                    <option value="Susi">السوسي عن أبي عمرو (عبدالرشيد صوفي)</option>
+                    <option value="Shubah">شعبة عن عاصم (الحذيفي)</option>
+                </select>
                 <label>نوع التحميل</label>
                 <select id="downloadType" class="form-control mb-2" title="نوع التحميل">
                     <option value="audio">ملف صوتي (MP3)</option>
@@ -127,6 +143,42 @@
             <div id="downloadStatus" class="status-text"></div>
         </div>
     </div>
+
+    <div id="listenModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2>استماع متتابع من - إلى</h2>
+            <div class="form-group">
+                <label for="listenReading">الرواية</label>
+                <select id="listenReading" class="form-control mb-2">
+                    <option value="Hafs">حفص عن عاصم (عبدالباسط)</option>
+                    <option value="HafsHussary">حفص عن عاصم (الحصري)</option>
+                    <option value="HafsMinshawi">حفص عن عاصم (المنشاوي)</option>
+                    <option value="Warsh">ورش عن نافع (عبدالباسط)</option>
+                    <option value="WarshHussary">ورش عن نافع (الحصري)</option>
+                    <option value="WarshJazairi">ورش عن نافع (ياسين الجزائري)</option>
+                    <option value="WarshDossari">ورش عن نافع (إبراهيم الدوسري)</option>
+                    <option value="Qaloun">قالون عن نافع (الحصري)</option>
+                    <option value="QalounHuthaify">قالون عن نافع (الحذيفي)</option>
+                    <option value="Duri">الدوري عن أبي عمرو (الحصري)</option>
+                    <option value="Susi">السوسي عن أبي عمرو (عبدالرشيد صوفي)</option>
+                    <option value="Shubah">شعبة عن عاصم (الحذيفي)</option>
+                </select>
+                
+                <label>نطاق الاستماع</label>
+                <div class="input-row">
+                    <select id="lsSurahFrom" class="form-control" title="من سورة"></select>
+                    <input type="number" id="lsAyahFrom" class="form-control" value="1" min="1" placeholder="آية">
+                </div>
+                <div class="input-row mt-10">
+                    <select id="lsSurahTo" class="form-control" title="إلى سورة"></select>
+                    <input type="number" id="lsAyahTo" class="form-control" value="1" min="1" placeholder="آية">
+                </div>
+            </div>
+            <button id="executeListenBtn" class="btn btn-success w-100"><i class="fas fa-play"></i> بدء الاستماع</button>
+            <div id="lsStatus" class="status-text"></div>
+        </div>
+    </div>
     
     <!-- منطقة مخفية لرسم الصورة قبل تحميلها -->
     <div id="imageCaptureArea"></div>
@@ -140,6 +192,7 @@
     <script src="js/audioPlayer.js?v=2.4"></script>
     <script src="js/search.js?v=2.4"></script>
     <script src="js/download.js?v=2.4"></script>
+    <script src="js/listen.js?v=2.4"></script>
     <script src="js/ui.js?v=2.4"></script>
     <script src="js/app.js?v=2.4"></script>
 </body>
