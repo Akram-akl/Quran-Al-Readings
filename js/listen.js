@@ -15,33 +15,14 @@ const ListenRange = {
         document.getElementById('executeListenBtn').addEventListener('click', () => this.execute());
         document.getElementById('lsSurahFrom').addEventListener('change', () => this._updateAyahLimit('lsSurahFrom', 'lsAyahFrom'));
         document.getElementById('lsSurahTo').addEventListener('change', () => this._updateAyahLimit('lsSurahTo', 'lsAyahTo'));
-
-        // تقييد إدخال الأرقام ديناميكياً لمنع تخطي الحدود أو القيم السالبة بصفحة الاستماع
-        const clampInput = (inputId, surahSelectId) => {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-            input.addEventListener('input', () => {
-                const surahNo = parseInt(document.getElementById(surahSelectId).value);
-                if (!this._surahsCache) return;
-                const surah = this._surahsCache.find(s => s.number === surahNo);
-                if (surah) {
-                    let val = parseInt(input.value);
-                    if (isNaN(val)) return;
-                    if (val > surah.ayahCount) input.value = surah.ayahCount;
-                    if (val < 1) input.value = 1;
-                }
-            });
-            input.addEventListener('blur', () => {
-                let val = parseInt(input.value);
-                if (isNaN(val) || val < 1) input.value = 1;
-            });
-        };
-        clampInput('lsAyahFrom', 'lsSurahFrom');
-        clampInput('lsAyahTo', 'lsSurahTo');
+        
+        // إعادة قراءة حدود السور عند تغيير القارئ بداخل مودال الاستماع
+        const readingSel = document.getElementById('listenReading');
+        if (readingSel) readingSel.addEventListener('change', () => this._populateSurahSelects());
     },
 
-    open() {
-        this._populateSurahSelects();
+    async open() {
+        await this._populateSurahSelects();
         this.modal.classList.add('active');
     },
 
@@ -50,9 +31,17 @@ const ListenRange = {
         document.getElementById('lsStatus').textContent = '';
     },
 
-    _populateSurahSelects() {
+    async _populateSurahSelects() {
         const readingKey = document.getElementById('listenReading').value;
-        const currentData = DataHandler.cache[readingKey] || DataHandler.cache[App.currentReading];
+        let currentData = DataHandler.cache[readingKey];
+        if (!currentData) {
+            try {
+                currentData = await DataHandler.loadReading(readingKey);
+            } catch (e) {
+                console.error("Failed to load reading inside listen modal:", e);
+            }
+        }
+        if (!currentData) currentData = DataHandler.cache[App.currentReading];
         if (!currentData) return;
         this._surahsCache = DataHandler.getSurahs(currentData);
 
@@ -91,15 +80,23 @@ const ListenRange = {
         }
     },
 
-    _updateAyahLimit(surahSelectId, ayahInputId) {
+    _updateAyahLimit(surahSelectId, ayahSelectId) {
         const surahNo = parseInt(document.getElementById(surahSelectId).value);
-        const ayahInput = document.getElementById(ayahInputId);
-        if (!this._surahsCache) return;
+        const ayahSelect = document.getElementById(ayahSelectId);
+        if (!this._surahsCache || !ayahSelect) return;
         const surah = this._surahsCache.find(s => s.number === surahNo);
         if (surah) {
-            ayahInput.max = surah.ayahCount;
-            if (parseInt(ayahInput.value) > surah.ayahCount) ayahInput.value = surah.ayahCount;
-            if (parseInt(ayahInput.value) < 1) ayahInput.value = 1;
+            const currentVal = parseInt(ayahSelect.value) || 1;
+            let optionsHtml = '';
+            for (let i = 1; i <= surah.ayahCount; i++) {
+                optionsHtml += `<option value="${i}">${i}</option>`;
+            }
+            ayahSelect.innerHTML = optionsHtml;
+            if (currentVal <= surah.ayahCount) {
+                ayahSelect.value = currentVal;
+            } else {
+                ayahSelect.value = 1;
+            }
         }
     },
 

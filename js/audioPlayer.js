@@ -15,6 +15,8 @@ const AudioPlayer = {
     playlist: [],          // قائمة الآيات المجدولة للاستماع المتتابع
     playlistIndex: -1,     // الفهرس الحالي بقائمة الاستماع
     playlistReadingKey: "",// رواية قائمة الاستماع
+    isTransitioning: false,
+    currentTimingKey: "",
     
     init() {
         // ربط حدث انتهاء الصوت
@@ -23,6 +25,7 @@ const AudioPlayer = {
             
             // تحقق من وجود قائمة استماع نشطة
             if (this.playlist && this.playlist.length > 0 && this.playlistIndex >= 0) {
+                if (this.isTransitioning) return;
                 if (config.isMonolithic) {
                     // في التشغيل المدمج، يتم الانتقال بواسطة توقيت المزامنة بداخل ontimeupdate
                     // لذا لا داعي لفعل شيء هنا إلا إذا انتهى السرفر من الملف بالكامل بالخطأ
@@ -82,11 +85,12 @@ const AudioPlayer = {
                     if (this.currentlyHighlighted !== activeAyaNo && this.audio.currentTime > 0.2) {
                         this.currentlyHighlighted = activeAyaNo;
                         this.currentAyah = DataHandler.cache[App.currentReading].find(a => a.aya_no === activeAyaNo && a.sura_no === App.currentSurah);
-                        this._highlightSingle(activeAyaNo);
+                        this._highlightSingle(activeAyaNo, App.currentSurah);
                     }
                     
                     // منطق التكرار التلقائي للآية في قائمة الاستماع
                     if (this.playlist && this.playlist.length > 0 && this.playlistIndex >= 0) {
+                        if (this.isTransitioning) return;
                         const track = this.playlist[this.playlistIndex];
                         if (track.aya_no === activeAyaNo && cTime >= activeAyaData.end_time - 150) {
                             if (this.isRepeat) {
@@ -107,6 +111,7 @@ const AudioPlayer = {
                     const lastAya = this.currentTimingData[this.currentTimingData.length - 1];
                     if (cTime >= lastAya.end_time && !this.isRepeat) {
                         if (this.playlist && this.playlist.length > 0 && this.playlistIndex >= 0) {
+                            if (this.isTransitioning) return;
                             this.playlistIndex++;
                             this._playCurrentTrack();
                         }
@@ -125,7 +130,7 @@ const AudioPlayer = {
                     }
                     if (this.currentlyHighlighted !== activeAya) {
                         this.currentlyHighlighted = activeAya;
-                        this._highlightSingle(activeAya);
+                        this._highlightSingle(activeAya, App.currentSurah);
                     }
                 }
             }
@@ -152,6 +157,7 @@ const AudioPlayer = {
     },
 
     async _playCurrentTrack() {
+        if (this.isTransitioning) return;
         if (!this.playlist || this.playlist.length === 0 || this.playlistIndex < 0) {
             this.stop();
             return;
@@ -164,6 +170,7 @@ const AudioPlayer = {
             return;
         }
 
+        this.isTransitioning = true;
         const track = this.playlist[this.playlistIndex];
         const targetPage = track.page;
         
@@ -182,6 +189,7 @@ const AudioPlayer = {
 
         // تشغيل الآية المطلوبة بداخل قائمة الاستماع دون مسح القائمة
         await this._playPlaylistAyah(track.aya_no, track.sura_no);
+        this.isTransitioning = false;
     },
 
     async _playPlaylistAyah(ayahNo, suraNo) {
@@ -204,11 +212,12 @@ const AudioPlayer = {
             this.groupedAyahs = [ayahNo];
             
             const timingUrl = config.getTimingPath(suraNo);
-            if (this.currentTimingSurah !== suraNo) {
+            const cacheKey = `${App.currentReading}_${suraNo}`;
+            if (this.currentTimingKey !== cacheKey) {
                 try {
                     const res = await fetch(timingUrl);
                     this.currentTimingData = await res.json();
-                    this.currentTimingSurah = suraNo;
+                    this.currentTimingKey = cacheKey;
                 } catch (e) {
                     console.error("Failed to load timing data:", e);
                     return;
@@ -303,7 +312,7 @@ const AudioPlayer = {
         }
     },
 
-    async playAyah(ayahNo) {
+    async playAyah(ayahNo, suraNo = App.currentSurah) {
         // مسح وتصفير قائمة الاستماع عند الضغط الفردي المباشر على الآية
         this.playlist = [];
         this.playlistIndex = -1;
@@ -312,22 +321,24 @@ const AudioPlayer = {
         this.stop();
         const config = READINGS_CONFIG[App.currentReading];
         const ayahs = DataHandler.cache[App.currentReading];
-        const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === App.currentSurah);
+        const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
 
         if (!ayah) return;
 
         this.currentAyah = ayah;
+        App.currentSurah = suraNo;
         
         // --- الهيكل الهجين: نظام السورة المدمجة (Monolithic) ---
         if (config.isMonolithic) {
             this.groupedAyahs = [ayahNo];
             
-            const timingUrl = config.getTimingPath(App.currentSurah);
-            if (this.currentTimingSurah !== App.currentSurah) {
+            const timingUrl = config.getTimingPath(suraNo);
+            const cacheKey = `${App.currentReading}_${suraNo}`;
+            if (this.currentTimingKey !== cacheKey) {
                 try {
                     const res = await fetch(timingUrl);
                     this.currentTimingData = await res.json();
-                    this.currentTimingSurah = App.currentSurah;
+                    this.currentTimingKey = cacheKey;
                 } catch (e) {
                     console.error("Failed to load timing data:", e);
                     return;
@@ -341,14 +352,14 @@ const AudioPlayer = {
                 return;
             }
 
-            const audioUrl = config.getAudioPath(App.currentSurah);
+            const audioUrl = config.getAudioPath(suraNo);
             if (!this.audio.src.endsWith(audioUrl)) {
                 this.audio.src = audioUrl;
             }
 
             // منع تشغيل الآيات المخفية في وضع الاختبار
             if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive) {
-                const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"]`);
+                const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"][data-surah="${suraNo}"]`);
                 if (el && el.classList.contains('hidden-ayah')) {
                     this._updateBtn(false);
                     return;
@@ -368,7 +379,7 @@ const AudioPlayer = {
             }
 
             this.currentlyHighlighted = ayahNo;
-            this._highlightSingle(ayahNo);
+            this._highlightSingle(ayahNo, suraNo);
             return;
         }
         // --- نهاية النظام المدمج ---
@@ -380,7 +391,7 @@ const AudioPlayer = {
         if (typeof AUDIO_MAP !== 'undefined') {
             const readingKey = App.currentReading.toLowerCase(); 
             if (AUDIO_MAP[readingKey]) {
-                const suraMap = AUDIO_MAP[readingKey][App.currentSurah];
+                const suraMap = AUDIO_MAP[readingKey][suraNo];
                 if (suraMap && suraMap[ayahNo]) {
                     mappedHafsAyahs = suraMap[ayahNo];
                     
@@ -397,7 +408,7 @@ const AudioPlayer = {
                         let totalChars = 0;
                         const ayahLengths = [];
                         for (const aya of this.groupedAyahs) {
-                            const aObj = ayahs.find(a => a.aya_no === aya && a.sura_no === App.currentSurah);
+                            const aObj = ayahs.find(a => a.aya_no === aya && a.sura_no === suraNo);
                             const textLen = aObj && aObj.aya_text ? aObj.aya_text.replace(/[^\u0621-\u064A]/g, '').length : 1;
                             totalChars += textLen;
                             ayahLengths.push({ aya, len: textLen });
@@ -417,7 +428,7 @@ const AudioPlayer = {
         // 2. Generate URLs for the mapped ayahs (they follow Hafs numbering)
         this.audioQueue = mappedHafsAyahs.map(hafsAyaNo => {
             return config.getAudioPath({
-                sura_no: ayah.sura_no,
+                sura_no: suraNo,
                 aya_no: hafsAyaNo,
                 jozz: ayah.jozz
             });
@@ -428,7 +439,7 @@ const AudioPlayer = {
         
         // منع تشغيل الآيات المخفية في وضع الاختبار
         if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive) {
-            const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"]`);
+            const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"][data-surah="${suraNo}"]`);
             if (el && el.classList.contains('hidden-ayah')) {
                 this._updateBtn(false);
                 return;
@@ -439,10 +450,10 @@ const AudioPlayer = {
         
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
-            this._highlightSingle(this.groupedAyahs[0]);
+            this._highlightSingle(this.groupedAyahs[0], suraNo);
         } else {
             this.currentlyHighlighted = ayahNo;
-            this._highlightGroup(this.groupedAyahs);
+            this._highlightGroup(this.groupedAyahs, suraNo);
         }
     },
 
@@ -463,22 +474,22 @@ const AudioPlayer = {
             if (this.audio.paused) this.audio.play();
             else this.audio.pause();
         } else {
-            this.playAyah(1);
+            this.playAyah(1, App.currentSurah);
         }
     },
 
     next() {
         if (!this.currentAyah) return;
         if (this.isRepeat) {
-            this.playAyah(this.currentAyah.aya_no);
+            this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no);
         } else {
             const maxAyahInGroup = Math.max(...this.groupedAyahs);
-            this.playAyah(maxAyahInGroup + 1);
+            this.playAyah(maxAyahInGroup + 1, this.currentAyah.sura_no);
         }
     },
 
     prev() {
-        if (this.currentAyah) this.playAyah(Math.max(1, this.currentAyah.aya_no - 1));
+        if (this.currentAyah) this.playAyah(Math.max(1, this.currentAyah.aya_no - 1), this.currentAyah.sura_no);
     },
 
     toggleRepeat() {
@@ -494,23 +505,25 @@ const AudioPlayer = {
         if (btn) btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
     },
 
-    _highlight(no) {
-        this._highlightGroup([no]);
+    _highlight(no, suraNo = App.currentSurah) {
+        this._highlightGroup([no], suraNo);
     },
 
-    _highlightSingle(no) {
+    _highlightSingle(no, suraNo = App.currentSurah) {
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
-            el.classList.toggle('active', elNo === no);
+            const elSurah = parseInt(el.dataset.surah);
+            el.classList.toggle('active', elNo === no && elSurah === suraNo);
         });
         const active = document.querySelector('.ayah-container.active');
         if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
     },
 
-    _highlightGroup(ayahNumbers) {
+    _highlightGroup(ayahNumbers, suraNo = App.currentSurah) {
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
-            el.classList.toggle('active', ayahNumbers.includes(elNo));
+            const elSurah = parseInt(el.dataset.surah);
+            el.classList.toggle('active', ayahNumbers.includes(elNo) && elSurah === suraNo);
         });
         const active = document.querySelector('.ayah-container.active');
         if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });

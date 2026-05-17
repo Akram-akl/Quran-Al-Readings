@@ -24,33 +24,10 @@ const DownloadManager = {
         // إعادة قراءة حدود السور عند تغيير القارئ/الرواية بداخل مودال التحميل
         const reciterSel = document.getElementById('dlReciter');
         if (reciterSel) reciterSel.addEventListener('change', () => this._populateSurahSelects());
-
-        // تقييد إدخال الأرقام ديناميكياً لمنع تخطي الحدود أو القيم السالبة
-        const clampInput = (inputId, surahSelectId) => {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-            input.addEventListener('input', () => {
-                const surahNo = parseInt(document.getElementById(surahSelectId).value);
-                if (!this._surahsCache) return;
-                const surah = this._surahsCache.find(s => s.number === surahNo);
-                if (surah) {
-                    let val = parseInt(input.value);
-                    if (isNaN(val)) return;
-                    if (val > surah.ayahCount) input.value = surah.ayahCount;
-                    if (val < 1) input.value = 1;
-                }
-            });
-            input.addEventListener('blur', () => {
-                let val = parseInt(input.value);
-                if (isNaN(val) || val < 1) input.value = 1;
-            });
-        };
-        clampInput('dlFromAyah', 'dlFromSurah');
-        clampInput('dlToAyah', 'dlToSurah');
     },
 
-    open() {
-        this._populateSurahSelects();
+    async open() {
+        await this._populateSurahSelects();
         this.modal.classList.add('active');
     },
 
@@ -59,16 +36,28 @@ const DownloadManager = {
         document.getElementById('downloadStatus').textContent = '';
     },
 
-    _populateSurahSelects() {
+    async _populateSurahSelects() {
         const readingKey = document.getElementById('dlReciter').value || App.currentReading;
-        const currentData = DataHandler.cache[readingKey] || DataHandler.cache[App.currentReading];
+        let currentData = DataHandler.cache[readingKey];
+        if (!currentData) {
+            try {
+                currentData = await DataHandler.loadReading(readingKey);
+            } catch (e) {
+                console.error("Failed to load reading inside download modal:", e);
+            }
+        }
+        if (!currentData) currentData = DataHandler.cache[App.currentReading];
         if (!currentData) return;
         this._surahsCache = DataHandler.getSurahs(currentData);
 
         const dlFrom = document.getElementById('dlFromSurah');
         const dlTo = document.getElementById('dlToSurah');
-        if (dlFrom) { dlFrom.min = 1; dlFrom.max = 114; }
-        if (dlTo) { dlTo.min = 1; dlTo.max = 114; }
+        
+        if (dlFrom && dlTo) {
+            const optionsHtml = this._surahsCache.map(s => `<option value="${s.number}">${s.number}. ${s.nameAr}</option>`).join('');
+            dlFrom.innerHTML = optionsHtml;
+            dlTo.innerHTML = optionsHtml;
+        }
 
         if (App.currentSurah) {
             document.getElementById('dlFromSurah').value = App.currentSurah;
@@ -80,18 +69,22 @@ const DownloadManager = {
     },
 
     /** تحديث الحد الأقصى لرقم الآية بناء على السورة المختارة */
-    _updateAyahLimit(surahSelectId, ayahInputId) {
+    _updateAyahLimit(surahSelectId, ayahSelectId) {
         const surahNo = parseInt(document.getElementById(surahSelectId).value);
-        const ayahInput = document.getElementById(ayahInputId);
-        if (!this._surahsCache) return;
+        const ayahSelect = document.getElementById(ayahSelectId);
+        if (!this._surahsCache || !ayahSelect) return;
         const surah = this._surahsCache.find(s => s.number === surahNo);
         if (surah) {
-            ayahInput.max = surah.ayahCount;
-            if (parseInt(ayahInput.value) > surah.ayahCount) {
-                ayahInput.value = surah.ayahCount;
+            const currentVal = parseInt(ayahSelect.value) || 1;
+            let optionsHtml = '';
+            for (let i = 1; i <= surah.ayahCount; i++) {
+                optionsHtml += `<option value="${i}">${i}</option>`;
             }
-            if (parseInt(ayahInput.value) < 1) {
-                ayahInput.value = 1;
+            ayahSelect.innerHTML = optionsHtml;
+            if (currentVal <= surah.ayahCount) {
+                ayahSelect.value = currentVal;
+            } else {
+                ayahSelect.value = 1;
             }
         }
     },

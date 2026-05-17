@@ -167,11 +167,11 @@ const UI = {
                             this.parentElement.classList.remove('hidden-ayah');
                             this.style.filter = 'none';
                         } else {
-                            AudioPlayer.playAyah(${a.aya_no});
+                            AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
                         }
                     ">${a.aya_text}</span> `;
                 } else {
-                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no})">${a.aya_text}</span> `;
+                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${a.aya_text}</span> `;
                 }
                 textBlock.appendChild(span);
             });

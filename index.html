@@ -131,12 +131,12 @@
                 </select>
                 <label>نطاق التحميل</label>
                 <div class="input-row">
-                    <input type="number" id="dlFromSurah" class="form-control" placeholder="سورة من">
-                    <input type="number" id="dlFromAyah" class="form-control" placeholder="آية">
+                    <select id="dlFromSurah" class="form-control" title="سورة من"></select>
+                    <select id="dlFromAyah" class="form-control" title="آية"></select>
                 </div>
                 <div class="input-row mt-10">
-                    <input type="number" id="dlToSurah" class="form-control" placeholder="سورة إلى">
-                    <input type="number" id="dlToAyah" class="form-control" placeholder="آية">
+                    <select id="dlToSurah" class="form-control" title="سورة إلى"></select>
+                    <select id="dlToAyah" class="form-control" title="آية"></select>
                 </div>
             </div>
             <button id="startDownloadBtn" class="btn btn-success w-100"><i class="fas fa-download"></i> بدء التحميل</button>
@@ -168,11 +168,11 @@
                 <label>نطاق الاستماع</label>
                 <div class="input-row">
                     <select id="lsSurahFrom" class="form-control" title="من سورة"></select>
-                    <input type="number" id="lsAyahFrom" class="form-control" value="1" min="1" placeholder="آية">
+                    <select id="lsAyahFrom" class="form-control" title="آية"></select>
                 </div>
                 <div class="input-row mt-10">
                     <select id="lsSurahTo" class="form-control" title="إلى سورة"></select>
-                    <input type="number" id="lsAyahTo" class="form-control" value="1" min="1" placeholder="آية">
+                    <select id="lsAyahTo" class="form-control" title="آية"></select>
                 </div>
             </div>
             <button id="executeListenBtn" class="btn btn-success w-100"><i class="fas fa-play"></i> بدء الاستماع</button>
