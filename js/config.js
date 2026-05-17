@@ -11,7 +11,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-abdelbasset-verse', // الرابط الذي يحتوي على الـ 3000 آية مسبقاً
+        archiveItem: 'akram-quran-hafs-abdelbasset', // الرابط الشخصي السليم
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
@@ -39,7 +39,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمد صديق المنشاوي',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-minshawi-verse', // الرابط الذي يحتوي على الآيات مسبقاً
+        archiveItem: 'akram-quran-hafs-minshawi', // الرابط الشخصي السليم
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
