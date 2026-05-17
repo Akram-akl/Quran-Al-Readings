@@ -39,7 +39,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمد صديق المنشاوي',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'akram-quran-hafs-minshawi', // الرابط الشخصي المستقر
+        archiveItem: 'quran-hafs-minshawi-verse', // الرابط الأصلي الممتلئ (3000 آية)
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
