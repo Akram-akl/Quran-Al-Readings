@@ -15,6 +15,29 @@ const ListenRange = {
         document.getElementById('executeListenBtn').addEventListener('click', () => this.execute());
         document.getElementById('lsSurahFrom').addEventListener('change', () => this._updateAyahLimit('lsSurahFrom', 'lsAyahFrom'));
         document.getElementById('lsSurahTo').addEventListener('change', () => this._updateAyahLimit('lsSurahTo', 'lsAyahTo'));
+
+        // تقييد إدخال الأرقام ديناميكياً لمنع تخطي الحدود أو القيم السالبة بصفحة الاستماع
+        const clampInput = (inputId, surahSelectId) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const surahNo = parseInt(document.getElementById(surahSelectId).value);
+                if (!this._surahsCache) return;
+                const surah = this._surahsCache.find(s => s.number === surahNo);
+                if (surah) {
+                    let val = parseInt(input.value);
+                    if (isNaN(val)) return;
+                    if (val > surah.ayahCount) input.value = surah.ayahCount;
+                    if (val < 1) input.value = 1;
+                }
+            });
+            input.addEventListener('blur', () => {
+                let val = parseInt(input.value);
+                if (isNaN(val) || val < 1) input.value = 1;
+            });
+        };
+        clampInput('lsAyahFrom', 'lsSurahFrom');
+        clampInput('lsAyahTo', 'lsSurahTo');
     },
 
     open() {

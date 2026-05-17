@@ -24,6 +24,29 @@ const DownloadManager = {
         // إعادة قراءة حدود السور عند تغيير القارئ/الرواية بداخل مودال التحميل
         const reciterSel = document.getElementById('dlReciter');
         if (reciterSel) reciterSel.addEventListener('change', () => this._populateSurahSelects());
+
+        // تقييد إدخال الأرقام ديناميكياً لمنع تخطي الحدود أو القيم السالبة
+        const clampInput = (inputId, surahSelectId) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const surahNo = parseInt(document.getElementById(surahSelectId).value);
+                if (!this._surahsCache) return;
+                const surah = this._surahsCache.find(s => s.number === surahNo);
+                if (surah) {
+                    let val = parseInt(input.value);
+                    if (isNaN(val)) return;
+                    if (val > surah.ayahCount) input.value = surah.ayahCount;
+                    if (val < 1) input.value = 1;
+                }
+            });
+            input.addEventListener('blur', () => {
+                let val = parseInt(input.value);
+                if (isNaN(val) || val < 1) input.value = 1;
+            });
+        };
+        clampInput('dlFromAyah', 'dlFromSurah');
+        clampInput('dlToAyah', 'dlToSurah');
     },
 
     open() {

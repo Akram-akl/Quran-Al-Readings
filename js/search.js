@@ -24,7 +24,8 @@ const Search = {
         if (modal) modal.classList.add('active');
 
         const grouped = {};
-        const readings = Object.keys(READINGS_CONFIG);
+        // البحث بتمثيل شيخ واحد لكل مصحف (الروايات الستة الفريدة) لمنع التكرار الطفولي للآيات
+        const readings = ['HafsHussary', 'WarshHussary', 'Qaloun', 'Duri', 'Susi', 'Shubah'];
 
         // البحث المتوازي عبر كافة القراءات المتوفرة
         for (const key of readings) {
@@ -128,10 +129,21 @@ const Search = {
         const modal = document.getElementById('searchModal');
         if (modal) modal.classList.remove('active');
         
-        const readingSelect = document.getElementById('readingSelect');
-        if (readingSelect) readingSelect.value = reading;
+        // الحفاظ على اختيار المستخدم للقارئ المفضل للرواية النشطة عند الانتقال
+        let targetReading = reading;
+        const current = App.currentReading;
+        if (reading.startsWith('Hafs') && current.startsWith('Hafs')) {
+            targetReading = current;
+        } else if (reading.startsWith('Warsh') && current.startsWith('Warsh')) {
+            targetReading = current;
+        } else if (reading.startsWith('Qaloun') && current.startsWith('Qaloun')) {
+            targetReading = current;
+        }
         
-        App.currentReading = reading;
+        const readingSelect = document.getElementById('readingSelect');
+        if (readingSelect) readingSelect.value = targetReading;
+        
+        App.currentReading = targetReading;
         App.loadPage(page).then(() => {
             setTimeout(() => AudioPlayer.playAyah(ayah), 500);
         });

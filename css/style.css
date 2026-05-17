@@ -28,14 +28,15 @@ body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: var(--bg);
     color: var(--text);
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
 .app-layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
-    height: 100vh;
+    height: 100dvh;
+    overflow: hidden; /* يمنع التمرير الأفقي تماماً ويخفي القائمة تماماً بالجوال */
 }
 
 .sidebar {
@@ -54,7 +55,7 @@ body {
 .main-body {
     display: grid;
     grid-template-rows: 50px 1fr 45px 50px;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
@@ -74,7 +75,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    -webkit-overflow-scrolling: touch;
     min-height: 0;
 }
 
@@ -172,60 +172,107 @@ body {
         transform: translateX(0); 
         box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15); 
     }
+    .reading-container {
+        padding: 15px 15px; /* تقليل الحواف الجانبية لزيادة وضوح النص ومساحة القراءة بالجوال */
+    }
 }
 
-/* Premium Custom Button Styling */
+/* Premium Glassmorphic Buttons Styling */
 .sidebar-content .btn {
-    border: none;
-    border-radius: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    border-radius: 12px;
     padding: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.5px;
-    transition: all 0.25s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    font-weight: 500;
+    font-size: 0.9rem;
+    background: rgba(16, 185, 129, 0.04);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    color: white;
+    color: var(--text);
     cursor: pointer;
 }
 
 .sidebar-content .btn i {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
 }
 
 /* Amber / Warning button for testing mode inactive */
 .sidebar-content .btn-warning {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.06);
+    color: #d97706;
 }
-/* Red / Danger button for testing mode active */
-.sidebar-content .btn-danger {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+[data-theme="dark"] .sidebar-content .btn-warning {
+    color: #fbbf24;
 }
-/* Green / Success button for listen mode */
-.sidebar-content .btn-success {
-    background: linear-gradient(135deg, #10b981, #059669);
-}
-/* Blue / Info button for search */
-.sidebar-content .btn-info {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-/* Indigo / Secondary button for download */
-.sidebar-content .btn-secondary {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
+.sidebar-content .btn-warning:hover {
+    background: rgba(245, 158, 11, 0.12);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
-.sidebar-content .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    filter: brightness(1.05);
+/* Red / Danger button for testing mode active */
+.sidebar-content .btn-danger {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.06);
+    color: #dc2626;
+}
+[data-theme="dark"] .sidebar-content .btn-danger {
+    color: #fca5a5;
+}
+.sidebar-content .btn-danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+}
+
+/* Green / Success button for listen mode */
+.sidebar-content .btn-success {
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.06);
+    color: #059669;
+}
+[data-theme="dark"] .sidebar-content .btn-success {
+    color: #34d399;
+}
+.sidebar-content .btn-success:hover {
+    background: rgba(16, 185, 129, 0.12);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+/* Blue / Info button for search */
+.sidebar-content .btn-info {
+    border-color: rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.06);
+    color: #2563eb;
+}
+[data-theme="dark"] .sidebar-content .btn-info {
+    color: #60a5fa;
+}
+.sidebar-content .btn-info:hover {
+    background: rgba(59, 130, 246, 0.12);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+}
+
+/* Indigo / Secondary button for download */
+.sidebar-content .btn-secondary {
+    border-color: rgba(99, 102, 241, 0.25);
+    background: rgba(99, 102, 241, 0.06);
+    color: #4f46e5;
+}
+[data-theme="dark"] .sidebar-content .btn-secondary {
+    color: #818cf8;
+}
+.sidebar-content .btn-secondary:hover {
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
 }
 
 .sidebar-content .btn:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transform: scale(0.98);
 }
 
 /* Surah Section Container */

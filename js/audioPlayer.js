@@ -177,7 +177,7 @@ const AudioPlayer = {
         // إذا كانت الآية تقع في صفحة مختلفة، نقوم بالانتقال للصفحة أولاً
         if (App.currentPage !== targetPage) {
             UI.showLoader();
-            await App.loadPage(targetPage);
+            await App.loadPage(targetPage, true);
         }
 
         // تشغيل الآية المطلوبة بداخل قائمة الاستماع دون مسح القائمة

@@ -50,11 +50,11 @@ const App = {
         if (d) d.onclick = () => document.getElementById('downloadModal').classList.add('active');
     },
 
-    async loadPage(page) {
+    async loadPage(page, keepPlaylist = false) {
         if (page < 1 || page > 604) return;
         this.currentPage = page;
         UI.showLoader();
-        if (typeof AudioPlayer !== 'undefined') AudioPlayer.stop();
+        if (typeof AudioPlayer !== 'undefined' && !keepPlaylist) AudioPlayer.stop();
 
         try {
             const ayahs = await DataHandler.getPageAyahs(this.currentReading, page);

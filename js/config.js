@@ -3,6 +3,13 @@
  */
 const IS_ELECTRON = (typeof process !== 'undefined' && process.versions && process.versions.electron);
 
+// التحقق التلقائي إذا كان البرنامج يعمل محلياً بالكامل على خادم Localhost أو Electron
+const IS_LOCAL = (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    IS_ELECTRON
+);
+
 const ARCHIVE_BASE = 'https://archive.org/download/';
 
 const READINGS_CONFIG = {
@@ -11,24 +18,34 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-abdelbasset-verse', // الرابط الذي يحتوي على الـ 3000 آية مسبقاً
+        archiveItem: 'quran-hafs-abdelbasset-verse', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Hafs/abdelbasset_abdessamad/${sss}${aaa}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+        getIstiazahPath() { 
+            if (IS_LOCAL) return `../Hafs/abdelbasset_abdessamad/001000.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; 
+        },
+        getBasmalahPath() { 
+            if (IS_LOCAL) return `../Hafs/abdelbasset_abdessamad/001001.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; 
+        }
     },
     HafsHussary: {
         name: 'حفص عن عاصم (الحصري)',
         reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'akram-quran-hafs-hussary', // الرابط الشخصي الجديد
+        archiveItem: 'akram-quran-hafs-hussary', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            // الحصري حفص غير متوفر محلياً في مجلد Hafs، نستخدم الرفع السحابي دائماً
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
         getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
@@ -39,66 +56,103 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمد صديق المنشاوي',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'akram-quran-hafs-minshawi', // الرابط الشخصي المستقر
+        archiveItem: 'akram-quran-hafs-minshawi', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Hafs/muhammad_siddiq_al-minshawi/${sss}${aaa}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+        getIstiazahPath() { 
+            if (IS_LOCAL) return `../Hafs/muhammad_siddiq_al-minshawi/001000.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; 
+        },
+        getBasmalahPath() { 
+            if (IS_LOCAL) return `../Hafs/muhammad_siddiq_al-minshawi/001001.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; 
+        }
     },
     Warsh: {
         name: 'ورش عن نافع (عبدالباسط)',
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'akram-quran-warsh-abdelbasset', // الرابط الشخصي الجديد
+        archiveItem: 'akram-quran-warsh-abdelbasset', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Warsh/abdelbasset_abdessamad/${sss}${aaa}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+        getIstiazahPath() { 
+            if (IS_LOCAL) return `../Warsh/abdelbasset_abdessamad/001000.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; 
+        },
+        getBasmalahPath() { 
+            if (IS_LOCAL) return `../Warsh/abdelbasset_abdessamad/001001.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; 
+        }
     },
     WarshHussary: {
         name: 'ورش عن نافع (الحصري)',
         reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'akram-quran-warsh-hussary', // الرابط الشخصي الجديد
+        archiveItem: 'akram-quran-warsh-hussary', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Warsh/mahmoud_khalil_al-hussary/${sss}${aaa}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+        getIstiazahPath() { 
+            if (IS_LOCAL) return `../Warsh/mahmoud_khalil_al-hussary/001000.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; 
+        },
+        getBasmalahPath() { 
+            if (IS_LOCAL) return `../Warsh/mahmoud_khalil_al-hussary/001001.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; 
+        }
     },
     WarshJazairi: {
         name: 'ورش عن نافع (ياسين الجزائري)',
         reader: 'الشيخ ياسين الجزائري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'akram-quran-warsh-jazairi', // الرابط الشخصي الجديد
+        archiveItem: 'akram-quran-warsh-jazairi', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Warsh/yassen_al_jazairi/${sss}${aaa}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
-        getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
-        getBasmalahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; }
+        getIstiazahPath() { 
+            if (IS_LOCAL) return `../Warsh/yassen_al_jazairi/001000.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; 
+        },
+        getBasmalahPath() { 
+            if (IS_LOCAL) return `../Warsh/yassen_al_jazairi/001001.mp3`;
+            return `${ARCHIVE_BASE}${this.archiveItem}/001001.mp3`; 
+        }
     },
     WarshDossari: {
         name: 'ورش عن نافع (إبراهيم الدوسري)',
         reader: 'الشيخ إبراهيم الدوسري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
-        archiveItem: 'akram-quran-warsh-dossari', // الرابط الشخصي الجديد
+        archiveItem: 'akram-quran-warsh-dossari', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
+            // إبراهيم الدوسري غير متوفر محلياً، نستخدم الرفع السحابي دائماً
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}${aaa}.mp3`;
         },
         getIstiazahPath() { return `${ARCHIVE_BASE}${this.archiveItem}/001000.mp3`; },
@@ -110,9 +164,12 @@ const READINGS_CONFIG = {
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
         isMonolithic: true,
-        archiveItem: 'quran-qaloun-hussary-114', // تم التحديث
+        archiveItem: 'quran-qaloun-hussary-114', 
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Qaloun/Al-Hussary/${sss}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
         getTimingPath(sura_no) {
@@ -126,9 +183,12 @@ const READINGS_CONFIG = {
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
         isMonolithic: true,
-        archiveItem: 'qaloun_huthaifyali_al_huthaify', // تم التحديث
+        archiveItem: 'qaloun_huthaifyali_al_huthaify', 
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Qaloun_Huthaify/Ali_Al_Huthaify/${sss}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
         getTimingPath(sura_no) {
@@ -142,9 +202,12 @@ const READINGS_CONFIG = {
         jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
         isMonolithic: true,
-        archiveItem: 'quran-duri-hussary-114', // تم التحديث
+        archiveItem: 'quran-duri-hussary-114', 
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Duri/Al-Hussary/${sss}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
         getTimingPath(sura_no) {
@@ -158,9 +221,12 @@ const READINGS_CONFIG = {
         jsonPath: 'data/SousiData_v2-0.json',
         fontFamily: 'UthmanicSusi',
         isMonolithic: true,
-        archiveItem: 'quran-susi-sofi-114', // تم التحديث
+        archiveItem: 'quran-susi-sofi-114', 
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Susi/Abdul_Rashid_Sufi/${sss}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
         getTimingPath(sura_no) {
@@ -174,9 +240,12 @@ const READINGS_CONFIG = {
         jsonPath: 'data/shubaData_v2-0.json',
         fontFamily: 'UthmanicShubah',
         isMonolithic: true,
-        archiveItem: 'quran-shubah-huthaify-114', // تم التحديث
+        archiveItem: 'quran-shubah-huthaify-114', 
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
+            if (IS_LOCAL) {
+                return `../Shubah/Ali_Al_Huthaify/${sss}.mp3`;
+            }
             return `${ARCHIVE_BASE}${this.archiveItem}/${sss}.mp3`;
         },
         getTimingPath(sura_no) {
