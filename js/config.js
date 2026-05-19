@@ -18,7 +18,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالباسط عبدالصمد',
         jsonPath: 'data/hafsData_v2-0.json',
         fontFamily: 'UthmanicHafs',
-        archiveItem: 'quran-hafs-abdelbasset-verse', 
+        archiveItem: 'akram-quran-hafs-abdelbasset', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
             const aaa = String(ayah.aya_no).padStart(3, '0');
