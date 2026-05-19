@@ -127,7 +127,12 @@ const UI = {
         const sortedAyahs = ayahs.sort((a, b) => a.aya_no - b.aya_no);
         this.currentPageAyahs = sortedAyahs; // حفظ آيات الصفحة الحالية للاستماع المتتابع
 
-        // تقسيم آيات الصفحة الحالية إلى مجموعات حسب رقم السورة (دعم تداخل السور وجزء عم)
+        // حاوية رئيسية واحدة للصفحة بأكملها لمحاكاة تدفق المصحف بشكل متصل
+        const pageContainer = document.createElement('div');
+        pageContainer.className = 'quran-text-block';
+        pageContainer.style.fontFamily = config.fontFamily;
+
+        // تقسيم آيات الصفحة الحالية إلى مجموعات حسب رقم السورة
         const suraGroups = {};
         sortedAyahs.forEach(a => {
             if (!suraGroups[a.sura_no]) {
@@ -142,41 +147,30 @@ const UI = {
             const currentSuraNo = parseInt(suraNo);
             const firstAyahInGroup = groupAyahs[0];
 
-            // إنشاء حاوية مخصصة وأنيقة للسورة الحالية
-            const surahSection = document.createElement('div');
-            surahSection.className = 'surah-section';
-
-            // إضافة ترويسة السورة كعنصر مستقل تماماً
+            // إضافة ترويسة السورة (inline-block)
             const header = document.createElement('div');
             header.className = 'surah-header-inline';
             header.textContent = `سورة ${firstAyahInGroup.sura_name_ar}`;
-            surahSection.appendChild(header);
+            pageContainer.appendChild(header);
 
             // الاستعاذة والبسملة قبل الآيات عند بداية كل سورة
             if (firstAyahInGroup.aya_no === 1) {
-                // الاستعاذة للرأس الأول بالصفحة فقط لمنع التكرار المزعج
                 if (isFirstSurahOnPage) {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
                     ist.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
                     ist.onclick = () => AudioPlayer.playIstiazah();
-                    surahSection.appendChild(ist);
+                    pageContainer.appendChild(ist);
                 }
                 
-                // البسملة لجميع السور عدا سورة التوبة (بشرط ألا تكون البسملة مدمجة بالآية كالفاتحة)
                 if (currentSuraNo !== 9 && !this._isBismillah(firstAyahInGroup)) {
                     const bas = document.createElement('div');
                     bas.className = 'bismillah';
                     bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
                     bas.onclick = () => AudioPlayer.playBasmalah();
-                    surahSection.appendChild(bas);
+                    pageContainer.appendChild(bas);
                 }
             }
-
-            // إنشاء كتلة نصية محاذية لآيات هذه السورة
-            const textBlock = document.createElement('div');
-            textBlock.className = 'quran-text-block';
-            textBlock.style.fontFamily = config.fontFamily;
 
             groupAyahs.forEach(a => {
                 const isB = this._isBismillah(a);
@@ -184,7 +178,7 @@ const UI = {
                 
                 let finalAyahText = a.aya_text;
                 
-                // معالجة القص للآيات الممتدة بين صفحتين (إذا توفرت القاعدة للرواية الحالية)
+                // معالجة القص للآيات الممتدة بين صفحتين
                 if (typeof a.page === 'string' && a.page.includes('-')) {
                     const [startPage, endPage] = a.page.split('-').map(Number);
                     const baseReading = reading.replace(/Hussary|Minshawi|Jazairi|Dossari|Huthaify/g, '');
@@ -202,15 +196,12 @@ const UI = {
                 }
 
                 span.className = isB ? 'bismillah' : 'ayah-container';
-                
-                // وضع البسملة المدمجة بالآيات في سطر لحالها للتنسيق
                 if (isB && currentSuraNo !== 1) span.style.display = 'block'; 
 
                 span.setAttribute('data-ayah', a.aya_no);
                 span.setAttribute('data-no', a.aya_no);
                 span.setAttribute('data-surah', a.sura_no);
                 
-                // تطبيق وضع الاختبار التفاعلي (النقرة الأولى للكشف، الثانية للتشغيل)
                 if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
                     span.classList.add('hidden-ayah');
                     span.innerHTML = `<span class="ayah-text" style="filter: blur(7px); user-select: none; cursor: pointer;" onclick="
@@ -224,15 +215,14 @@ const UI = {
                 } else {
                     span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${finalAyahText}</span> `;
                 }
-                textBlock.appendChild(span);
+                pageContainer.appendChild(span);
             });
 
-            surahSection.appendChild(textBlock);
-            area.appendChild(surahSection);
-            
             isFirstSurahOnPage = false;
         }
 
+        area.appendChild(pageContainer);
+        
         area.scrollTop = 0;
         const title = document.getElementById('currentSurahTitle');
         if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
