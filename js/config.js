@@ -18,27 +18,27 @@ const SPANNING_AYAH_SPLITS = {
         "4:44": { lastWord: "السبيل", nextWord: "والله" },
         "20:86": { lastWord: "السامرى", nextWord: "فاخرج" },
         "24:36": { lastWord: "والاصال", nextWord: "رجال" },
-        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+        "24:42": { lastWord: "بالابصر", nextWord: "يقلب" }
     },
     "Qaloun": {
         "4:44": { lastWord: "السبيل", nextWord: "والله" },
         "20:86": { lastWord: "السامرى", nextWord: "فاخرج" },
         "24:36": { lastWord: "والاصال", nextWord: "رجال" },
-        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+        "24:42": { lastWord: "بالابصر", nextWord: "يقلب" }
     },
     "Duri": {
         "2:218": { lastWord: "تتفكرون", nextWord: "في" },
         "4:44": { lastWord: "السبيل", nextWord: "والله" },
         "14:27": { lastWord: "السماء", nextWord: "توتى" },
         "24:36": { lastWord: "والاصال", nextWord: "رجال" },
-        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+        "24:42": { lastWord: "بالابصر", nextWord: "يقلب" }
     },
     "Susi": {
         "2:218": { lastWord: "تتفكرون", nextWord: "في" },
         "4:44": { lastWord: "السبيل", nextWord: "والله" },
         "14:27": { lastWord: "السماء", nextWord: "توتى" },
         "24:36": { lastWord: "والاصال", nextWord: "رجال" },
-        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+        "24:42": { lastWord: "بالابصر", nextWord: "يقلب" }
     }
 };
 

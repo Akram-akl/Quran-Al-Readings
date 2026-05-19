@@ -90,10 +90,11 @@ const UI = {
         const words = ayahText.trim().split(/\s+/);
         
         // مساعدة لإزالة التشكيل بهدف المقارنة فقط
-        const normalize = (w) => w.replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656]/g, "")
+        const normalize = (w) => w.replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656\u200C\u06D6-\u06ED]/g, "")
                                   .replace(/[أإآٱ]/g, "ا")
                                   .replace(/ة/g, "ه")
-                                  .replace(/ى/g, "ي");
+                                  .replace(/ى/g, "ي")
+                                  .replace(/ؤ/g, "و");
                                   
         const normLast = normalize(lastWordOfPart1);
         const normNext = normalize(firstWordOfPart2);
