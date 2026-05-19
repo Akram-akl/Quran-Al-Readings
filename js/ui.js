@@ -123,21 +123,30 @@ const UI = {
         area.innerHTML = '';
         const config = READINGS_CONFIG[reading];
 
-        // فرز الآيات لضمان الترتيب الصحيح حسب aya_no
         const sortedAyahs = ayahs.sort((a, b) => a.aya_no - b.aya_no);
-        this.currentPageAyahs = sortedAyahs; // حفظ آيات الصفحة الحالية للاستماع المتتابع
+        this.currentPageAyahs = sortedAyahs; 
 
-        // حاوية رئيسية واحدة للصفحة بأكملها لمحاكاة تدفق المصحف بشكل متصل
-        const pageContainer = document.createElement('div');
-        pageContainer.className = 'quran-text-block';
-        pageContainer.style.fontFamily = config.fontFamily;
+        // 1. تحديد أقصى سطر في الصفحة (عادة 15)
+        let maxLine = 15;
+        sortedAyahs.forEach(a => {
+            if (a.line_end > maxLine) maxLine = a.line_end;
+        });
 
-        // تقسيم آيات الصفحة الحالية إلى مجموعات حسب رقم السورة
+        // 2. إنشاء حاويات السطور بدقة
+        const lineElements = {};
+        for(let i = 1; i <= maxLine; i++) {
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'quran-line';
+            lineDiv.style.textAlign = 'justify';
+            lineDiv.style.textAlignLast = 'justify'; // مط الكلمات لملء السطر تماماً كالمصحف
+            lineDiv.style.width = '100%';
+            lineDiv.style.display = 'block';
+            lineElements[i] = lineDiv;
+        }
+
         const suraGroups = {};
         sortedAyahs.forEach(a => {
-            if (!suraGroups[a.sura_no]) {
-                suraGroups[a.sura_no] = [];
-            }
+            if (!suraGroups[a.sura_no]) suraGroups[a.sura_no] = [];
             suraGroups[a.sura_no].push(a);
         });
 
@@ -145,89 +154,137 @@ const UI = {
 
         for (const [suraNo, groupAyahs] of Object.entries(suraGroups)) {
             const currentSuraNo = parseInt(suraNo);
-            const firstAyahInGroup = groupAyahs[0];
+            const firstAyah = groupAyahs[0];
+            const lastAyah = groupAyahs[groupAyahs.length - 1];
 
-            // إضافة ترويسة السورة (inline-block)
-            const header = document.createElement('div');
-            header.className = 'surah-header-inline';
-            header.textContent = `سورة ${firstAyahInGroup.sura_name_ar}`;
-            pageContainer.appendChild(header);
+            // 3. وضع الترويسة والبسملة في سطورها المخصصة
+            if (firstAyah.aya_no === 1) {
+                let headerLineNum = (firstAyah.line_start || 2) - 2;
+                let bismillahLineNum = (firstAyah.line_start || 2) - 1;
+                
+                if (headerLineNum < 1) headerLineNum = 1;
+                if (bismillahLineNum < 1) bismillahLineNum = 1;
 
-            // الاستعاذة والبسملة قبل الآيات عند بداية كل سورة
-            if (firstAyahInGroup.aya_no === 1) {
-                if (isFirstSurahOnPage) {
+                if (isFirstSurahOnPage && headerLineNum > 1) {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
                     ist.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
                     ist.onclick = () => AudioPlayer.playIstiazah();
-                    pageContainer.appendChild(ist);
+                    if (lineElements[headerLineNum - 1] || lineElements[1]) {
+                        (lineElements[headerLineNum - 1] || lineElements[1]).appendChild(ist);
+                        (lineElements[headerLineNum - 1] || lineElements[1]).style.textAlignLast = 'center';
+                    }
                 }
-                
-                if (currentSuraNo !== 9 && !this._isBismillah(firstAyahInGroup)) {
+
+                const header = document.createElement('div');
+                header.className = 'surah-header-inline';
+                header.textContent = 'سورة ' + firstAyah.sura_name_ar;
+                if (lineElements[headerLineNum]) {
+                    lineElements[headerLineNum].appendChild(header);
+                    lineElements[headerLineNum].style.textAlignLast = 'center';
+                }
+
+                if (currentSuraNo !== 9 && !this._isBismillah(firstAyah)) {
                     const bas = document.createElement('div');
                     bas.className = 'bismillah';
                     bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
                     bas.onclick = () => AudioPlayer.playBasmalah();
-                    pageContainer.appendChild(bas);
+                    if (lineElements[bismillahLineNum]) {
+                        lineElements[bismillahLineNum].appendChild(bas);
+                        lineElements[bismillahLineNum].style.textAlignLast = 'center';
+                    }
                 }
             }
 
+            // إزالة التوسيط الإجباري (التمدد) من السطر الأخير للسورة لكي لا تتباعد الكلمات بشكل قبيح
+            if (lineElements[lastAyah.line_end]) {
+                lineElements[lastAyah.line_end].style.textAlignLast = 'right';
+            }
+
+            // 4. توزيع الآيات على السطور
             groupAyahs.forEach(a => {
                 const isB = this._isBismillah(a);
-                const span = document.createElement('span');
+                let text = a.aya_text;
                 
-                let finalAyahText = a.aya_text;
-                
-                // معالجة القص للآيات الممتدة بين صفحتين
                 if (typeof a.page === 'string' && a.page.includes('-')) {
                     const [startPage, endPage] = a.page.split('-').map(Number);
                     const baseReading = reading.replace(/Hussary|Minshawi|Jazairi|Dossari|Huthaify/g, '');
                     const splitRules = typeof SPANNING_AYAH_SPLITS !== 'undefined' ? SPANNING_AYAH_SPLITS[baseReading] : null;
-                    const ruleKey = `${a.sura_no}:${a.aya_no}`;
-                    
+                    const ruleKey = a.sura_no + ':' + a.aya_no;
                     if (splitRules && splitRules[ruleKey]) {
                         const rule = splitRules[ruleKey];
                         if (App.currentPage === startPage) {
-                            finalAyahText = this.splitAyahText(finalAyahText, rule.lastWord, rule.nextWord, 1);
+                            text = this.splitAyahText(text, rule.lastWord, rule.nextWord, 1);
                         } else if (App.currentPage === endPage) {
-                            finalAyahText = this.splitAyahText(finalAyahText, rule.lastWord, rule.nextWord, 2);
+                            text = this.splitAyahText(text, rule.lastWord, rule.nextWord, 2);
                         }
                     }
                 }
 
-                span.className = isB ? 'bismillah' : 'ayah-container';
-                if (isB && currentSuraNo !== 1) span.style.display = 'block'; 
+                const startLine = a.line_start || 1;
+                const endLine = a.line_end || startLine;
 
-                span.setAttribute('data-ayah', a.aya_no);
-                span.setAttribute('data-no', a.aya_no);
-                span.setAttribute('data-surah', a.sura_no);
-                
-                if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
-                    span.classList.add('hidden-ayah');
-                    span.innerHTML = `<span class="ayah-text" style="filter: blur(7px); user-select: none; cursor: pointer;" onclick="
-                        if (this.parentElement.classList.contains('hidden-ayah')) {
-                            this.parentElement.classList.remove('hidden-ayah');
-                            this.style.filter = 'none';
-                        } else {
-                            AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
-                        }
-                    ">${finalAyahText}</span> `;
+                if (startLine === endLine) {
+                    const span = this._createAyahSpan(a, text, isB);
+                    if (lineElements[startLine]) lineElements[startLine].appendChild(span);
                 } else {
-                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${finalAyahText}</span> `;
-                }
-                pageContainer.appendChild(span);
-            });
+                    // تقسيم ذكي للكلمات لتوزيعها على السطور
+                    const words = text.trim().split(/s+/);
+                    const spanned = endLine - startLine + 1;
+                    const wordsPerLine = Math.ceil(words.length / spanned);
 
+                    for (let i = 0; i < spanned; i++) {
+                        const chunk = words.slice(i * wordsPerLine, (i + 1) * wordsPerLine).join(' ');
+                        if (chunk.length > 0) {
+                            const span = this._createAyahSpan(a, chunk, isB); 
+                            if (lineElements[startLine + i]) {
+                                lineElements[startLine + i].appendChild(span);
+                            }
+                        }
+                    }
+                }
+            });
             isFirstSurahOnPage = false;
         }
 
-        area.appendChild(pageContainer);
+        const pageContainer = document.createElement('div');
+        pageContainer.className = 'quran-text-block mushaf-page-container';
+        pageContainer.style.fontFamily = config.fontFamily;
         
+        pageContainer.style.textAlign = 'right';
+
+        for(let i = 1; i <= maxLine; i++) {
+            pageContainer.appendChild(lineElements[i]);
+        }
+
+        area.appendChild(pageContainer);
         area.scrollTop = 0;
         const title = document.getElementById('currentSurahTitle');
-        if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
+        if (title) title.textContent = 'سورة ' + ayahs[0].sura_name_ar;
     },
 
+    _createAyahSpan(a, text, isB) {
+        const span = document.createElement('span');
+        span.className = isB ? 'bismillah' : 'ayah-container';
+        span.setAttribute('data-ayah', a.aya_no);
+        span.setAttribute('data-no', a.aya_no);
+        span.setAttribute('data-surah', a.sura_no);
+        
+        if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
+            span.classList.add('hidden-ayah');
+            span.innerHTML = `<span class="ayah-text" style="filter: blur(7px); user-select: none; cursor: pointer;" onclick="
+                if (this.parentElement.classList.contains('hidden-ayah')) {
+                    this.parentElement.classList.remove('hidden-ayah');
+                    this.style.filter = 'none';
+                } else {
+                    AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
+                }
+            ">${text}</span> `;
+        } else {
+            span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${text}</span> `;
+        }
+        return span;
+    },
     _isBismillah(a) {
         return a.aya_no === 1 && (a.aya_text_emlaey || a.aya_text || '').includes('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ');
     },

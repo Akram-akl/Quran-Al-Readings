@@ -309,3 +309,12 @@ body {
 /* Fixed Inline Styles */
 #downloadType { margin-bottom: 10px; }
 #imageCaptureArea { position: absolute; left: -9999px; top: -9999px; z-index: -1; }
+
+
+/* Quran Mushaf Line Layout */
+.quran-line {
+    width: 100%;
+    min-height: 2.4em;
+    margin: 2px 0;
+    display: block;
+}
