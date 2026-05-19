@@ -27,7 +27,13 @@ const DataHandler = {
     async getPageAyahs(readingKey, pageNo) {
         const data = await this.loadReading(readingKey);
         if (!data) return [];
-        return data.filter(ayah => parseInt(ayah.page) === parseInt(pageNo));
+        return data.filter(ayah => {
+            if (typeof ayah.page === 'string' && ayah.page.includes('-')) {
+                const [start, end] = ayah.page.split('-').map(Number);
+                return parseInt(pageNo) >= start && parseInt(pageNo) <= end;
+            }
+            return parseInt(ayah.page) === parseInt(pageNo);
+        });
     },
 
     getSurahs(data) {

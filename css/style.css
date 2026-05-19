@@ -82,8 +82,10 @@ body {
     width: 100%;
     max-width: 800px;
     direction: rtl;
-    line-height: 1.8; /* تقليل التباعد بين السطور */
+    line-height: 2.1; /* زيادة طفيفة لدعم الحركات ومنع تداخل السطور */
     text-align: justify;
+    text-justify: inter-word; /* محاذاة حقيقية للمصحف */
+    text-align-last: center; /* توسيط السطر الأخير في السورة */
     word-spacing: 2px;
 }
 
