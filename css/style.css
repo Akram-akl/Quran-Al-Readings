@@ -80,20 +80,12 @@ body {
 
 .quran-text-block {
     width: 100%;
-    max-width: 760px;
+    max-width: 800px;
     direction: rtl;
     line-height: 2.1; /* زيادة طفيفة لدعم الحركات ومنع تداخل السطور */
     text-align: justify;
+    text-align-last: center; /* توسيط السطر الأخير في السورة */
     word-spacing: 2px;
-}
-
-.quran-line {
-    width: 100%;
-    display: block;
-    line-height: 2.3;
-    font-size: 2.1rem;
-    min-height: 2.5rem;
-    margin: 4px 0;
 }
 
 .ayah-container {
@@ -318,12 +310,3 @@ body {
 /* Fixed Inline Styles */
 #downloadType { margin-bottom: 10px; }
 #imageCaptureArea { position: absolute; left: -9999px; top: -9999px; z-index: -1; }
-
-
-/* Quran Mushaf Line Layout */
-.quran-line {
-    width: 100%;
-    min-height: 2.4em;
-    margin: 2px 0;
-    display: block;
-}
