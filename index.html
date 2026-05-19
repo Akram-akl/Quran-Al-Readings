@@ -216,8 +216,15 @@
             <span class="close-modal"><i class="fas fa-times"></i></span>
             <h2>تحديد علامة خاصة للاية</h2>
             <div class="form-group mt-3">
-                <label for="tagText">اسم العلامة المرجعية</label>
-                <input type="text" id="tagText" class="form-control" placeholder="مثال: مراجعة اليوم، متشابهات...">
+                <label for="existingTagsSelect" class="mb-1">اختر علامة موجودة</label>
+                <select id="existingTagsSelect" class="form-control mb-3">
+                    <option value="new">--- كتابة علامة جديدة ---</option>
+                </select>
+                
+                <div id="newTagInputWrapper">
+                    <label for="tagText" class="mb-1">اسم العلامة الجديدة</label>
+                    <input type="text" id="tagText" class="form-control" placeholder="مثال: مراجعة اليوم، متشابهات...">
+                </div>
             </div>
             <button id="saveTagBtn" class="btn btn-success w-100 mt-2"><i class="fas fa-save"></i> حفظ العلامة</button>
         </div>

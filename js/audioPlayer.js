@@ -17,8 +17,8 @@ const AudioPlayer = {
     playlistReadingKey: "",// رواية قائمة الاستماع
     isTransitioning: false,
     currentTimingKey: "",
-    maxAyahRepeats: 1,     // التكرارات المحددة لكل آية
-    ayahRepeatCount: 1,    // العداد الحالي للآية المكررة
+    playlistRepeatCount: 1, // العداد الحالي لتكرار المقطع
+    maxPlaylistRepeats: 1,  // التكرارات المحددة للمقطع بالكامل
     
     init() {
         // ربط حدث انتهاء الصوت
@@ -38,16 +38,8 @@ const AudioPlayer = {
                         this.audio.src = this.audioQueue.shift();
                         this.audio.play();
                     } else {
-                        // تكرار الآية الحالية في قائمة الاستماع
-                        if (this.ayahRepeatCount < this.maxAyahRepeats) {
-                            this.ayahRepeatCount++;
-                            const track = this.playlist[this.playlistIndex];
-                            this._playPlaylistAyah(track.aya_no, track.sura_no);
-                        } else {
-                            this.ayahRepeatCount = 1;
-                            this.playlistIndex++;
-                            this._playCurrentTrack();
-                        }
+                        this.playlistIndex++;
+                        this._playCurrentTrack();
                     }
                 }
             } else {
@@ -102,13 +94,9 @@ const AudioPlayer = {
                         if (this.isTransitioning) return;
                         const track = this.playlist[this.playlistIndex];
                         if (track.aya_no === activeAyaNo && cTime >= activeAyaData.end_time - 150) {
-                            if (this.ayahRepeatCount < this.maxAyahRepeats) {
-                                this.ayahRepeatCount++;
-                                this.audio.currentTime = activeAyaData.start_time / 1000;
-                            } else if (this.isRepeat) {
+                            if (this.isRepeat) {
                                 this.audio.currentTime = activeAyaData.start_time / 1000;
                             } else {
-                                this.ayahRepeatCount = 1;
                                 this.playlistIndex++;
                                 this._playCurrentTrack();
                             }
@@ -158,7 +146,6 @@ const AudioPlayer = {
 
     stop() {
         this.audio.pause();
-        this.audio.src = "";
         this.audioQueue = []; // مسح قائمة الملفات الصوتية عند الإيقاف
     },
 
@@ -167,6 +154,7 @@ const AudioPlayer = {
         this.playlist = ayahs;
         this.playlistIndex = 0;
         this.playlistReadingKey = readingKey;
+        this.playlistRepeatCount = 1;
     },
 
     async _playCurrentTrack() {
@@ -176,11 +164,18 @@ const AudioPlayer = {
             return;
         }
         if (this.playlistIndex >= this.playlist.length) {
-            console.log("Playlist finished!");
-            this.stop();
-            const statusEl = document.getElementById('lsStatus');
-            if (statusEl) statusEl.textContent = '✅ انتهى تشغيل قائمة الاستماع';
-            return;
+            if (this.playlistRepeatCount < this.maxPlaylistRepeats) {
+                this.playlistRepeatCount++;
+                this.playlistIndex = 0;
+                const statusEl = document.getElementById('lsStatus');
+                if (statusEl) statusEl.textContent = `▶ تكرار المقطع (المرة ${this.playlistRepeatCount} من ${this.maxPlaylistRepeats === Infinity ? 'لا محدود' : this.maxPlaylistRepeats})`;
+            } else {
+                console.log("Playlist finished!");
+                this.stop();
+                const statusEl = document.getElementById('lsStatus');
+                if (statusEl) statusEl.textContent = '✅ انتهى تشغيل المقطع المحدد';
+                return;
+            }
         }
 
         this.isTransitioning = true;
@@ -244,7 +239,9 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            if (!this.audio.src.endsWith(audioUrl)) {
+            const tempAudio = new Audio();
+            tempAudio.src = audioUrl;
+            if (this.audio.src !== tempAudio.src) {
                 this.audio.src = audioUrl;
             }
 
@@ -366,7 +363,9 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            if (!this.audio.src.endsWith(audioUrl)) {
+            const tempAudio = new Audio();
+            tempAudio.src = audioUrl;
+            if (this.audio.src !== tempAudio.src) {
                 this.audio.src = audioUrl;
             }
 
@@ -483,7 +482,10 @@ const AudioPlayer = {
     },
 
     togglePlayPause() {
-        if (this.audio.src && this.audio.src !== window.location.href) {
+        const isCurrentAyahOnPage = this.currentAyah && typeof UI !== 'undefined' && UI.currentPageAyahs && 
+            UI.currentPageAyahs.some(a => a.sura_no === this.currentAyah.sura_no && a.aya_no === this.currentAyah.aya_no);
+
+        if (this.audio.src && this.audio.src !== window.location.href && isCurrentAyahOnPage) {
             if (this.audio.paused) this.audio.play();
             else this.audio.pause();
         } else {

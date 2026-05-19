@@ -110,9 +110,8 @@ const TagsAndContext = {
         if (btnTag) {
             btnTag.onclick = () => {
                 this._hideMenu();
+                this.populateTagModalDropdown();
                 const modal = document.getElementById('tagInputModal');
-                const input = document.getElementById('tagText');
-                if (input) input.value = '';
                 if (modal) modal.classList.add('active');
             };
         }
@@ -121,8 +120,15 @@ const TagsAndContext = {
         const saveBtn = document.getElementById('saveTagBtn');
         if (saveBtn) {
             saveBtn.onclick = () => {
-                const textInput = document.getElementById('tagText');
-                const tagName = textInput ? textInput.value.trim() : "";
+                const select = document.getElementById('existingTagsSelect');
+                let tagName = "";
+                if (select && select.value !== 'new') {
+                    tagName = select.value.trim();
+                } else {
+                    const textInput = document.getElementById('tagText');
+                    tagName = textInput ? textInput.value.trim() : "";
+                }
+
                 if (!tagName) return;
 
                 this.addTag(tagName);
@@ -130,6 +136,37 @@ const TagsAndContext = {
                 if (modal) modal.classList.remove('active');
             };
         }
+    },
+
+    populateTagModalDropdown() {
+        const select = document.getElementById('existingTagsSelect');
+        const wrapper = document.getElementById('newTagInputWrapper');
+        const textInput = document.getElementById('tagText');
+        if (!select) return;
+
+        // تفريغ المدخلات
+        if (textInput) textInput.value = '';
+        if (wrapper) wrapper.style.display = 'block';
+
+        // قراءة كافة العلامات الفريدة المخزنة
+        const tags = this.getTags();
+        const uniqueNames = [...new Set(tags.map(t => t.tagName))].filter(Boolean);
+
+        select.innerHTML = '<option value="new">--- كتابة علامة جديدة ---</option>';
+        uniqueNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+
+        select.onchange = () => {
+            if (select.value === 'new') {
+                if (wrapper) wrapper.style.display = 'block';
+            } else {
+                if (wrapper) wrapper.style.display = 'none';
+            }
+        };
     },
 
     // سؤال المستخدم عن طبيعة البحث (كلمة أم آية)
@@ -174,13 +211,13 @@ const TagsAndContext = {
     // تنظيف الحركات والرموز القرآنية
     normalizeText(txt) {
         if (!txt) return "";
-        return txt.trim()
-            .replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656\u200C\u06D6-\u06ED]/g, "")
+        return txt.replace(/[^\u0621-\u064A\s]/g, "")
             .replace(/[أإآٱ]/g, "ا")
             .replace(/ة/g, "ه")
-            .replace(/ى/g, "ي")
-            .replace(/ؤ/g, "o")
-            .replace(/[ۖۚۛۗۘۖ]/g, "");
+            .replace(/[ىي]/g, "ي")
+            .replace(/ؤ/g, "و")
+            .replace(/\s+/g, " ")
+            .trim();
     },
 
     // تنفيذ محرك بحث المتشابهات

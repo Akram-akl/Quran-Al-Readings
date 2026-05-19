@@ -179,7 +179,7 @@ body {
 }
 
 /* Premium Glassmorphic Buttons Styling */
-.sidebar-content .btn {
+.btn {
     border: 1px solid rgba(16, 185, 129, 0.15);
     border-radius: 12px;
     padding: 12px;
@@ -196,83 +196,98 @@ body {
     gap: 10px;
     color: var(--text);
     cursor: pointer;
+    width: 100%;
 }
 
-.sidebar-content .btn i {
+.btn i {
     font-size: 1.05rem;
 }
 
 /* Amber / Warning button for testing mode inactive */
-.sidebar-content .btn-warning {
+.btn-warning {
     border-color: rgba(245, 158, 11, 0.25);
     background: rgba(245, 158, 11, 0.06);
     color: #d97706;
 }
-[data-theme="dark"] .sidebar-content .btn-warning {
+[data-theme="dark"] .btn-warning {
     color: #fbbf24;
 }
-.sidebar-content .btn-warning:hover {
+.btn-warning:hover {
     background: rgba(245, 158, 11, 0.12);
     box-shadow: 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
 /* Red / Danger button for testing mode active */
-.sidebar-content .btn-danger {
+.btn-danger {
     border-color: rgba(239, 68, 68, 0.25);
     background: rgba(239, 68, 68, 0.06);
     color: #dc2626;
 }
-[data-theme="dark"] .sidebar-content .btn-danger {
+[data-theme="dark"] .btn-danger {
     color: #fca5a5;
 }
-.sidebar-content .btn-danger:hover {
+.btn-danger:hover {
     background: rgba(239, 68, 68, 0.12);
     box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
 }
 
 /* Green / Success button for listen mode */
-.sidebar-content .btn-success {
+.btn-success {
     border-color: rgba(16, 185, 129, 0.25);
     background: rgba(16, 185, 129, 0.06);
     color: #059669;
 }
-[data-theme="dark"] .sidebar-content .btn-success {
+[data-theme="dark"] .btn-success {
     color: #34d399;
 }
-.sidebar-content .btn-success:hover {
+.btn-success:hover {
     background: rgba(16, 185, 129, 0.12);
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
 }
 
 /* Blue / Info button for search */
-.sidebar-content .btn-info {
+.btn-info {
     border-color: rgba(59, 130, 246, 0.25);
     background: rgba(59, 130, 246, 0.06);
     color: #2563eb;
 }
-[data-theme="dark"] .sidebar-content .btn-info {
+[data-theme="dark"] .btn-info {
     color: #60a5fa;
 }
-.sidebar-content .btn-info:hover {
+.btn-info:hover {
+    background: rgba(59, 130, 246, 0.12);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+}
+
+/* Blue / Primary button */
+.btn-primary {
+    border-color: rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.06);
+    color: #2563eb;
+}
+[data-theme="dark"] .btn-primary {
+    color: #60a5fa;
+}
+.btn-primary:hover {
     background: rgba(59, 130, 246, 0.12);
     box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
 }
 
 /* Indigo / Secondary button for download */
-.sidebar-content .btn-secondary {
+.btn-secondary {
     border-color: rgba(99, 102, 241, 0.25);
     background: rgba(99, 102, 241, 0.06);
     color: #4f46e5;
 }
-[data-theme="dark"] .sidebar-content .btn-secondary {
+[data-theme="dark"] .btn-secondary {
     color: #818cf8;
 }
-.sidebar-content .btn-secondary:hover {
+.btn-secondary:hover {
     background: rgba(99, 102, 241, 0.12);
     box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
 }
 
-.sidebar-content .btn:active {
+.btn:active {
     transform: scale(0.98);
 }
 

@@ -139,8 +139,8 @@ const ListenRange = {
         }
 
         const repeatCountVal = document.getElementById('lsRepeatCount').value;
-        AudioPlayer.maxAyahRepeats = repeatCountVal === 'infinite' ? Infinity : parseInt(repeatCountVal);
-        AudioPlayer.ayahRepeatCount = 1;
+        AudioPlayer.maxPlaylistRepeats = repeatCountVal === 'infinite' ? Infinity : parseInt(repeatCountVal);
+        AudioPlayer.playlistRepeatCount = 1;
 
         AudioPlayer.buildPlaylistFromRange(readingKey, ayahs);
         AudioPlayer.playlistIndex = 0;
