@@ -310,3 +310,156 @@ body {
 /* Fixed Inline Styles */
 #downloadType { margin-bottom: 10px; }
 #imageCaptureArea { position: absolute; left: -9999px; top: -9999px; z-index: -1; }
+
+/* Custom Context Menu */
+.custom-context-menu {
+    position: fixed;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10001;
+    min-width: 160px;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease-out;
+}
+.context-item {
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+    text-align: right;
+}
+.context-item:hover {
+    background: var(--border);
+}
+.context-item i {
+    color: var(--primary);
+    width: 16px;
+}
+
+/* Sidebar Tags */
+.tags-sidebar-container {
+    margin-top: 15px;
+    direction: rtl;
+}
+.tags-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sidebar-tags-list {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-right: 5px;
+}
+.no-tags-text {
+    font-size: 0.85rem;
+    color: var(--text);
+    opacity: 0.6;
+    text-align: center;
+}
+.tag-group {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 5px;
+}
+[data-theme="dark"] .tag-group {
+    background: rgba(255, 255, 255, 0.03);
+}
+.tag-group-header {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    font-weight: 550;
+    cursor: pointer;
+    background: var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+.tag-group-header:hover {
+    background: var(--border);
+    opacity: 0.9;
+}
+.tag-group-items {
+    display: none;
+    flex-direction: column;
+    padding: 5px 0;
+}
+.tag-group-items.active {
+    display: flex;
+}
+.tag-item-link {
+    padding: 6px 15px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+.tag-item-link:hover {
+    background: rgba(6, 78, 59, 0.1);
+}
+.tag-delete-btn {
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px 5px;
+    transition: transform 0.2s;
+}
+.tag-delete-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Words wrappers inside Quran Text block */
+.q_word {
+    display: inline-block;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    border-radius: 4px;
+    padding: 0 1px;
+}
+.q_word:hover {
+    background: rgba(6, 78, 59, 0.15);
+    color: var(--primary);
+}
+
+/* Mutashabihat and other styles */
+.modal-sub {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 15px;
+}
+.mutashabihat-meta {
+    font-size: 0.95rem;
+    padding: 8px;
+    background: rgba(6, 78, 59, 0.08);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: var(--primary);
+}
+.gap-2 { gap: 10px; }
+.d-flex { display: flex; }
+.flex-column { flex-direction: column; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

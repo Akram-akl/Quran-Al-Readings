@@ -17,6 +17,8 @@ const AudioPlayer = {
     playlistReadingKey: "",// رواية قائمة الاستماع
     isTransitioning: false,
     currentTimingKey: "",
+    maxAyahRepeats: 1,     // التكرارات المحددة لكل آية
+    ayahRepeatCount: 1,    // العداد الحالي للآية المكررة
     
     init() {
         // ربط حدث انتهاء الصوت
@@ -36,9 +38,16 @@ const AudioPlayer = {
                         this.audio.src = this.audioQueue.shift();
                         this.audio.play();
                     } else {
-                        // الانتقال للآية التالية في قائمة الاستماع
-                        this.playlistIndex++;
-                        this._playCurrentTrack();
+                        // تكرار الآية الحالية في قائمة الاستماع
+                        if (this.ayahRepeatCount < this.maxAyahRepeats) {
+                            this.ayahRepeatCount++;
+                            const track = this.playlist[this.playlistIndex];
+                            this._playPlaylistAyah(track.aya_no, track.sura_no);
+                        } else {
+                            this.ayahRepeatCount = 1;
+                            this.playlistIndex++;
+                            this._playCurrentTrack();
+                        }
                     }
                 }
             } else {
@@ -93,9 +102,13 @@ const AudioPlayer = {
                         if (this.isTransitioning) return;
                         const track = this.playlist[this.playlistIndex];
                         if (track.aya_no === activeAyaNo && cTime >= activeAyaData.end_time - 150) {
-                            if (this.isRepeat) {
+                            if (this.ayahRepeatCount < this.maxAyahRepeats) {
+                                this.ayahRepeatCount++;
+                                this.audio.currentTime = activeAyaData.start_time / 1000;
+                            } else if (this.isRepeat) {
                                 this.audio.currentTime = activeAyaData.start_time / 1000;
                             } else {
+                                this.ayahRepeatCount = 1;
                                 this.playlistIndex++;
                                 this._playCurrentTrack();
                             }
@@ -474,7 +487,60 @@ const AudioPlayer = {
             if (this.audio.paused) this.audio.play();
             else this.audio.pause();
         } else {
+            this.startPagePlaybackPrompt();
+        }
+    },
+
+    startPagePlaybackPrompt() {
+        if (typeof UI === 'undefined' || !UI.currentPageAyahs || UI.currentPageAyahs.length === 0) {
             this.playAyah(1, App.currentSurah);
+            return;
+        }
+
+        const ayahs = UI.currentPageAyahs;
+        const surahsOnPage = [];
+        const seenSurahs = new Set();
+        ayahs.forEach(a => {
+            if (!seenSurahs.has(a.sura_no)) {
+                seenSurahs.add(a.sura_no);
+                surahsOnPage.push({ no: a.sura_no, name: a.sura_name_ar, firstAyah: a.aya_no });
+            }
+        });
+
+        if (surahsOnPage.length <= 1) {
+            this.playAyah(ayahs[0].aya_no, ayahs[0].sura_no);
+        } else {
+            const modal = document.getElementById('playChoiceModal');
+            const container = document.getElementById('playChoiceContainer');
+            if (modal && container) {
+                container.innerHTML = '';
+
+                // 1. بداية الصفحة
+                const btnPage = document.createElement('button');
+                btnPage.className = 'btn btn-primary w-100 mb-2';
+                btnPage.innerHTML = `<i class="fas fa-file-alt"></i> بداية الصفحة (سورة ${ayahs[0].sura_name_ar} آية ${ayahs[0].aya_no})`;
+                btnPage.onclick = () => {
+                    modal.classList.remove('active');
+                    this.playAyah(ayahs[0].aya_no, ayahs[0].sura_no);
+                };
+                container.appendChild(btnPage);
+
+                // 2. خيار السور المتعددة بالصفحة
+                surahsOnPage.forEach(s => {
+                    const btnSurah = document.createElement('button');
+                    btnSurah.className = 'btn btn-success w-100 mb-2';
+                    btnSurah.innerHTML = `<i class="fas fa-book-open"></i> بداية سورة ${s.name} (آية ${s.firstAyah})`;
+                    btnSurah.onclick = () => {
+                        modal.classList.remove('active');
+                        this.playAyah(s.firstAyah, s.no);
+                    };
+                    container.appendChild(btnSurah);
+                });
+
+                modal.classList.add('active');
+            } else {
+                this.playAyah(ayahs[0].aya_no, ayahs[0].sura_no);
+            }
         }
     },
 

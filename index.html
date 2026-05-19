@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#064e3b">
     <link rel="icon" href="assets/logo.png">
     <link rel="apple-touch-icon" href="assets/logo.png"> <!-- إضافة الأيقونة المفقودة -->
-    <link rel="stylesheet" href="css/style.css?v=2.8">
+    <link rel="stylesheet" href="css/style.css?v=2.9">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -51,8 +51,8 @@
                 <button id="testingModeBtn" class="btn btn-warning w-100 mt-2 mb-2" title="وضع الحفظ والاختبار">
                     <i class="fas fa-eye-slash"></i> وضع الاختبار
                 </button>
-                <button id="listenRangeBtn" class="btn btn-success w-100 mt-2 mb-2" title="استماع متتابع">
-                    <i class="fas fa-play-circle"></i> استماع متتابع
+                <button id="listenRangeBtn" class="btn btn-success w-100 mt-2 mb-2" title="استماع محدد">
+                    <i class="fas fa-play-circle"></i> استماع محدد
                 </button>
                 <button id="searchOpenBtn" class="btn btn-info w-100 mt-2 mb-2" title="البحث الشامل">
                     <i class="fas fa-search"></i> بحث في القراءات
@@ -60,6 +60,14 @@
                 <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2" title="تحميل">
                     <i class="fas fa-download"></i> تحميل الصوت
                 </button>
+                
+                <hr>
+                <div class="tags-sidebar-container">
+                    <h3 class="tags-title"><i class="fas fa-tags"></i> العلامات الخاصة</h3>
+                    <div id="sidebarTagsList" class="sidebar-tags-list">
+                        <span class="no-tags-text">لا توجد علامات مضافة حالياً.</span>
+                    </div>
+                </div>
             </div>
             <div class="sidebar-footer">
                 <button id="themeToggleBtn" class="btn-icon" title="مظهر"><i class="fas fa-moon"></i></button>
@@ -147,7 +155,7 @@
     <div id="listenModal" class="modal">
         <div class="modal-content">
             <span class="close-modal"><i class="fas fa-times"></i></span>
-            <h2>استماع متتابع من - إلى</h2>
+            <h2>استماع محدد من - إلى</h2>
             <div class="form-group">
                 <label for="listenReading">الرواية</label>
                 <select id="listenReading" class="form-control mb-2">
@@ -156,7 +164,7 @@
                     <option value="HafsMinshawi">حفص عن عاصم (المنشاوي)</option>
                     <option value="Warsh">ورش عن نافع (عبدالباسط)</option>
                     <option value="WarshHussary">ورش عن نافع (الحصري)</option>
-                    <option value="WarshJazairi">ورش عن نافع (ياسين الجزائري)</option>
+                    <option value="WarshJazairi">ورش عن نافع (ياسين الجزائائري)</option>
                     <option value="WarshDossari">ورش عن نافع (إبراهيم الدوسري)</option>
                     <option value="Qaloun">قالون عن نافع (الحصري)</option>
                     <option value="QalounHuthaify">قالون عن نافع (الحذيفي)</option>
@@ -174,26 +182,78 @@
                     <select id="lsSurahTo" class="form-control" title="إلى سورة"></select>
                     <select id="lsAyahTo" class="form-control" title="آية"></select>
                 </div>
+
+                <label class="mt-10" for="lsRepeatCount">عدد تكرارات الآية</label>
+                <select id="lsRepeatCount" class="form-control mb-2">
+                    <option value="1">مرة واحدة (بدون تكرار)</option>
+                    <option value="2">مرتين</option>
+                    <option value="3">3 مرات</option>
+                    <option value="5">5 مرات</option>
+                    <option value="10">10 مرات</option>
+                    <option value="infinite">لا محدود (حتى إلغاء التشغيل)</option>
+                </select>
             </div>
             <button id="executeListenBtn" class="btn btn-success w-100"><i class="fas fa-play"></i> بدء الاستماع</button>
             <div id="lsStatus" class="status-text"></div>
         </div>
     </div>
     
+    <!-- Modals الإضافية للميزات المتقدمة -->
+    
+    <!-- نافذة اختيار بدء التشغيل للصفحات المشتركة -->
+    <div id="playChoiceModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2>خيارات تشغيل الصفحة المشتركة</h2>
+            <p class="modal-sub">تحتوي هذه الصفحة على أكثر من سورة، من أين تود بدء الاستماع؟</p>
+            <div id="playChoiceContainer" class="d-flex flex-column gap-2 mt-3"></div>
+        </div>
+    </div>
+
+    <!-- نافذة إدخال العلامة المرجعية -->
+    <div id="tagInputModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2>تحديد علامة خاصة للاية</h2>
+            <div class="form-group mt-3">
+                <label for="tagText">اسم العلامة المرجعية</label>
+                <input type="text" id="tagText" class="form-control" placeholder="مثال: مراجعة اليوم، متشابهات...">
+            </div>
+            <button id="saveTagBtn" class="btn btn-success w-100 mt-2"><i class="fas fa-save"></i> حفظ العلامة</button>
+        </div>
+    </div>
+
+    <!-- نافذة بحث المتشابهات والتنقل -->
+    <div id="mutashabihatModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2>مستكشف المتشابهات والمواضع</h2>
+            <div id="mutashabihatMeta" class="mutashabihat-meta"></div>
+            <div id="mutashabihatList" class="search-results-area mt-2"></div>
+        </div>
+    </div>
+
+    <!-- القائمة المنبثقة الذكية (Context Menu) -->
+    <div id="ayahContextMenu" class="custom-context-menu" style="display: none;">
+        <div class="context-item" id="ctxSearch"><i class="fas fa-search"></i> بحث المتشابهات</div>
+        <div class="context-item" id="ctxTag"><i class="fas fa-tag"></i> تحديد علامة خاصة</div>
+    </div>
+
     <!-- منطقة مخفية لرسم الصورة قبل تحميلها -->
     <div id="imageCaptureArea"></div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="js/config.js?v=2.8"></script>
-    <script src="js/dataHandler.js?v=2.8"></script>
+    <script src="js/config.js?v=2.9"></script>
+    <script src="js/dataHandler.js?v=2.9"></script>
     <script src="js/supabase.js"></script>
     <script src="js/audioMap.js"></script>
-    <script src="js/audioPlayer.js?v=2.8"></script>
-    <script src="js/search.js?v=2.8"></script>
-    <script src="js/download.js?v=2.8"></script>
-    <script src="js/listen.js?v=2.8"></script>
-    <script src="js/ui.js?v=2.8"></script>
-    <script src="js/app.js?v=2.8"></script>
+    <script src="js/audioPlayer.js?v=2.9"></script>
+    <script src="js/search.js?v=2.9"></script>
+    <script src="js/download.js?v=2.9"></script>
+    <script src="js/listen.js?v=2.9"></script>
+    <script src="js/tagsAndContext.js?v=2.9"></script>
+    <script src="js/ui.js?v=2.9"></script>
+    <script src="js/app.js?v=2.9"></script>
 </body>
 </html>

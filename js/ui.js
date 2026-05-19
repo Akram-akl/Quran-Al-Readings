@@ -210,6 +210,12 @@ const UI = {
                 span.setAttribute('data-no', a.aya_no);
                 span.setAttribute('data-surah', a.sura_no);
                 
+                // تغليف كل كلمة قرآنية بـ span لتسهيل التفاعل الفردي (البحث والعلامات)
+                let formattedText = finalAyahText;
+                if (!isB) {
+                    formattedText = finalAyahText.split(/\s+/).map(w => `<span class="q_word">${w}</span>`).join(' ');
+                }
+
                 // تطبيق وضع الاختبار التفاعلي (النقرة الأولى للكشف، الثانية للتشغيل)
                 if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
                     span.classList.add('hidden-ayah');
@@ -220,9 +226,9 @@ const UI = {
                         } else {
                             AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
                         }
-                    ">${finalAyahText}</span> `;
+                    ">${formattedText}</span> `;
                 } else {
-                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${finalAyahText}</span> `;
+                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${formattedText}</span> `;
                 }
                 textBlock.appendChild(span);
             });
