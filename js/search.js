@@ -17,12 +17,34 @@ const Search = {
     normalizeArabic(text) {
         if (!text) return "";
         return text
-            .replace(/[\u064B-\u065F\u0670]/g, "") // إزالة الحركات والتنوين والشدة والمدة
+            .replace(/\u0670/g, "ا")             // تحويل الألف الخنجرية لألف عادية أولاً لضمان التمييز
+            .replace(/[\u064B-\u065F]/g, "")     // إزالة باقي الحركات والتنوين والشدة والمدة
             .replace(/[أإآٱ]/g, "ا")             // توحيد الألف
             .replace(/ة/g, "ه")                  // توحيد التاء المربوطة والهاء
-            .replace(/ى/g, "ي")                  // توحيد الألف المقصورة والياء
-            .replace(/\s+/g, "")                 // إزالة المسافات تماماً لضمان دقة التطابق
-            .replace(/[^\u0621-\u064A]/g, "");    // إزالة علامات الوقف والرموز الخاصة
+            .replace(/[ىي]/g, "ي")                  // توحيد الألف المقصورة والياء
+            .replace(/ؤ/g, "و")                  // توحيد الواو
+            .replace(/[^\u0621-\u064A\s]/g, "")  // إزالة علامات الوقف والرموز الخاصة مع إبقاء المسافة
+            .replace(/\s+/g, " ")                // دمج المسافات
+            .trim();
+    },
+
+    isWordMatch(cleanText, cleanQuery) {
+        if (!cleanText || !cleanQuery) return false;
+        const textWords = cleanText.split(' ');
+        const queryWords = cleanQuery.split(' ');
+        if (queryWords.length === 0) return false;
+        
+        for (let i = 0; i <= textWords.length - queryWords.length; i++) {
+            let match = true;
+            for (let j = 0; j < queryWords.length; j++) {
+                if (textWords[i + j] !== queryWords[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) return true;
+        }
+        return false;
     },
 
     getHafsAyaNo(readingKey, suraNo, ayaNo) {
@@ -68,7 +90,7 @@ const Search = {
                 const matches = data.filter(a => {
                     const normEmlaey = this.normalizeArabic(a.aya_text_emlaey);
                     const normText = this.normalizeArabic(a.aya_text);
-                    return normEmlaey.includes(normQuery) || normText.includes(normQuery);
+                    return this.isWordMatch(normEmlaey, normQuery) || this.isWordMatch(normText, normQuery);
                 });
 
                 matches.forEach(m => {

@@ -20,9 +20,11 @@ const TagsAndContext = {
         area.addEventListener('contextmenu', (e) => {
             const wordEl = e.target.closest('.q_word');
             const containerEl = e.target.closest('.ayah-container');
-            if (containerEl) {
+            const istiazahEl = e.target.closest('.istiazah');
+            const bismillahEl = e.target.closest('.bismillah');
+            if (containerEl || istiazahEl || bismillahEl) {
                 e.preventDefault();
-                this._showMenu(e.clientX, e.clientY, containerEl, wordEl);
+                this._showMenu(e.clientX, e.clientY, containerEl, wordEl, istiazahEl, bismillahEl);
             }
         });
 
@@ -32,11 +34,13 @@ const TagsAndContext = {
         area.addEventListener('touchstart', (e) => {
             const wordEl = e.target.closest('.q_word');
             const containerEl = e.target.closest('.ayah-container');
-            if (containerEl) {
+            const istiazahEl = e.target.closest('.istiazah');
+            const bismillahEl = e.target.closest('.bismillah');
+            if (containerEl || istiazahEl || bismillahEl) {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
                 this.longPressTimer = setTimeout(() => {
-                    this._showMenu(touchStartX, touchStartY, containerEl, wordEl);
+                    this._showMenu(touchStartX, touchStartY, containerEl, wordEl, istiazahEl, bismillahEl);
                 }, 400); // 400ms ضغطة مطولة
             }
         }, { passive: true });
@@ -57,26 +61,56 @@ const TagsAndContext = {
         });
     },
 
-    _showMenu(x, y, containerEl, wordEl) {
+    _showMenu(x, y, containerEl, wordEl, istiazahEl, bismillahEl) {
         const menu = document.getElementById('ayahContextMenu');
         if (!menu) return;
 
-        const suraNo = parseInt(containerEl.dataset.surah);
-        const ayaNo = parseInt(containerEl.dataset.ayah || containerEl.dataset.no);
-        const fullList = DataHandler.cache[App.currentReading];
-        const ayah = fullList ? fullList.find(a => a.sura_no === suraNo && a.aya_no === ayaNo) : null;
+        const ctxPlay = document.getElementById('ctxPlay');
+        const ctxSearch = document.getElementById('ctxSearch');
+        const ctxTag = document.getElementById('ctxTag');
 
-        if (!ayah) return;
+        // إعادة عرض الأزرار كالعادة
+        if (ctxPlay) ctxPlay.style.display = 'flex';
+        if (ctxSearch) ctxSearch.style.display = 'flex';
+        if (ctxTag) ctxTag.style.display = 'flex';
 
-        this.selectedAyah = ayah;
-        this.selectedWord = wordEl ? wordEl.textContent.trim().replace(/[ۖۚۛۗۘ]/g, "") : "";
+        if (istiazahEl) {
+            this.selectedAyah = null;
+            this.selectedWord = "";
+            this.contextType = "istiazah";
+            if (ctxSearch) ctxSearch.style.display = 'none';
+            if (ctxTag) ctxTag.style.display = 'none';
+            if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للاستعاذة';
+        } else if (bismillahEl) {
+            this.selectedAyah = null;
+            this.selectedWord = "";
+            this.contextType = "bismillah";
+            if (ctxSearch) ctxSearch.style.display = 'none';
+            if (ctxTag) ctxTag.style.display = 'none';
+            if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للبسملة';
+        } else if (containerEl) {
+            const suraNo = parseInt(containerEl.dataset.surah);
+            const ayaNo = parseInt(containerEl.dataset.ayah || containerEl.dataset.no);
+            const fullList = DataHandler.cache[App.currentReading];
+            const ayah = fullList ? fullList.find(a => a.sura_no === suraNo && a.aya_no === ayaNo) : null;
+            if (!ayah) return;
+
+            this.selectedAyah = ayah;
+            this.selectedWord = wordEl ? wordEl.textContent.trim().replace(/[ۖۚۛۗۘ]/g, "") : "";
+            this.contextType = "ayah";
+
+            if (ctxPlay) ctxPlay.innerHTML = `<i class="fas fa-play"></i> استماع للآية ${ayaNo}`;
+            if (!wordEl && ctxSearch) ctxSearch.style.display = 'none';
+        } else {
+            return;
+        }
 
         // موضع القائمة
         menu.style.display = 'block';
         
         // التحقق من حدود الشاشة لمنع خروج القائمة
         const menuWidth = 180;
-        const menuHeight = 100;
+        const menuHeight = 120;
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
 
@@ -96,6 +130,21 @@ const TagsAndContext = {
     },
 
     _bindModalActions() {
+        // زر تشغيل الصوت من القائمة المنبثقة
+        const btnPlay = document.getElementById('ctxPlay');
+        if (btnPlay) {
+            btnPlay.onclick = () => {
+                this._hideMenu();
+                if (this.contextType === "istiazah") {
+                    AudioPlayer.playIstiazah();
+                } else if (this.contextType === "bismillah") {
+                    AudioPlayer.playBasmalah();
+                } else if (this.contextType === "ayah" && this.selectedAyah) {
+                    AudioPlayer.playAyah(this.selectedAyah.aya_no, this.selectedAyah.sura_no);
+                }
+            };
+        }
+
         // زر بحث المتشابهات من القائمة المنبثقة
         const btnSearch = document.getElementById('ctxSearch');
         if (btnSearch) {
@@ -211,13 +260,34 @@ const TagsAndContext = {
     // تنظيف الحركات والرموز القرآنية
     normalizeText(txt) {
         if (!txt) return "";
-        return txt.replace(/[^\u0621-\u064A\s]/g, "")
+        return txt
+            .replace(/\u0670/g, "ا")             // تحويل الألف الخنجرية لألف عادية أولاً لضمان التمييز
+            .replace(/[^\u0621-\u064A\s]/g, "")
             .replace(/[أإآٱ]/g, "ا")
             .replace(/ة/g, "ه")
             .replace(/[ىي]/g, "ي")
             .replace(/ؤ/g, "و")
             .replace(/\s+/g, " ")
             .trim();
+    },
+
+    isWordMatch(cleanText, cleanQuery) {
+        if (!cleanText || !cleanQuery) return false;
+        const textWords = cleanText.split(' ');
+        const queryWords = cleanQuery.split(' ');
+        if (queryWords.length === 0) return false;
+        
+        for (let i = 0; i <= textWords.length - queryWords.length; i++) {
+            let match = true;
+            for (let j = 0; j < queryWords.length; j++) {
+                if (textWords[i + j] !== queryWords[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) return true;
+        }
+        return false;
     },
 
     // تنفيذ محرك بحث المتشابهات
@@ -234,7 +304,11 @@ const TagsAndContext = {
         // البحث فقط بالقراءة المحددة حالياً
         const matches = allAyahs.filter(a => {
             const cleanText = this.normalizeText(a.aya_text);
-            return cleanText.includes(cleanQuery);
+            if (mode === 'word') {
+                return this.isWordMatch(cleanText, cleanQuery);
+            } else {
+                return cleanText.includes(cleanQuery);
+            }
         });
 
         meta.innerHTML = `مواضع متشابهات: "${queryText}" (${matches.length} موضع)`;

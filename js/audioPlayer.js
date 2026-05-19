@@ -19,6 +19,10 @@ const AudioPlayer = {
     currentTimingKey: "",
     playlistRepeatCount: 1, // العداد الحالي لتكرار المقطع
     maxPlaylistRepeats: 1,  // التكرارات المحددة للمقطع بالكامل
+    timingCache: {},
+    preloadedAudioObjects: [],
+    stopAtEndOfSura: null,
+    keepStopBoundary: false,
     
     init() {
         // ربط حدث انتهاء الصوت
@@ -144,6 +148,65 @@ const AudioPlayer = {
         if (repeatBtn) repeatBtn.onclick = () => this.toggleRepeat();
     },
 
+    async preloadPageAudios(readingKey, ayahs) {
+        if (!readingKey || !ayahs || ayahs.length === 0) return;
+        const config = READINGS_CONFIG[readingKey];
+        if (!config) return;
+
+        if (!this.timingCache) this.timingCache = {};
+        if (!this.preloadedAudioObjects) this.preloadedAudioObjects = [];
+
+        // تنظيف ذاكرة الكائنات لتفريغ الذاكرة
+        this.preloadedAudioObjects = [];
+
+        if (config.isMonolithic) {
+            const surahs = [...new Set(ayahs.map(a => a.sura_no))];
+            for (const suraNo of surahs) {
+                const cacheKey = `${readingKey}_${suraNo}`;
+                if (!this.timingCache[cacheKey]) {
+                    const timingUrl = config.getTimingPath(suraNo);
+                    fetch(timingUrl)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.timingCache[cacheKey] = data;
+                        })
+                        .catch(e => console.warn("Preload timing failed:", e));
+                }
+
+                const audioUrl = config.getAudioPath(suraNo);
+                const preloadAudio = new Audio();
+                preloadAudio.src = audioUrl;
+                preloadAudio.preload = 'auto';
+                this.preloadedAudioObjects.push(preloadAudio);
+            }
+        } else {
+            const preloadCount = Math.min(5, ayahs.length);
+            for (let i = 0; i < preloadCount; i++) {
+                const a = ayahs[i];
+                let mappedHafsAyahs = [a.aya_no];
+                
+                if (typeof AUDIO_MAP !== 'undefined') {
+                    const rKey = readingKey.toLowerCase();
+                    if (AUDIO_MAP[rKey] && AUDIO_MAP[rKey][a.sura_no] && AUDIO_MAP[rKey][a.sura_no][a.aya_no]) {
+                        mappedHafsAyahs = AUDIO_MAP[rKey][a.sura_no][a.aya_no];
+                    }
+                }
+
+                for (const hafsAya of mappedHafsAyahs) {
+                    const audioUrl = config.getAudioPath({
+                        sura_no: a.sura_no,
+                        aya_no: hafsAya,
+                        jozz: a.jozz
+                    });
+                    const preloadAudio = new Audio();
+                    preloadAudio.src = audioUrl;
+                    preloadAudio.preload = 'auto';
+                    this.preloadedAudioObjects.push(preloadAudio);
+                }
+            }
+        }
+    },
+
     stop() {
         this.audio.pause();
         this.audioQueue = []; // مسح قائمة الملفات الصوتية عند الإيقاف
@@ -219,13 +282,17 @@ const AudioPlayer = {
         if (config.isMonolithic) {
             this.groupedAyahs = [ayahNo];
             
-            const timingUrl = config.getTimingPath(suraNo);
             const cacheKey = `${App.currentReading}_${suraNo}`;
-            if (this.currentTimingKey !== cacheKey) {
+            if (this.timingCache && this.timingCache[cacheKey]) {
+                this.currentTimingData = this.timingCache[cacheKey];
+                this.currentTimingKey = cacheKey;
+            } else if (this.currentTimingKey !== cacheKey) {
                 try {
+                    const timingUrl = config.getTimingPath(suraNo);
                     const res = await fetch(timingUrl);
                     this.currentTimingData = await res.json();
                     this.currentTimingKey = cacheKey;
+                    this.timingCache[cacheKey] = this.currentTimingData;
                 } catch (e) {
                     console.error("Failed to load timing data:", e);
                     return;
@@ -323,6 +390,11 @@ const AudioPlayer = {
     },
 
     async playAyah(ayahNo, suraNo = App.currentSurah) {
+        if (!this.keepStopBoundary) {
+            this.stopAtEndOfSura = null;
+        }
+        this.keepStopBoundary = false;
+
         // مسح وتصفير قائمة الاستماع عند الضغط الفردي المباشر على الآية
         this.playlist = [];
         this.playlistIndex = -1;
@@ -342,13 +414,17 @@ const AudioPlayer = {
         if (config.isMonolithic) {
             this.groupedAyahs = [ayahNo];
             
-            const timingUrl = config.getTimingPath(suraNo);
             const cacheKey = `${App.currentReading}_${suraNo}`;
-            if (this.currentTimingKey !== cacheKey) {
+            if (this.timingCache && this.timingCache[cacheKey]) {
+                this.currentTimingData = this.timingCache[cacheKey];
+                this.currentTimingKey = cacheKey;
+            } else if (this.currentTimingKey !== cacheKey) {
                 try {
+                    const timingUrl = config.getTimingPath(suraNo);
                     const res = await fetch(timingUrl);
                     this.currentTimingData = await res.json();
                     this.currentTimingKey = cacheKey;
+                    this.timingCache[cacheKey] = this.currentTimingData;
                 } catch (e) {
                     console.error("Failed to load timing data:", e);
                     return;
@@ -471,13 +547,21 @@ const AudioPlayer = {
 
     playIstiazah() {
         this.stop();
-        this.audio.src = READINGS_CONFIG[App.currentReading].getIstiazahPath();
+        const config = READINGS_CONFIG[App.currentReading];
+        const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
+            ? config.getIstiazahPath() 
+            : 'assets/fallback_istiazah.mp3';
+        this.audio.src = path;
         this.audio.play();
     },
 
     playBasmalah() {
         this.stop();
-        this.audio.src = READINGS_CONFIG[App.currentReading].getBasmalahPath();
+        const config = READINGS_CONFIG[App.currentReading];
+        const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
+            ? config.getBasmalahPath() 
+            : 'assets/fallback_basmalah.mp3';
+        this.audio.src = path;
         this.audio.play();
     },
 
@@ -517,27 +601,44 @@ const AudioPlayer = {
             if (modal && container) {
                 container.innerHTML = '';
 
-                // 1. بداية الصفحة
+                // 1. خيار تكملة السورة الأولى فقط التي تبدأ منها الصفحة
+                const firstSurah = surahsOnPage[0];
                 const btnPage = document.createElement('button');
                 btnPage.className = 'btn btn-primary w-100 mb-2';
-                btnPage.innerHTML = `<i class="fas fa-file-alt"></i> بداية الصفحة (سورة ${ayahs[0].sura_name_ar} آية ${ayahs[0].aya_no})`;
+                btnPage.innerHTML = `<i class="fas fa-file-alt"></i> تكملة سورة ${firstSurah.name} (من آية ${firstSurah.firstAyah})`;
                 btnPage.onclick = () => {
                     modal.classList.remove('active');
-                    this.playAyah(ayahs[0].aya_no, ayahs[0].sura_no);
+                    this.keepStopBoundary = true;
+                    this.stopAtEndOfSura = firstSurah.no;
+                    this.playAyah(firstSurah.firstAyah, firstSurah.no);
                 };
                 container.appendChild(btnPage);
 
-                // 2. خيار السور المتعددة بالصفحة
-                surahsOnPage.forEach(s => {
+                // 2. خيار تشغيل الصفحة بالكامل عبر قائمة التشغيل المجدولة
+                const btnFullPage = document.createElement('button');
+                btnFullPage.className = 'btn btn-info w-100 mb-2';
+                btnFullPage.innerHTML = `<i class="fas fa-play-circle"></i> تشغيل الصفحة بالكامل (${ayahs.length} آية)`;
+                btnFullPage.onclick = () => {
+                    modal.classList.remove('active');
+                    this.buildPlaylistFromRange(App.currentReading, ayahs);
+                    this.playlistRepeatCount = 1;
+                    this.maxPlaylistRepeats = 1;
+                    this._playCurrentTrack();
+                };
+                container.appendChild(btnFullPage);
+
+                // 3. خيارات السور الأخرى التي تبدأ في هذه الصفحة
+                for (let i = 1; i < surahsOnPage.length; i++) {
+                    const s = surahsOnPage[i];
                     const btnSurah = document.createElement('button');
                     btnSurah.className = 'btn btn-success w-100 mb-2';
-                    btnSurah.innerHTML = `<i class="fas fa-book-open"></i> بداية سورة ${s.name} (آية ${s.firstAyah})`;
+                    btnSurah.innerHTML = `<i class="fas fa-book-open"></i> بداية سورة ${s.name} (آية 1)`;
                     btnSurah.onclick = () => {
                         modal.classList.remove('active');
                         this.playAyah(s.firstAyah, s.no);
                     };
                     container.appendChild(btnSurah);
-                });
+                }
 
                 modal.classList.add('active');
             } else {
@@ -562,6 +663,12 @@ const AudioPlayer = {
                 
                 // إذا لم توجد آية تالية في نفس السورة، انتقل للآية الأولى من السورة التالية
                 if (!nextAyah) {
+                    if (this.stopAtEndOfSura === suraNo) {
+                        this.stopAtEndOfSura = null;
+                        this.stop();
+                        this._updateBtn(false);
+                        return;
+                    }
                     nextAyah = allData.find(a => a.sura_no === suraNo + 1 && a.aya_no === 1);
                 }
                 

@@ -45,9 +45,34 @@ const App = {
             const surah = SURAHS.find(x => x.number == e.target.value);
             if (surah) this.loadPage(surah.startPage);
         };
-        if (j) j.onchange = (e) => this.loadPage((e.target.value - 1) * 20 + 1);
+        if (j) j.onchange = (e) => this.loadPage(this.getJozzStartPage(e.target.value));
         if (t) t.onclick = () => this.TestingMode.toggle();
         if (d) d.onclick = () => document.getElementById('downloadModal').classList.add('active');
+    },
+
+    getJozzStartPage(jozzNum) {
+        const jozz = parseInt(jozzNum);
+        if (isNaN(jozz) || jozz < 1 || jozz > 30) return 1;
+
+        const cachedData = DataHandler.cache[this.currentReading];
+        if (cachedData && cachedData.length > 0) {
+            const jozzAyahs = cachedData.filter(a => parseInt(a.jozz) === jozz);
+            if (jozzAyahs.length > 0) {
+                const minPage = Math.min(...jozzAyahs.map(a => parseInt(a.page)));
+                if (minPage >= 1 && minPage <= 604) {
+                    return minPage;
+                }
+            }
+        }
+
+        const hafsMap = {
+            1: 1, 2: 22, 3: 42, 4: 62, 5: 82, 6: 102, 7: 121, 8: 142, 9: 162, 10: 182,
+            11: 202, 12: 222, 13: 242, 14: 262, 15: 282, 16: 302, 17: 322, 18: 342, 19: 362, 20: 382,
+            21: 402, 22: 422, 23: 442, 24: 462, 25: 482, 26: 502, 27: 522, 28: 542, 29: 562, 30: 582
+        };
+        const otherMap = { ...hafsMap, 11: 201 };
+        const isHafs = this.currentReading.startsWith('Hafs');
+        return isHafs ? hafsMap[jozz] : otherMap[jozz];
     },
 
     async loadPage(page, keepPlaylist = false, forceStop = false) {
@@ -65,6 +90,11 @@ const App = {
                 UI.updatePageInfo(page);
                 const sSel = document.getElementById('surahSelect');
                 if (sSel) sSel.value = this.currentSurah;
+
+                // التمهيد الصوتي المسبق للصفحة في الخلفية
+                if (typeof AudioPlayer !== 'undefined') {
+                    AudioPlayer.preloadPageAudios(this.currentReading, ayahs);
+                }
             }
         } catch (e) {
             console.error("Load Error:", e);

@@ -159,7 +159,6 @@ const UI = {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
                     ist.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';
-                    ist.onclick = () => AudioPlayer.playIstiazah();
                     surahSection.appendChild(ist);
                 }
                 
@@ -168,7 +167,6 @@ const UI = {
                     const bas = document.createElement('div');
                     bas.className = 'bismillah';
                     bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
-                    bas.onclick = () => AudioPlayer.playBasmalah();
                     surahSection.appendChild(bas);
                 }
             }
@@ -223,12 +221,10 @@ const UI = {
                         if (this.parentElement.classList.contains('hidden-ayah')) {
                             this.parentElement.classList.remove('hidden-ayah');
                             this.style.filter = 'none';
-                        } else {
-                            AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
                         }
                     ">${formattedText}</span> `;
                 } else {
-                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${formattedText}</span> `;
+                    span.innerHTML = `<span class="ayah-text">${formattedText}</span> `;
                 }
                 textBlock.appendChild(span);
             });

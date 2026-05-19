@@ -328,6 +328,7 @@ body {
 
 /* Custom Context Menu */
 .custom-context-menu {
+    display: none;
     position: fixed;
     background: var(--surface);
     border: 1px solid var(--border);
