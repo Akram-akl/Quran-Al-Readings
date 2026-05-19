@@ -126,11 +126,12 @@ const UI = {
         const sortedAyahs = ayahs.sort((a, b) => a.aya_no - b.aya_no);
         this.currentPageAyahs = sortedAyahs; 
 
-        // 1. تحديد أقصى سطر في الصفحة (عادة 15)
-        let maxLine = 15;
+        // 1. تحديد أقصى سطر في الصفحة ديناميكياً
+        let maxLine = 0;
         sortedAyahs.forEach(a => {
             if (a.line_end > maxLine) maxLine = a.line_end;
         });
+        if (maxLine === 0) maxLine = 15;
 
         // 2. إنشاء حاويات السطور بدقة
         const lineElements = {};
