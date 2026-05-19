@@ -85,6 +85,36 @@ const UI = {
         if (input) input.value = page;
     },
 
+    splitAyahText(ayahText, lastWordOfPart1, firstWordOfPart2, returnPart) {
+        if (!ayahText) return "";
+        const words = ayahText.trim().split(/\s+/);
+        
+        // مساعدة لإزالة التشكيل بهدف المقارنة فقط
+        const normalize = (w) => w.replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656]/g, "")
+                                  .replace(/[أإآٱ]/g, "ا")
+                                  .replace(/ة/g, "ه")
+                                  .replace(/ى/g, "ي");
+                                  
+        const normLast = normalize(lastWordOfPart1);
+        const normNext = normalize(firstWordOfPart2);
+        
+        let splitIndex = -1;
+        for (let i = 0; i < words.length - 1; i++) {
+            if (normalize(words[i]) === normLast && normalize(words[i + 1]) === normNext) {
+                splitIndex = i;
+                break;
+            }
+        }
+        
+        if (splitIndex === -1) return ayahText; // في حالة عدم التطابق، نعيد النص كاملاً
+        
+        if (returnPart === 1) {
+            return words.slice(0, splitIndex + 1).join(" ");
+        } else {
+            return words.slice(splitIndex + 1).join(" ");
+        }
+    },
+
     renderAyahs(ayahs, reading) {
         const area = document.getElementById('readingArea');
         if (!area || !ayahs.length) return;
@@ -150,6 +180,26 @@ const UI = {
             groupAyahs.forEach(a => {
                 const isB = this._isBismillah(a);
                 const span = document.createElement('span');
+                
+                let finalAyahText = a.aya_text;
+                
+                // معالجة القص للآيات الممتدة بين صفحتين (إذا توفرت القاعدة للرواية الحالية)
+                if (typeof a.page === 'string' && a.page.includes('-')) {
+                    const [startPage, endPage] = a.page.split('-').map(Number);
+                    const baseReading = reading.replace(/Hussary|Minshawi|Jazairi|Dossari|Huthaify/g, '');
+                    const splitRules = typeof SPANNING_AYAH_SPLITS !== 'undefined' ? SPANNING_AYAH_SPLITS[baseReading] : null;
+                    const ruleKey = `${a.sura_no}:${a.aya_no}`;
+                    
+                    if (splitRules && splitRules[ruleKey]) {
+                        const rule = splitRules[ruleKey];
+                        if (App.currentPage === startPage) {
+                            finalAyahText = this.splitAyahText(finalAyahText, rule.lastWord, rule.nextWord, 1);
+                        } else if (App.currentPage === endPage) {
+                            finalAyahText = this.splitAyahText(finalAyahText, rule.lastWord, rule.nextWord, 2);
+                        }
+                    }
+                }
+
                 span.className = isB ? 'bismillah' : 'ayah-container';
                 
                 // وضع البسملة المدمجة بالآيات في سطر لحالها للتنسيق
@@ -169,9 +219,9 @@ const UI = {
                         } else {
                             AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no});
                         }
-                    ">${a.aya_text}</span> `;
+                    ">${finalAyahText}</span> `;
                 } else {
-                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${a.aya_text}</span> `;
+                    span.innerHTML = `<span class="ayah-text" onclick="AudioPlayer.playAyah(${a.aya_no}, ${a.sura_no})">${finalAyahText}</span> `;
                 }
                 textBlock.appendChild(span);
             });

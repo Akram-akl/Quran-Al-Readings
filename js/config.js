@@ -12,6 +12,37 @@ const IS_LOCAL = (
 
 const ARCHIVE_BASE = 'https://archive.org/download/';
 
+// قواعد القص اليدوي للآيات الممتدة عبر صفحتين لتفادي التكرار
+const SPANNING_AYAH_SPLITS = {
+    "Warsh": {
+        "4:44": { lastWord: "السبيل", nextWord: "والله" },
+        "20:86": { lastWord: "السامرى", nextWord: "فاخرج" },
+        "24:36": { lastWord: "والاصال", nextWord: "رجال" },
+        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+    },
+    "Qaloun": {
+        "4:44": { lastWord: "السبيل", nextWord: "والله" },
+        "20:86": { lastWord: "السامرى", nextWord: "فاخرج" },
+        "24:36": { lastWord: "والاصال", nextWord: "رجال" },
+        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+    },
+    "Duri": {
+        "2:218": { lastWord: "تتفكرون", nextWord: "في" },
+        "4:44": { lastWord: "السبيل", nextWord: "والله" },
+        "14:27": { lastWord: "السماء", nextWord: "توتى" },
+        "24:36": { lastWord: "والاصال", nextWord: "رجال" },
+        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+    },
+    "Susi": {
+        "2:218": { lastWord: "تتفكرون", nextWord: "في" },
+        "4:44": { lastWord: "السبيل", nextWord: "والله" },
+        "14:27": { lastWord: "السماء", nextWord: "توتى" },
+        "24:36": { lastWord: "والاصال", nextWord: "رجال" },
+        "24:42": { lastWord: "بالابصار", nextWord: "يقلب" }
+    }
+};
+
+
 const READINGS_CONFIG = {
     Hafs: {
         name: 'حفص عن عاصم (عبدالباسط)',
