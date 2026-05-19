@@ -197,11 +197,6 @@ const UI = {
                 }
             }
 
-            // إزالة التوسيط الإجباري (التمدد) من السطر الأخير للسورة لكي لا تتباعد الكلمات بشكل قبيح
-            if (lineElements[lastAyah.line_end]) {
-                lineElements[lastAyah.line_end].style.textAlignLast = 'right';
-            }
-
             // 4. توزيع الآيات على السطور
             groupAyahs.forEach(a => {
                 const isB = this._isBismillah(a);
@@ -230,7 +225,7 @@ const UI = {
                     if (lineElements[startLine]) lineElements[startLine].appendChild(span);
                 } else {
                     // تقسيم ذكي للكلمات لتوزيعها على السطور
-                    const words = text.trim().split(/s+/);
+                    const words = text.trim().split(/\s+/);
                     const spanned = endLine - startLine + 1;
                     const wordsPerLine = Math.ceil(words.length / spanned);
 
@@ -248,10 +243,44 @@ const UI = {
             isFirstSurahOnPage = false;
         }
 
+        // تطبيق خوارزمية التوسيط والمحاذاة الانسيابية لكل سطر بشكل ديناميكي
+        for (let i = 1; i <= maxLine; i++) {
+            const lineDiv = lineElements[i];
+            if (!lineDiv) continue;
+
+            const textContent = lineDiv.textContent.trim();
+            const words = textContent.split(/\s+/).filter(w => w.length > 0);
+
+            if (words.length === 0) {
+                lineDiv.style.textAlign = 'center';
+                lineDiv.style.textAlignLast = 'center';
+                continue;
+            }
+
+            const hasHeaderOrBismillah = lineDiv.querySelector('.surah-header-inline') || lineDiv.querySelector('.bismillah') || lineDiv.querySelector('.istiazah');
+            
+            // تحديد ما إذا كان السطر هو نهاية سورة
+            let isLastLineOfSurah = (i === maxLine);
+            if (!isLastLineOfSurah && lineElements[i + 1]) {
+                const nextLineHasHeader = lineElements[i + 1].querySelector('.surah-header-inline') || lineElements[i + 1].querySelector('.bismillah') || lineElements[i + 1].querySelector('.istiazah');
+                if (nextLineHasHeader) {
+                    isLastLineOfSurah = true;
+                }
+            }
+
+            // إذا كان السطر قصيراً جداً (4 كلمات أو أقل)، أو يحتوي ترويسة/بسملة، أو هو السطر الأخير للسورة -> يتم توسيطه انسيابياً
+            if (hasHeaderOrBismillah || isLastLineOfSurah || words.length <= 4) {
+                lineDiv.style.textAlign = 'center';
+                lineDiv.style.textAlignLast = 'center';
+            } else {
+                lineDiv.style.textAlign = 'justify';
+                lineDiv.style.textAlignLast = 'justify';
+            }
+        }
+
         const pageContainer = document.createElement('div');
         pageContainer.className = 'quran-text-block mushaf-page-container';
         pageContainer.style.fontFamily = config.fontFamily;
-        
         pageContainer.style.textAlign = 'right';
 
         for(let i = 1; i <= maxLine; i++) {

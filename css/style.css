@@ -87,6 +87,15 @@ body {
     word-spacing: 2px;
 }
 
+.quran-line {
+    width: 100%;
+    display: block;
+    line-height: 2.3;
+    font-size: 2.1rem;
+    min-height: 2.5rem;
+    margin: 4px 0;
+}
+
 .ayah-container {
     display: inline;
     font-size: 2.1rem; /* تصغير طفيف لتناسب السطر */
