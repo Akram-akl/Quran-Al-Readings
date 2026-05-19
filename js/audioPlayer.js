@@ -478,13 +478,39 @@ const AudioPlayer = {
         }
     },
 
-    next() {
+    async next() {
         if (!this.currentAyah) return;
         if (this.isRepeat) {
             this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no);
         } else {
             const maxAyahInGroup = Math.max(...this.groupedAyahs);
-            this.playAyah(maxAyahInGroup + 1, this.currentAyah.sura_no);
+            const nextAyahNo = maxAyahInGroup + 1;
+            const suraNo = this.currentAyah.sura_no;
+            
+            // البحث عن الآية التالية في بيانات القراءة الكاملة
+            const allData = DataHandler.cache[App.currentReading];
+            if (allData) {
+                let nextAyah = allData.find(a => a.aya_no === nextAyahNo && a.sura_no === suraNo);
+                
+                // إذا لم توجد آية تالية في نفس السورة، انتقل للآية الأولى من السورة التالية
+                if (!nextAyah) {
+                    nextAyah = allData.find(a => a.sura_no === suraNo + 1 && a.aya_no === 1);
+                }
+                
+                if (nextAyah) {
+                    // إذا كانت الآية التالية في صفحة مختلفة، انتقل للصفحة أولاً
+                    if (parseInt(nextAyah.page) !== App.currentPage) {
+                        await App.loadPage(parseInt(nextAyah.page));
+                    }
+                    this.playAyah(nextAyah.aya_no, nextAyah.sura_no);
+                } else {
+                    // انتهى القرآن الكريم
+                    this.stop();
+                    this._updateBtn(false);
+                }
+            } else {
+                this.playAyah(nextAyahNo, suraNo);
+            }
         }
     },
 

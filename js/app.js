@@ -40,7 +40,7 @@ const App = {
         const t = document.getElementById('testingModeBtn');
         const d = document.getElementById('downloadOpenBtn');
 
-        if (r) r.onchange = (e) => { this.currentReading = e.target.value; this.loadPage(this.currentPage); };
+        if (r) r.onchange = (e) => { this.currentReading = e.target.value; this.loadPage(this.currentPage, false, true); };
         if (s) s.onchange = (e) => { 
             const surah = SURAHS.find(x => x.number == e.target.value);
             if (surah) this.loadPage(surah.startPage);
@@ -50,11 +50,12 @@ const App = {
         if (d) d.onclick = () => document.getElementById('downloadModal').classList.add('active');
     },
 
-    async loadPage(page, keepPlaylist = false) {
+    async loadPage(page, keepPlaylist = false, forceStop = false) {
         if (page < 1 || page > 604) return;
         this.currentPage = page;
         UI.showLoader();
-        if (typeof AudioPlayer !== 'undefined' && !keepPlaylist) AudioPlayer.stop();
+        // إيقاف الصوت فقط عند تغيير الرواية، وليس عند تصفح الصفحات
+        if (typeof AudioPlayer !== 'undefined' && forceStop) AudioPlayer.stop();
 
         try {
             const ayahs = await DataHandler.getPageAyahs(this.currentReading, page);

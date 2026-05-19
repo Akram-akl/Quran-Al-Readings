@@ -142,15 +142,20 @@ const Search = {
             card.appendChild(metaHeader);
 
             // عرض الصيغ المتوفرة جنباً إلى جنب بداخل نفس الكارت
-            item.variants.forEach(v => {
+            item.variants.forEach((v, vIdx) => {
                 const variantDiv = document.createElement('div');
                 variantDiv.className = 'search-variant';
                 variantDiv.style.display = 'flex';
                 variantDiv.style.alignItems = 'center';
                 variantDiv.style.justifyContent = 'space-between';
                 variantDiv.style.gap = '15px';
+                variantDiv.style.paddingBottom = '12px';
                 variantDiv.style.marginBottom = '12px';
                 variantDiv.style.direction = 'rtl';
+                // إضافة فاصل مرئي بين كل آية والتي تليها
+                if (vIdx < item.variants.length - 1) {
+                    variantDiv.style.borderBottom = '1px solid var(--border)';
+                }
 
                 variantDiv.innerHTML = `
                     <span style="font-size: 0.8rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; min-width: 160px; text-align: center;">

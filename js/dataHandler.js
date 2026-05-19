@@ -28,5 +28,20 @@ const DataHandler = {
         const data = await this.loadReading(readingKey);
         if (!data) return [];
         return data.filter(ayah => parseInt(ayah.page) === parseInt(pageNo));
+    },
+
+    getSurahs(data) {
+        if (!data || data.length === 0) return [];
+        const surahMap = {};
+        data.forEach(a => {
+            if (a.aya_no === 0) return;
+            if (!surahMap[a.sura_no]) {
+                surahMap[a.sura_no] = { number: a.sura_no, nameAr: a.sura_name_ar, ayahCount: 0 };
+            }
+            if (a.aya_no > surahMap[a.sura_no].ayahCount) {
+                surahMap[a.sura_no].ayahCount = a.aya_no;
+            }
+        });
+        return Object.values(surahMap).sort((a, b) => a.number - b.number);
     }
 };
