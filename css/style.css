@@ -80,7 +80,7 @@ body {
 
 .quran-text-block {
     width: 100%;
-    max-width: 800px;
+    max-width: 950px;
     direction: rtl;
     line-height: 2.1; /* زيادة طفيفة لدعم الحركات ومنع تداخل السطور */
     text-align: justify;
