@@ -321,7 +321,8 @@ const TagsAndContext = {
         const footnotes = [];
         let html = text.replace(/\n/g, '<br>');
         
-        html = html.replace(/(\([^()]*أخرجه[^()]*\)|\[[^\[\]]*انظر[^\[\]]*\])/g, (match) => {
+        // Match (أخرجه...) or [انظر...] and similar references
+        html = html.replace(/(\([^()]*?(أخرجه|انظر)[^()]*?\)|\[[^\[\]]*?(أخرجه|انظر)[^\[\]]*?\])/g, (match) => {
             footnotes.push(match);
             return `<sup style="color:var(--primary);cursor:pointer;font-weight:bold;" title="${match}">[${footnotes.length}]</sup>`;
         });
@@ -338,8 +339,9 @@ const TagsAndContext = {
 
     async showWordMeaningAndEerab(suraNo, ayaNo, wordNo) {
         const wordText = this.selectedWord || '';
-        const headerHtml = wordText ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.5rem; text-align: center; color: var(--primary);">"${wordText}"</blockquote>` : '';
+        const headerHtml = wordText ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.5rem; text-align: center; color: var(--primary); font-family: 'Uthmanic', Arial, sans-serif;">"${wordText}"</blockquote>` : '';
         const loaderHtml = headerHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب المعلومات...</div>';
+
         
         this.openApiModal('معنى وإعراب الكلمة', loaderHtml, true);
         
@@ -357,7 +359,7 @@ const TagsAndContext = {
 
         let tabsHtml = `<div class="api-tabs" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px;">`;
         tabs.forEach((t, i) => {
-            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}')">${t.label}</button>`;
+            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}', this)">${t.label}</button>`;
         });
         tabsHtml += `</div>`;
         
@@ -373,7 +375,7 @@ const TagsAndContext = {
 
     async showAyahTafsir(suraNo, ayaNo) {
         const ayahObj = this.selectedAyah;
-        const ayahTextHtml = ayahObj ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.4rem; line-height: 2;">${ayahObj.aya_text} <span style="color:#064e3b">﴿${ayahObj.aya_no}﴾</span></blockquote>` : '';
+        const ayahTextHtml = ayahObj ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.5rem; line-height: 2; font-family: 'Uthmanic', Arial, sans-serif;">${ayahObj.aya_text} <span style="color:#064e3b; font-family: sans-serif;">﴿${ayahObj.aya_no}﴾</span></blockquote>` : '';
         const loaderHtml = ayahTextHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب التفاسير...</div>';
         
         this.openApiModal(`تفاسير الآية ${ayaNo}`, loaderHtml, true);
@@ -419,7 +421,7 @@ const TagsAndContext = {
 
         let tabsHtml = `<div class="api-tabs" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px; white-space:nowrap;">`;
         tabs.forEach((t, i) => {
-            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}')">${t.label}</button>`;
+            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}', this)">${t.label}</button>`;
         });
         tabsHtml += `</div>`;
         

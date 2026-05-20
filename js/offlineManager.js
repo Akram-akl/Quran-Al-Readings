@@ -111,7 +111,7 @@ const OfflineManager = {
         
         // تجهيز الروابط
         for (const sNo of surahsToDownload) {
-            const ayahs = data.filter(a => a.sura_no === sNo && a.aya_no > 0);
+            const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
             for (const ayah of ayahs) {
                 // Audio URL
                 const audioUrl = AudioPlayer.getAudioPath(this.currentReading, ayah);

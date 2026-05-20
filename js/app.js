@@ -154,13 +154,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-window.switchApiTab = function(tabId) {
+window.switchApiTab = function(tabId, btnElement) {
     document.querySelectorAll('.api-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.api-tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.api-tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none';
+    });
     
-    const btn = document.querySelector(`.api-tab-btn[onclick="switchApiTab('${tabId}')"]`);
-    if (btn) btn.classList.add('active');
+    if (btnElement) {
+        btnElement.classList.add('active');
+    } else {
+        const btn = document.querySelector(`.api-tab-btn[onclick*="${tabId}"]`);
+        if (btn) btn.classList.add('active');
+    }
     
-    const tab = document.getElementById(`tab-${tabId}`);
-    if (tab) tab.classList.add('active');
+    let tab = document.getElementById(tabId) || document.getElementById(`tab-${tabId}`);
+    if (tab) {
+        tab.classList.add('active');
+        tab.style.display = 'block';
+    }
 };
+
