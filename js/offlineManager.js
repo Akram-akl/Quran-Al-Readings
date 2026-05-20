@@ -27,6 +27,23 @@ const OfflineManager = {
         const stopBtn = document.getElementById('offlineStopBtn');
         if (stopBtn) stopBtn.addEventListener('click', () => this.stopDownload());
         
+        const rSel = document.getElementById('offlineReadingSelect');
+        if (rSel) {
+            rSel.addEventListener('change', () => {
+                this.currentReading = rSel.value;
+                this.populateSurahs();
+                this.updateDownloadedList();
+            });
+        }
+        
+        const confirmYes = document.getElementById('offlineConfirmYesBtn');
+        if (confirmYes) confirmYes.addEventListener('click', () => this.executeDownloadAll());
+        
+        const confirmNo = document.getElementById('offlineConfirmNoBtn');
+        if (confirmNo) confirmNo.addEventListener('click', () => {
+            document.getElementById('offlineConfirmBox').style.display = 'none';
+        });
+
         const modal = document.getElementById('offlineLibModal');
         if (modal) {
             const closeBtn = modal.querySelector('.close-modal');
@@ -38,6 +55,12 @@ const OfflineManager = {
         const modal = document.getElementById('offlineLibModal');
         if (modal) modal.classList.add('active');
         this.currentReading = App.currentReading;
+        const rSel = document.getElementById('offlineReadingSelect');
+        if (rSel) rSel.value = this.currentReading;
+        
+        document.getElementById('offlineAlertBox').style.display = 'none';
+        document.getElementById('offlineConfirmBox').style.display = 'none';
+        
         await this.populateSurahs();
         await this.updateDownloadedList();
     },
@@ -94,20 +117,36 @@ const OfflineManager = {
     async startDownload(allSurahs) {
         if (this.isDownloading) return;
         
-        let surahsToDownload = [];
+        document.getElementById('offlineAlertBox').style.display = 'none';
+
+        if (allSurahs) {
+            document.getElementById('offlineConfirmBox').style.display = 'block';
+            return;
+        }
+
+        const sel = document.getElementById('offlineSurahSelect');
+        if (!sel) return;
+        const surahsToDownload = [parseInt(sel.value)];
+        
+        await this._startProcess(surahsToDownload);
+    },
+    
+    async executeDownloadAll() {
+        document.getElementById('offlineConfirmBox').style.display = 'none';
+        let data = DataHandler.cache[this.currentReading];
+        if (!data) data = await DataHandler.loadReading(this.currentReading);
+        if (!data) return;
+        const surahsToDownload = DataHandler.getSurahs(data).map(s => s.number);
+        await this._startProcess(surahsToDownload);
+    },
+
+    async _startProcess(surahsToDownload) {
         let data = DataHandler.cache[this.currentReading];
         if (!data) data = await DataHandler.loadReading(this.currentReading);
         if (!data) return;
 
-        if (allSurahs) {
-            if (!confirm('تنبيه: تحميل القرآن كاملاً سيستغرق وقتاً طويلاً ومساحة تخزين كبيرة (قرابة 1 جيجابايت). هل تود المتابعة؟')) return;
-            surahsToDownload = DataHandler.getSurahs(data).map(s => s.number);
-        } else {
-            const sel = document.getElementById('offlineSurahSelect');
-            if (sel) surahsToDownload = [parseInt(sel.value)];
-        }
-
         this.downloadQueue = [];
+        this._downloadingSurahs = surahsToDownload;
         
         // تجهيز الروابط
         for (const sNo of surahsToDownload) {
@@ -141,7 +180,11 @@ const OfflineManager = {
 
     async processQueue() {
         if (!('caches' in window)) {
-            alert('عذراً، متصفحك لا يدعم خاصية العمل بدون إنترنت.');
+            const alertBox = document.getElementById('offlineAlertBox');
+            if (alertBox) {
+                alertBox.textContent = 'عذراً، متصفحك لا يدعم خاصية العمل بدون إنترنت.';
+                alertBox.style.display = 'block';
+            }
             this.stopDownload();
             return;
         }
@@ -181,16 +224,21 @@ const OfflineManager = {
             const downloaded = JSON.parse(localStorage.getItem('offlineSurahs') || '{}');
             if (!downloaded[this.currentReading]) downloaded[this.currentReading] = [];
             
-            // If it finished gracefully, the last sura requested (or all requested) are done.
-            // A more robust way is tracking which surahs were completely downloaded, but for now we mark the requested ones.
-            if (!document.getElementById('offlineSurahSelect')) return; // Ensure elements exist
-            const suraNo = parseInt(document.getElementById('offlineSurahSelect').value);
-            if (!downloaded[this.currentReading].includes(suraNo)) {
-                downloaded[this.currentReading].push(suraNo);
-                localStorage.setItem('offlineSurahs', JSON.stringify(downloaded));
-            }
+            this._downloadingSurahs.forEach(suraNo => {
+                if (!downloaded[this.currentReading].includes(suraNo)) {
+                    downloaded[this.currentReading].push(suraNo);
+                }
+            });
+            localStorage.setItem('offlineSurahs', JSON.stringify(downloaded));
             
-            alert('تم تحميل البيانات بنجاح! يمكنك الآن الاستماع والقراءة بدون إنترنت.');
+            const alertBox = document.getElementById('offlineAlertBox');
+            if (alertBox) {
+                alertBox.textContent = 'تم تحميل البيانات بنجاح! يمكنك الآن الاستماع والقراءة بدون إنترنت.';
+                alertBox.style.background = '#d4edda';
+                alertBox.style.color = '#155724';
+                alertBox.style.border = '1px solid #c3e6cb';
+                alertBox.style.display = 'block';
+            }
             this.updateUIStatus('finish');
             this.updateDownloadedList();
         }

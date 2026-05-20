@@ -279,11 +279,30 @@
             <p class="modal-sub">قم بتحميل السور لتتمكن من تشغيل الصوت وعرض التفاسير بدون الحاجة للاتصال بالإنترنت.</p>
             
             <div class="form-group mt-3">
+                <label>اختر القراءة للتحميل</label>
+                <select id="offlineReadingSelect" class="form-control mb-2">
+                    <option value="Hafs">حفص عن عاصم</option>
+                    <option value="Warsh">ورش عن نافع</option>
+                    <option value="Qaloun">قالون عن نافع</option>
+                    <option value="Shubah">شعبة عن عاصم</option>
+                    <option value="Douri">الدوري عن أبي عمرو</option>
+                    <option value="Sousi">السوسي عن أبي عمرو</option>
+                </select>
+                
                 <label>اختر السورة للتحميل</label>
                 <select id="offlineSurahSelect" class="form-control mb-2"></select>
                 <div class="d-flex gap-2">
                     <button id="offlineDlSurahBtn" class="btn btn-primary flex-grow-1"><i class="fas fa-download"></i> تحميل السورة</button>
                     <button id="offlineDlAllBtn" class="btn btn-warning flex-grow-1"><i class="fas fa-download"></i> تحميل الكل</button>
+                </div>
+                <div id="offlineConfirmBox" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; padding:10px; border-radius:5px; margin-top:10px;">
+                    <p style="margin:0 0 10px 0; font-size:0.9rem;">تنبيه: تحميل القرآن كاملاً سيستغرق وقتاً طويلاً ومساحة تخزين كبيرة (قرابة 1 جيجابايت). هل تود المتابعة؟</p>
+                    <div class="d-flex gap-2">
+                        <button id="offlineConfirmYesBtn" class="btn btn-success flex-grow-1 btn-sm">نعم، تابع التحميل</button>
+                        <button id="offlineConfirmNoBtn" class="btn btn-secondary flex-grow-1 btn-sm">إلغاء</button>
+                    </div>
+                </div>
+                <div id="offlineAlertBox" style="display:none; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; padding:10px; border-radius:5px; margin-top:10px; font-size:0.9rem;">
                 </div>
                 <div class="d-flex gap-2 mt-2">
                     <button id="offlinePauseBtn" class="btn btn-secondary flex-grow-1" style="display:none;"><i class="fas fa-pause"></i> إيقاف مؤقت</button>
