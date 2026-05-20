@@ -77,7 +77,10 @@
         <main class="main-body">
             <header class="header">
                 <button id="openSidebarBtn" class="btn-icon mobile-only" title="فتح"><i class="fas fa-bars"></i></button>
-                <h1 id="currentSurahTitle">سورة الفاتحة</h1>
+                <div class="header-title-wrapper" style="display: flex; align-items: center; gap: 10px;">
+                    <h1 id="currentSurahTitle">سورة الفاتحة</h1>
+                    <button id="surahInfoBtn" class="btn-icon" style="font-size: 1.2rem; color: var(--primary);" title="معلومات السورة"><i class="fas fa-info-circle"></i></button>
+                </div>
             </header>
             <div class="reading-container" id="readingArea"></div>
             <nav class="page-navigation">
@@ -242,9 +245,27 @@
 
     <!-- القائمة المنبثقة الذكية (Context Menu) -->
     <div id="ayahContextMenu" class="custom-context-menu">
+        <div class="context-item" id="ctxWordQeraat"><i class="fas fa-book-reader"></i> اختلافات القراءات للكلمة</div>
+        <div class="context-item" id="ctxWordMeaning"><i class="fas fa-language"></i> إعراب ومعنى الكلمة</div>
+        <div class="context-item" id="ctxAyahTafsir"><i class="fas fa-book-open"></i> تفاسير ومعلومات الآية</div>
+        <hr style="margin: 5px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
         <div class="context-item" id="ctxPlay"><i class="fas fa-play"></i> استماع</div>
         <div class="context-item" id="ctxSearch"><i class="fas fa-search"></i> بحث المتشابهات</div>
         <div class="context-item" id="ctxTag"><i class="fas fa-tag"></i> تحديد علامة خاصة</div>
+    </div>
+
+    <!-- نافذة عرض معلومات API (التفاسير، القراءات، معلومات السورة) -->
+    <div id="apiInfoModal" class="modal">
+        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <span class="close-modal"><i class="fas fa-times"></i></span>
+            <h2 id="apiInfoTitle" style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;">معلومات</h2>
+            <div id="apiInfoWarning" style="display:none; background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #ffeeba;">
+                <i class="fas fa-exclamation-triangle"></i> التفسير المعروض مبني على رواية "حفص عن عاصم".
+            </div>
+            <div id="apiInfoContent" style="line-height: 1.8; font-size: 1.1rem; color: var(--text);">
+                جاري التحميل...
+            </div>
+        </div>
     </div>
 
     <!-- منطقة مخفية لرسم الصورة قبل تحميلها -->
@@ -257,6 +278,7 @@
     <script src="js/supabase.js"></script>
     <script src="js/audioMap.js"></script>
     <script src="js/audioPlayer.js?v=2.9"></script>
+    <script src="js/api.js?v=2.9"></script>
     <script src="js/search.js?v=2.9"></script>
     <script src="js/download.js?v=2.9"></script>
     <script src="js/listen.js?v=2.9"></script>

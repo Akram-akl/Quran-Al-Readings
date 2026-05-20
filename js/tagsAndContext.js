@@ -68,15 +68,22 @@ const TagsAndContext = {
         const ctxPlay = document.getElementById('ctxPlay');
         const ctxSearch = document.getElementById('ctxSearch');
         const ctxTag = document.getElementById('ctxTag');
+        const ctxWordQeraat = document.getElementById('ctxWordQeraat');
+        const ctxWordMeaning = document.getElementById('ctxWordMeaning');
+        const ctxAyahTafsir = document.getElementById('ctxAyahTafsir');
 
         // إعادة عرض الأزرار كالعادة
         if (ctxPlay) ctxPlay.style.display = 'flex';
         if (ctxSearch) ctxSearch.style.display = 'flex';
         if (ctxTag) ctxTag.style.display = 'flex';
+        if (ctxWordQeraat) ctxWordQeraat.style.display = 'none';
+        if (ctxWordMeaning) ctxWordMeaning.style.display = 'none';
+        if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'none';
 
         if (istiazahEl) {
             this.selectedAyah = null;
             this.selectedWord = "";
+            this.selectedWordNo = null;
             this.contextType = "istiazah";
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
@@ -84,6 +91,7 @@ const TagsAndContext = {
         } else if (bismillahEl) {
             this.selectedAyah = null;
             this.selectedWord = "";
+            this.selectedWordNo = null;
             this.contextType = "bismillah";
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
@@ -97,10 +105,19 @@ const TagsAndContext = {
 
             this.selectedAyah = ayah;
             this.selectedWord = wordEl ? wordEl.textContent.trim().replace(/[ۖۚۛۗۘ]/g, "") : "";
+            this.selectedWordNo = wordEl ? parseInt(wordEl.dataset.wordIdx) : null;
             this.contextType = "ayah";
 
             if (ctxPlay) ctxPlay.innerHTML = `<i class="fas fa-play"></i> استماع للآية ${ayaNo}`;
             if (!wordEl && ctxSearch) ctxSearch.style.display = 'none';
+            
+            // API Features
+            if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'flex';
+            if (wordEl) {
+                if (ctxWordQeraat) ctxWordQeraat.style.display = 'flex';
+                const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
+                if (isHafs && ctxWordMeaning) ctxWordMeaning.style.display = 'flex';
+            }
         } else {
             return;
         }
@@ -185,6 +202,140 @@ const TagsAndContext = {
                 if (modal) modal.classList.remove('active');
             };
         }
+
+        // إغلاق نافذة API
+        const modal = document.getElementById('apiInfoModal');
+        if (modal) {
+            const closeBtn = modal.querySelector('.close-modal');
+            if (closeBtn) {
+                closeBtn.onclick = () => modal.classList.remove('active');
+            }
+        }
+
+        // أزرار API
+        const ctxWordQeraat = document.getElementById('ctxWordQeraat');
+        if (ctxWordQeraat) {
+            ctxWordQeraat.onclick = () => {
+                this._hideMenu();
+                if (this.selectedAyah && this.selectedWordNo) {
+                    this.showWordQeraat(this.selectedAyah.sura_no, this.selectedAyah.aya_no, this.selectedWordNo);
+                }
+            };
+        }
+
+        const ctxWordMeaning = document.getElementById('ctxWordMeaning');
+        if (ctxWordMeaning) {
+            ctxWordMeaning.onclick = () => {
+                this._hideMenu();
+                if (this.selectedAyah && this.selectedWordNo) {
+                    this.showWordMeaningAndEerab(this.selectedAyah.sura_no, this.selectedAyah.aya_no, this.selectedWordNo);
+                }
+            };
+        }
+
+        const ctxAyahTafsir = document.getElementById('ctxAyahTafsir');
+        if (ctxAyahTafsir) {
+            ctxAyahTafsir.onclick = () => {
+                this._hideMenu();
+                if (this.selectedAyah) {
+                    this.showAyahTafsir(this.selectedAyah.sura_no, this.selectedAyah.aya_no);
+                }
+            };
+        }
+    },
+
+    openApiModal(title, htmlContent, showWarning = false) {
+        const modal = document.getElementById('apiInfoModal');
+        const titleEl = document.getElementById('apiInfoTitle');
+        const contentEl = document.getElementById('apiInfoContent');
+        const warningEl = document.getElementById('apiInfoWarning');
+        
+        if (!modal || !titleEl || !contentEl) return;
+
+        titleEl.textContent = title;
+        contentEl.innerHTML = htmlContent;
+        if (warningEl) {
+            warningEl.style.display = showWarning ? 'block' : 'none';
+        }
+
+        modal.classList.add('active');
+    },
+
+    async showWordQeraat(suraNo, ayaNo, wordNo) {
+        this.openApiModal('اختلافات القراءات للكلمة', '<div class="loader">جاري جلب القراءات...</div>');
+        const data = await SurahAPI.getWordQeraat(suraNo, ayaNo, wordNo);
+        if (data.error || (data.data && data.data.length === 0)) {
+            this.openApiModal('اختلافات القراءات للكلمة', '<p>لم يرد في هذه الكلمة خلاف بين القراء.</p>');
+            return;
+        }
+        
+        const qeraatHtml = data.data.map(item => `
+            <div style="margin-bottom: 15px; padding: 10px; background: rgba(6,78,59,0.05); border-radius: 8px; border-right: 4px solid var(--primary);">
+                <strong style="color: var(--primary);">${item.rawi_name || item.qaree_name}:</strong>
+                <p style="margin: 5px 0 0 0;">${item.qeraa_desc}</p>
+            </div>
+        `).join('');
+        this.openApiModal('اختلافات القراءات للكلمة', qeraatHtml);
+    },
+
+    async showWordMeaningAndEerab(suraNo, ayaNo, wordNo) {
+        this.openApiModal('معنى وإعراب الكلمة', '<div class="loader">جاري جلب المعلومات...</div>', true);
+        const [meaning, eerab, tasreef] = await Promise.all([
+            SurahAPI.getWordMeaningOld(suraNo, ayaNo, wordNo),
+            SurahAPI.getWordEerab(suraNo, ayaNo, wordNo),
+            SurahAPI.getWordTasreef(suraNo, ayaNo, wordNo)
+        ]);
+
+        let html = '';
+        if (meaning.data) html += `<div style="margin-bottom:15px"><strong>المعنى:</strong><p>${meaning.data}</p></div>`;
+        if (eerab.data) html += `<div style="margin-bottom:15px"><strong>الإعراب:</strong><p>${eerab.data}</p></div>`;
+        if (tasreef.data) html += `<div style="margin-bottom:15px"><strong>التصريف:</strong><p>${tasreef.data}</p></div>`;
+        
+        if (!html) html = '<p>المعلومات غير متوفرة لهذه الكلمة.</p>';
+        this.openApiModal('معنى وإعراب الكلمة', html, true);
+    },
+
+    async showAyahTafsir(suraNo, ayaNo) {
+        this.openApiModal('تفاسير ومعلومات الآية', '<div class="loader">جاري جلب التفاسير...</div>', true);
+        
+        const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
+        
+        const promises = [SurahAPI.getAyaTafsirMokhtasar(suraNo, ayaNo)];
+        if (isHafs) {
+            promises.push(SurahAPI.getAyaTajweed(suraNo, ayaNo));
+            promises.push(SurahAPI.getAyaEerab(suraNo, ayaNo));
+        }
+
+        const results = await Promise.all(promises);
+        const tafsir = results[0];
+        const tajweed = isHafs ? results[1] : null;
+        const eerab = isHafs ? results[2] : null;
+
+        let html = '';
+        if (tafsir.data && tafsir.data.text) {
+            html += `<div style="margin-bottom:20px"><h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-book"></i> التفسير المختصر:</h3><p>${tafsir.data.text}</p></div>`;
+        } else {
+            html += '<p>التفسير غير متوفر لهذه الآية.</p>';
+        }
+
+        if (tajweed && tajweed.data) {
+            const tjwd = Array.isArray(tajweed.data) ? tajweed.data.map(t => t.text).join('<br>') : tajweed.data.text;
+            if (tjwd) {
+                html += `<div style="margin-bottom:20px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+                            <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-microphone"></i> أحكام التجويد:</h3>
+                            <p>${tjwd}</p>
+                         </div>`;
+            }
+        }
+        
+        if (eerab && eerab.data) {
+            html += `<div style="margin-bottom:20px">
+                        <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-pen-nib"></i> إعراب الآية:</h3>
+                        <p>${eerab.data}</p>
+                     </div>`;
+        }
+
+        this.openApiModal(`الآية رقم ${ayaNo}`, html, true);
     },
 
     populateTagModalDropdown() {

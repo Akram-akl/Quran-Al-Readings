@@ -208,7 +208,7 @@ const UI = {
                 // تغليف كل كلمة قرآنية بـ span لتسهيل التفاعل الفردي (البحث والعلامات)
                 let formattedText = finalAyahText;
                 if (!isB) {
-                    formattedText = finalAyahText.split(/\s+/).map(w => `<span class="q_word">${w}</span>`).join(' ');
+                    formattedText = finalAyahText.split(/\s+/).map((w, i) => `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`).join(' ');
                 }
 
                 // تطبيق وضع الاختبار التفاعلي (النقرة الأولى للكشف، الثانية للتشغيل)
