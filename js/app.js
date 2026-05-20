@@ -56,21 +56,33 @@ const App = {
                     TagsAndContext.openApiModal('معلومات السورة', '<div class="loader">جاري جلب المعلومات...</div>');
                     const info = await SurahAPI.getSuraInfo(this.currentSurah);
                     
-                    let html = '';
+                    let html = '<div class="api-tabs">';
+                    let contentHtml = '';
+                    let isFirst = true;
+
                     if (info.asmaa && info.asmaa.content) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${info.asmaa.content.replace(/\n/g, '<br>')}</p></div>`;
+                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('asmaa')">أسماء السورة</button>`;
+                        contentHtml += `<div id="tab-asmaa" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${info.asmaa.content.replace(/\n/g, '<br>')}</p></div>`;
+                        isFirst = false;
                     }
                     if (info.fadael && info.fadael.content) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${info.fadael.content.replace(/\n/g, '<br>')}</p></div>`;
+                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('fadael')">الفضائل</button>`;
+                        contentHtml += `<div id="tab-fadael" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${info.fadael.content.replace(/\n/g, '<br>')}</p></div>`;
+                        isFirst = false;
                     }
                     if (info.nozool && info.nozool.content) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${info.nozool.content.replace(/\n/g, '<br>')}</p></div>`;
+                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('nozool')">النزول</button>`;
+                        contentHtml += `<div id="tab-nozool" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${info.nozool.content.replace(/\n/g, '<br>')}</p></div>`;
+                        isFirst = false;
                     }
                     if (info.adad && info.adad.content) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${info.adad.content.replace(/\n/g, '<br>')}</p></div>`;
+                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('adad')">الآيات</button>`;
+                        contentHtml += `<div id="tab-adad" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${info.adad.content.replace(/\n/g, '<br>')}</p></div>`;
+                        isFirst = false;
                     }
                     
-                    if (!html) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
+                    html += '</div>' + contentHtml;
+                    if (isFirst) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
                     TagsAndContext.openApiModal(`سورة ${document.getElementById('currentSurahTitle').textContent.replace('سورة ', '')}`, html);
                 }
             };
@@ -130,3 +142,14 @@ const App = {
 };
 
 window.onload = () => App.init();
+
+window.switchApiTab = function(tabId) {
+    document.querySelectorAll('.api-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.api-tab-content').forEach(c => c.classList.remove('active'));
+    
+    const btn = document.querySelector(`.api-tab-btn[onclick="switchApiTab('${tabId}')"]`);
+    if (btn) btn.classList.add('active');
+    
+    const tab = document.getElementById(`tab-${tabId}`);
+    if (tab) tab.classList.add('active');
+};

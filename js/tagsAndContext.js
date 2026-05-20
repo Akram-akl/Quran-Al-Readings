@@ -310,7 +310,17 @@ const TagsAndContext = {
         
         const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
         
-        const promises = [SurahAPI.getAyaTafsirMokhtasar(suraNo, ayaNo)];
+        let tafsirAyaNo = ayaNo;
+        if (parseInt(suraNo) === 1 && !isHafs) {
+            const aNo = parseInt(ayaNo);
+            if (aNo >= 1 && aNo <= 5) {
+                tafsirAyaNo = aNo + 1;
+            } else if (aNo === 6 || aNo === 7) {
+                tafsirAyaNo = 7;
+            }
+        }
+        
+        const promises = [SurahAPI.getAyaTafsirMokhtasar(suraNo, tafsirAyaNo)];
         if (isHafs) {
             promises.push(SurahAPI.getAyaTajweed(suraNo, ayaNo));
             promises.push(SurahAPI.getAyaEerab(suraNo, ayaNo));
