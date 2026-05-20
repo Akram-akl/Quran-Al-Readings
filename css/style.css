@@ -15,12 +15,12 @@
     --border: #334155;
 }
 
-@font-face { font-family: 'UthmanicHafs'; src: url('../fonts/uthmanic_hafs_v20.ttf') format('truetype'); }
-@font-face { font-family: 'UthmanicWarsh'; src: url('../fonts/uthmanic_warsh_v21.ttf') format('truetype'); }
-@font-face { font-family: 'UthmanicQaloun'; src: url('../fonts/uthmanic_qaloun_v21.ttf') format('truetype'); }
-@font-face { font-family: 'UthmanicDuri'; src: url('../fonts/uthmanic_douri_v20.ttf') format('truetype'); }
-@font-face { font-family: 'UthmanicShubah'; src: url('../fonts/uthmanic_shuba_v20.ttf') format('truetype'); }
-@font-face { font-family: 'UthmanicSusi'; src: url('../fonts/uthmanic_sousi_v20.ttf') format('truetype'); }
+@font-face { font-family: 'UthmanicHafs'; src: url('../fonts/uthmanic_hafs_v20.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'UthmanicWarsh'; src: url('../fonts/uthmanic_warsh_v21.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'UthmanicQaloun'; src: url('../fonts/uthmanic_qaloun_v21.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'UthmanicDuri'; src: url('../fonts/uthmanic_douri_v20.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'UthmanicShubah'; src: url('../fonts/uthmanic_shuba_v20.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'UthmanicSusi'; src: url('../fonts/uthmanic_sousi_v20.ttf') format('truetype'); font-display: swap; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 

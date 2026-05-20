@@ -1,7 +1,21 @@
+const CACHE_NAME = 'quran-offline-v2';
+const PRECACHE_ASSETS = [
+    './fonts/uthmanic_hafs_v20.ttf',
+    './fonts/uthmanic_warsh_v21.ttf',
+    './fonts/uthmanic_qaloun_v21.ttf',
+    './fonts/uthmanic_douri_v20.ttf',
+    './fonts/uthmanic_shuba_v20.ttf',
+    './fonts/uthmanic_sousi_v20.ttf'
+];
+
 self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(PRECACHE_ASSETS);
+        })
+    );
     self.skipWaiting();
 });
-
 self.addEventListener('activate', (event) => {
     event.waitUntil(clients.claim());
 });
@@ -14,7 +28,7 @@ self.addEventListener('fetch', (event) => {
     // We only intercept specific domains that we know we cache (Audio and API)
     if (url.hostname.includes('archive.org') || url.hostname.includes('surahapp.com') || url.hostname.includes('github.io')) {
         event.respondWith(
-            caches.open('quran-offline-v1').then(async (cache) => {
+            caches.open(CACHE_NAME).then(async (cache) => {
                 const cachedResponse = await cache.match(event.request);
                 if (cachedResponse) {
                     return cachedResponse;

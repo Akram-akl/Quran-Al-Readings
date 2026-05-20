@@ -378,9 +378,9 @@ const TagsAndContext = {
 
     async showAyahTafsir(suraNo, ayaNo) {
         const ayahObj = this.selectedAyah;
-        // Strip out all Uthmani small high signs to prevent weird character rendering in non-Uthmani contexts
-        const cleanAyaText = ayahObj ? ayahObj.aya_text.replace(/[\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '') : '';
-        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.6rem; line-height: 2;">${cleanAyaText} <span style="color:#064e3b; font-family: Arial, sans-serif !important; font-size: 1rem;">(${ayahObj.aya_no})</span></blockquote>` : '';
+        const config = READINGS_CONFIG[App.currentReading] || { fontFamily: 'UthmanicHafs' };
+        // Use the native text and native Uthmani font. We no longer strip characters because we preloaded the fonts.
+        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.8rem; line-height: 2; font-family: ${config.fontFamily};">${ayahObj.aya_text} <span class="aya-number" style="color:#064e3b; font-size: 1.6rem;">﴿${ayahObj.aya_no}﴾</span></blockquote>` : '';
         const loaderHtml = ayahTextHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب التفاسير...</div>';
         
         this.openApiModal(`تفاسير الآية ${ayaNo}`, loaderHtml, true);
