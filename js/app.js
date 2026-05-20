@@ -57,17 +57,17 @@ const App = {
                     const info = await SurahAPI.getSuraInfo(this.currentSurah);
                     
                     let html = '';
-                    if (info.asmaa && info.asmaa.data) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${info.asmaa.data}</p></div>`;
+                    if (info.asmaa && info.asmaa.content) {
+                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${info.asmaa.content.replace(/\n/g, '<br>')}</p></div>`;
                     }
-                    if (info.fadael && info.fadael.data) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${info.fadael.data}</p></div>`;
+                    if (info.fadael && info.fadael.content) {
+                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${info.fadael.content.replace(/\n/g, '<br>')}</p></div>`;
                     }
-                    if (info.nozool && info.nozool.data) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${info.nozool.data}</p></div>`;
+                    if (info.nozool && info.nozool.content) {
+                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${info.nozool.content.replace(/\n/g, '<br>')}</p></div>`;
                     }
-                    if (info.adad && info.adad.data) {
-                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${info.adad.data}</p></div>`;
+                    if (info.adad && info.adad.content) {
+                        html += `<div style="margin-bottom:15px"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${info.adad.content.replace(/\n/g, '<br>')}</p></div>`;
                     }
                     
                     if (!html) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
