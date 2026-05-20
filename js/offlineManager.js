@@ -149,21 +149,55 @@ const OfflineManager = {
         this._downloadingSurahs = surahsToDownload;
         
         // تجهيز الروابط
+        const config = READINGS_CONFIG[this.currentReading];
+        if (!config) return;
+
         for (const sNo of surahsToDownload) {
+            // إضافة السورة (البيانات JSON) - Already handled by loadReading caching, but we can queue JSON path explicitly if needed.
+            // Tafsir URLs and Surah Info URLs
             const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
             for (const ayah of ayahs) {
-                // Audio URL
-                const audioUrl = AudioPlayer.getAudioPath(this.currentReading, ayah);
-                if (audioUrl) {
-                    this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
-                }
                 // Tafsir URL (Mokhtasar)
                 const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${ayah.aya_no}`;
                 this.downloadQueue.push({ type: 'api', url: tafsirUrl, sura: sNo });
             }
+            
             // Sura Info API
             this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/asmaa-sowar/${sNo}`, sura: sNo });
             this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/fadael-sowar/${sNo}`, sura: sNo });
+
+            // Audio URLs
+            if (config.isMonolithic) {
+                // One file per surah
+                const audioUrl = config.getAudioPath(sNo);
+                if (audioUrl) this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
+                
+                // Timing file
+                const timingUrl = config.getTimingPath(sNo);
+                if (timingUrl) this.downloadQueue.push({ type: 'json', url: timingUrl, sura: sNo });
+            } else {
+                // One file per ayah
+                for (const ayah of ayahs) {
+                    let mappedHafsAyahs = [ayah.aya_no];
+                    if (typeof AUDIO_MAP !== 'undefined') {
+                        const rKey = config.audioMapKey || this.currentReading;
+                        if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][sNo] && AUDIO_MAP[rKey][sNo][ayah.aya_no]) {
+                            mappedHafsAyahs = AUDIO_MAP[rKey][sNo][ayah.aya_no];
+                        }
+                    }
+
+                    for (const hafsAya of mappedHafsAyahs) {
+                        const audioUrl = config.getAudioPath({
+                            sura_no: sNo,
+                            aya_no: hafsAya,
+                            jozz: ayah.jozz
+                        });
+                        if (audioUrl) {
+                            this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
+                        }
+                    }
+                }
+            }
         }
 
         if (this.downloadQueue.length === 0) return;

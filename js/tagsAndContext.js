@@ -329,9 +329,11 @@ const TagsAndContext = {
         });
         
         if (footnotes.length > 0) {
-            html += `<div class="footnote-section">`;
+            html += `<div class="footnote-section" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 0.9rem;">`;
             footnotes.forEach((fn, idx) => {
-                html += `<div>[${idx + 1}] ${fn}</div>`;
+                // Remove ¬ and ¥ from the final displayed text
+                const cleanFn = fn.replace(/[¬¥]/g, '');
+                html += `<div style="margin-bottom: 5px;">[${idx + 1}] ${cleanFn}</div>`;
             });
             html += `</div>`;
         }
@@ -376,7 +378,9 @@ const TagsAndContext = {
 
     async showAyahTafsir(suraNo, ayaNo) {
         const ayahObj = this.selectedAyah;
-        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.6rem; line-height: 2;">${ayahObj.aya_text.replace(/[\u06D6-\u06DC]/g, '')} <span style="color:#064e3b; font-size: 1rem;">(${ayahObj.aya_no})</span></blockquote>` : '';
+        // Strip out all Uthmani small high signs to prevent weird character rendering in non-Uthmani contexts
+        const cleanAyaText = ayahObj ? ayahObj.aya_text.replace(/[\u06D6-\u06DC\u06DF-\u06E8\u06EA-\u06ED]/g, '') : '';
+        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.6rem; line-height: 2;">${cleanAyaText} <span style="color:#064e3b; font-family: Arial, sans-serif !important; font-size: 1rem;">(${ayahObj.aya_no})</span></blockquote>` : '';
         const loaderHtml = ayahTextHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب التفاسير...</div>';
         
         this.openApiModal(`تفاسير الآية ${ayaNo}`, loaderHtml, true);
