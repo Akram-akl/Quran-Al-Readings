@@ -222,7 +222,7 @@ const DownloadManager = {
             : hafsConfig.getBasmalahPath();
 
         async function fetchAndDecode(url) {
-            const resp = await fetch(url);
+            const resp = await fetch(url, { mode: 'cors' });
             if (!resp.ok) throw new Error("Failed to fetch audio file from: " + url);
             const arrayBuffer = await resp.arrayBuffer();
             return await audioCtx.decodeAudioData(arrayBuffer);

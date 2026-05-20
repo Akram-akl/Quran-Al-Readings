@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quran-readings-v6';
+const CACHE_NAME = 'quran-readings-v7';
 const STATIC_ASSETS = [
     'index.html',
     'css/style.css',
@@ -38,14 +38,18 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    // تجاوز ملفات الصوت لتجنب مشاكل سفاري (Safari Range Header Bug) ولا نخبئها لأن حجمها كبير جداً
+    if (event.request.url.endsWith('.mp3') || event.request.url.includes('archive.org')) {
+        return; // المتصفح سيتعامل معها بشكل طبيعي
+    }
+
     event.respondWith(
         caches.match(event.request).then(cached => {
             if (cached) return cached;
             return fetch(event.request).then(response => {
-                // تخزين ملفات JSON والصوت والخطوط
+                // لا نخبئ الصوت هنا
                 if (response.ok && (
                     event.request.url.endsWith('.json') || 
-                    event.request.url.endsWith('.mp3') ||
                     event.request.url.endsWith('.ttf')
                 )) {
                     const clone = response.clone();
