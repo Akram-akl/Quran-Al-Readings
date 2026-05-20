@@ -321,8 +321,8 @@ const TagsAndContext = {
         const footnotes = [];
         let html = text.replace(/\n/g, '<br>');
         
-        // Match references inside brackets or as sentences ending with a period
-        const regex = /(\([^)]*(?:أخرجه|انظر|رواه|متفق)[^)]*\)|\[[^\]]*(?:أخرجه|انظر|رواه|متفق)[^\]]*\]|(?:أخرجه|انظر|رواه|متفق)[^.؛<]*(?:[.؛]|$))/g;
+        // Match references inside brackets, or native API footnote symbols (¬ ... ¥), or as sentences ending with a period
+        const regex = /(?:¬[^¥]*¥|\([^)]*(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^)]*\)|\[[^\]]*(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^\]]*\]|(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^.؛<]*(?:[.؛]|$))/g;
         html = html.replace(regex, (match) => {
             footnotes.push(match.replace(/<br>/g, ' '));
             return `<sup style="color:var(--primary);cursor:pointer;font-weight:bold;margin:0 2px;" title="${match.replace(/"/g, '&quot;')}">[${footnotes.length}]</sup>`;
@@ -376,7 +376,7 @@ const TagsAndContext = {
 
     async showAyahTafsir(suraNo, ayaNo) {
         const ayahObj = this.selectedAyah;
-        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.6rem; line-height: 2;">${ayahObj.aya_text} <span style="color:#064e3b; font-family: sans-serif; font-size: 1rem;">﴿${ayahObj.aya_no}﴾</span></blockquote>` : '';
+        const ayahTextHtml = ayahObj ? `<blockquote class="quran-text" style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.6rem; line-height: 2;">${ayahObj.aya_text.replace(/[\u06D6-\u06DC]/g, '')} <span style="color:#064e3b; font-size: 1rem;">(${ayahObj.aya_no})</span></blockquote>` : '';
         const loaderHtml = ayahTextHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب التفاسير...</div>';
         
         this.openApiModal(`تفاسير الآية ${ayaNo}`, loaderHtml, true);
