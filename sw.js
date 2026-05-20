@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quran-readings-v5';
+const CACHE_NAME = 'quran-readings-v6';
 const STATIC_ASSETS = [
     'index.html',
     'css/style.css',
