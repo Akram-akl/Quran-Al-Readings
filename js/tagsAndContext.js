@@ -71,11 +71,13 @@ const TagsAndContext = {
         const ctxWordQeraat = document.getElementById('ctxWordQeraat');
         const ctxWordMeaning = document.getElementById('ctxWordMeaning');
         const ctxAyahTafsir = document.getElementById('ctxAyahTafsir');
+        const ctxCopyAya = document.getElementById('ctxCopyAya');
 
         // إعادة عرض الأزرار كالعادة
         if (ctxPlay) ctxPlay.style.display = 'flex';
         if (ctxSearch) ctxSearch.style.display = 'flex';
         if (ctxTag) ctxTag.style.display = 'flex';
+        if (ctxCopyAya) ctxCopyAya.style.display = 'flex';
         if (ctxWordQeraat) ctxWordQeraat.style.display = 'none';
         if (ctxWordMeaning) ctxWordMeaning.style.display = 'none';
         if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'none';
@@ -87,6 +89,7 @@ const TagsAndContext = {
             this.contextType = "istiazah";
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
+            if (ctxCopyAya) ctxCopyAya.style.display = 'none';
             if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للاستعاذة';
         } else if (bismillahEl) {
             this.selectedAyah = null;
@@ -95,6 +98,7 @@ const TagsAndContext = {
             this.contextType = "bismillah";
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
+            if (ctxCopyAya) ctxCopyAya.style.display = 'none';
             if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للبسملة';
         } else if (containerEl) {
             const suraNo = parseInt(containerEl.dataset.surah);
@@ -158,6 +162,30 @@ const TagsAndContext = {
                     AudioPlayer.playBasmalah();
                 } else if (this.contextType === "ayah" && this.selectedAyah) {
                     AudioPlayer.playAyah(this.selectedAyah.aya_no, this.selectedAyah.sura_no);
+                }
+            };
+        }
+
+        // زر نسخ الآية
+        const ctxCopyAya = document.getElementById('ctxCopyAya');
+        if (ctxCopyAya) {
+            ctxCopyAya.onclick = () => {
+                this._hideMenu();
+                if (this.selectedAyah) {
+                    const text = this.selectedAyah.aya_text_emlaey || this.selectedAyah.aya_text;
+                    navigator.clipboard.writeText(text).then(() => {
+                        const originalHtml = ctxCopyAya.innerHTML;
+                        ctxCopyAya.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+                        ctxCopyAya.style.color = '#10b981';
+                        ctxCopyAya.style.display = 'flex';
+                        const menu = document.getElementById('ayahContextMenu');
+                        if (menu) menu.style.display = 'block';
+                        setTimeout(() => {
+                            ctxCopyAya.innerHTML = originalHtml;
+                            ctxCopyAya.style.color = '';
+                            this._hideMenu();
+                        }, 1000);
+                    }).catch(e => console.error('Copy failed', e));
                 }
             };
         }

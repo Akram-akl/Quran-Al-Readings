@@ -488,3 +488,7 @@ body {
 .api-tab-content { display: none; animation: fadeIn 0.3s ease; }
 .api-tab-content.active { display: block; }
 
+
+/* Prevent Selection */
+#readingArea { user-select: none; -webkit-user-select: none; }
+
