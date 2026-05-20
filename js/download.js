@@ -127,6 +127,10 @@ const DownloadManager = {
             statusEl.textContent = 'لم يتم العثور على آيات في هذا النطاق';
             return;
         }
+        if (ayahs.length > 50) {
+            statusEl.textContent = 'عفواً، لا يمكن تحميل أكثر من 50 آية دفعة واحدة للحفاظ على استقرار التطبيق.';
+            return;
+        }
 
         const type = document.getElementById('downloadType').value;
 

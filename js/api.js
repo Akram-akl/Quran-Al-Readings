@@ -9,8 +9,30 @@ const SurahAPI = {
         if (this.cache.has(endpoint)) {
             return this.cache.get(endpoint);
         }
+        
+        const url = `${this.baseUrl}${endpoint}`;
+        
+        // 1. Check Offline Cache Storage
+        if ('caches' in window) {
+            try {
+                const offlineCache = await caches.open('quran-offline-v1');
+                const match = await offlineCache.match(url);
+                if (match) {
+                    const data = await match.json();
+                    this.cache.set(endpoint, data);
+                    return data;
+                }
+            } catch (e) {
+                console.error('Cache API error:', e);
+            }
+        }
+
+        // 2. Fetch from Network
         try {
-            const response = await fetch(`${this.baseUrl}${endpoint}`);
+            if (!navigator.onLine) {
+                return { error: 'الرجاء الاتصال بالإنترنت. هذه البيانات غير محملة مسبقاً في الجهاز.' };
+            }
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             this.cache.set(endpoint, data);

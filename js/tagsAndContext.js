@@ -316,71 +316,121 @@ const TagsAndContext = {
         this.openApiModal('اختلافات القراءات للكلمة', qeraatHtml);
     },
 
+    _formatContentWithFootnotes(text) {
+        if (!text) return '';
+        const footnotes = [];
+        let html = text.replace(/\n/g, '<br>');
+        
+        html = html.replace(/(\([^()]*أخرجه[^()]*\)|\[[^\[\]]*انظر[^\[\]]*\])/g, (match) => {
+            footnotes.push(match);
+            return `<sup style="color:var(--primary);cursor:pointer;font-weight:bold;" title="${match}">[${footnotes.length}]</sup>`;
+        });
+        
+        if (footnotes.length > 0) {
+            html += `<div class="footnote-section">`;
+            footnotes.forEach((fn, idx) => {
+                html += `<div>[${idx + 1}] ${fn}</div>`;
+            });
+            html += `</div>`;
+        }
+        return html;
+    },
+
     async showWordMeaningAndEerab(suraNo, ayaNo, wordNo) {
-        this.openApiModal('معنى وإعراب الكلمة', '<div class="loader">جاري جلب المعلومات...</div>', true);
+        const wordText = this.selectedWord || '';
+        const headerHtml = wordText ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.5rem; text-align: center; color: var(--primary);">"${wordText}"</blockquote>` : '';
+        const loaderHtml = headerHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب المعلومات...</div>';
+        
+        this.openApiModal('معنى وإعراب الكلمة', loaderHtml, true);
+        
         const [meaning, eerab, tasreef] = await Promise.all([
             SurahAPI.getWordMeaningOld(suraNo, ayaNo, wordNo),
             SurahAPI.getWordEerab(suraNo, ayaNo, wordNo),
             SurahAPI.getWordTasreef(suraNo, ayaNo, wordNo)
         ]);
 
-        let html = '';
-        if (meaning.content) html += `<div style="margin-bottom:15px"><strong>المعنى:</strong><p>${meaning.content}</p></div>`;
-        if (eerab.content) html += `<div style="margin-bottom:15px"><strong>الإعراب:</strong><p>${eerab.content}</p></div>`;
-        if (tasreef.content) html += `<div style="margin-bottom:15px"><strong>التصريف:</strong><p>${tasreef.content}</p></div>`;
+        const tabs = [
+            { id: 'w_meaning', label: 'المعنى', content: this._formatContentWithFootnotes(meaning?.content) },
+            { id: 'w_eerab', label: 'الإعراب', content: this._formatContentWithFootnotes(eerab?.content) },
+            { id: 'w_tasreef', label: 'التصريف', content: this._formatContentWithFootnotes(tasreef?.content) }
+        ];
+
+        let tabsHtml = `<div class="api-tabs" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px;">`;
+        tabs.forEach((t, i) => {
+            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}')">${t.label}</button>`;
+        });
+        tabsHtml += `</div>`;
         
-        if (!html) html = '<p>المعلومات غير متوفرة لهذه الكلمة.</p>';
-        this.openApiModal('معنى وإعراب الكلمة', html, true);
+        let contentHtml = '';
+        tabs.forEach((t, i) => {
+            contentHtml += `<div id="${t.id}" class="api-tab-content" style="display:${i===0?'block':'none'}">
+                ${t.content || '<p>المعلومات غير متوفرة لهذه الكلمة.</p>'}
+            </div>`;
+        });
+
+        this.openApiModal('معنى وإعراب الكلمة', headerHtml + tabsHtml + contentHtml, true);
     },
 
     async showAyahTafsir(suraNo, ayaNo) {
-        this.openApiModal('تفاسير ومعلومات الآية', '<div class="loader">جاري جلب التفاسير...</div>', true);
+        const ayahObj = this.selectedAyah;
+        const ayahTextHtml = ayahObj ? `<blockquote style="border-right: 4px solid var(--primary); padding-right: 15px; margin: 0 0 15px 0; background: rgba(16, 185, 129, 0.05); padding: 15px; font-size: 1.4rem; line-height: 2;">${ayahObj.aya_text} <span style="color:#064e3b">﴿${ayahObj.aya_no}﴾</span></blockquote>` : '';
+        const loaderHtml = ayahTextHtml + '<div style="text-align:center;padding:20px;"><div class="inline-loader"></div> جاري جلب التفاسير...</div>';
+        
+        this.openApiModal(`تفاسير الآية ${ayaNo}`, loaderHtml, true);
         
         const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
         
         let tafsirAyaNo = ayaNo;
         if (parseInt(suraNo) === 1 && !isHafs) {
             const aNo = parseInt(ayaNo);
-            if (aNo >= 1 && aNo <= 5) {
-                tafsirAyaNo = aNo + 1;
-            } else if (aNo === 6 || aNo === 7) {
-                tafsirAyaNo = 7;
-            }
+            if (aNo >= 1 && aNo <= 5) tafsirAyaNo = aNo + 1;
+            else if (aNo === 6 || aNo === 7) tafsirAyaNo = 7;
         }
         
-        const promises = [SurahAPI.getAyaTafsirMokhtasar(suraNo, tafsirAyaNo)];
+        const promises = [
+            SurahAPI.getAyaTafsirMokhtasar(suraNo, tafsirAyaNo),
+            SurahAPI.fetchWithCache(`/aya/tafsir-katheer/${suraNo}/${tafsirAyaNo}`),
+            SurahAPI.fetchWithCache(`/aya/tafsir-saadi/${suraNo}/${tafsirAyaNo}`),
+            SurahAPI.fetchWithCache(`/aya/tafsir-tabary/${suraNo}/${tafsirAyaNo}`),
+            SurahAPI.fetchWithCache(`/aya/tafsir-baghawy/${suraNo}/${tafsirAyaNo}`),
+            SurahAPI.fetchWithCache(`/aya/w-moyassar/${suraNo}/${tafsirAyaNo}`)
+        ];
+        
         if (isHafs) {
             promises.push(SurahAPI.getAyaTajweed(suraNo, ayaNo));
             promises.push(SurahAPI.getAyaEerab(suraNo, ayaNo));
         }
 
         const results = await Promise.all(promises);
-        const tafsir = results[0];
-        const tajweed = isHafs ? results[1] : null;
-        const eerab = isHafs ? results[2] : null;
-
-        let html = '';
-        if (tafsir.content) {
-            html += `<div style="margin-bottom:20px"><h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-book"></i> التفسير المختصر:</h3><p>${tafsir.content}</p></div>`;
-        } else {
-            html += '<p>التفسير غير متوفر لهذه الآية.</p>';
-        }
-
-        if (tajweed && tajweed.content) {
-            html += `<div style="margin-bottom:20px; padding: 10px; background: rgba(0,0,0,0.02); border-radius: 8px;">
-                        <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-microphone"></i> أحكام التجويد:</h3>
-                        <p>${tajweed.content.replace(/\n/g, '<br>')}</p>
-                     </div>`;
-        }
         
-        if (eerab && eerab.content) {
-            html += `<div style="margin-bottom:20px">
-                        <h3 style="color:var(--primary);margin-bottom:10px;"><i class="fas fa-pen-nib"></i> إعراب الآية:</h3>
-                        <p>${eerab.content.replace(/\n/g, '<br>')}</p>
-                     </div>`;
+        const tabs = [
+            { id: 't_mokhtasar', label: 'المختصر', content: this._formatContentWithFootnotes(results[0]?.content) },
+            { id: 't_saadi', label: 'السعدي', content: this._formatContentWithFootnotes(results[2]?.content) },
+            { id: 't_katheer', label: 'ابن كثير', content: this._formatContentWithFootnotes(results[1]?.content) },
+            { id: 't_tabary', label: 'الطبري', content: this._formatContentWithFootnotes(results[3]?.content) },
+            { id: 't_baghawy', label: 'البغوي', content: this._formatContentWithFootnotes(results[4]?.content) },
+            { id: 't_moyassar', label: 'الميسر', content: this._formatContentWithFootnotes(results[5]?.content) }
+        ];
+        
+        if (isHafs) {
+            tabs.push({ id: 't_tajweed', label: 'التجويد', content: this._formatContentWithFootnotes(results[6]?.content) });
+            tabs.push({ id: 't_eerab', label: 'الإعراب', content: this._formatContentWithFootnotes(results[7]?.content) });
         }
 
-        this.openApiModal(`الآية رقم ${ayaNo}`, html, true);
+        let tabsHtml = `<div class="api-tabs" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px; white-space:nowrap;">`;
+        tabs.forEach((t, i) => {
+            tabsHtml += `<button class="api-tab-btn ${i===0?'active':''}" onclick="switchApiTab('${t.id}')">${t.label}</button>`;
+        });
+        tabsHtml += `</div>`;
+        
+        let contentHtml = '';
+        tabs.forEach((t, i) => {
+            contentHtml += `<div id="${t.id}" class="api-tab-content" style="display:${i===0?'block':'none'}">
+                ${t.content || '<p>المعلومات غير متوفرة.</p>'}
+            </div>`;
+        });
+
+        this.openApiModal(`تفاسير الآية ${ayaNo}`, ayahTextHtml + tabsHtml + contentHtml, true);
     },
 
     populateTagModalDropdown() {

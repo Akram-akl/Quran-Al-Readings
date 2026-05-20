@@ -492,3 +492,15 @@ body {
 /* Prevent Selection */
 #readingArea { user-select: none; -webkit-user-select: none; }
 
+
+/* Sticky Modal Headers */
+.modal-content { display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+.modal-content h2, .modal-content h3 { flex-shrink: 0; }
+.api-tabs { flex-shrink: 0; position: sticky; top: 0; background: #fff; z-index: 10; margin-bottom: 0; border-bottom: 2px solid #ddd; }
+#apiInfoContent { flex-grow: 1; overflow-y: auto; padding-top: 15px; }
+/* Footnotes */
+.footnote-section { margin-top: 20px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 0.9em; color: #666; }
+/* Loaders */
+.inline-loader { display: inline-block; width: 1.5rem; height: 1.5rem; border: 3px solid rgba(16, 185, 129, 0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+

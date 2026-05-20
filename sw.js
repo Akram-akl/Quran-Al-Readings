@@ -1,62 +1,40 @@
-const CACHE_NAME = 'quran-readings-v7';
-const STATIC_ASSETS = [
-    'index.html',
-    'css/style.css',
-    'js/config.js',
-    'js/dataHandler.js',
-    'js/audioMap.js',
-    'js/audioPlayer.js',
-    'js/search.js',
-    'js/download.js',
-    'js/listen.js',
-    'js/ui.js',
-    'js/app.js',
-    'manifest.json',
-    'assets/logo.png',
-    'fonts/uthmanic_hafs_v20.ttf',
-    'fonts/uthmanic_warsh_v21.ttf',
-    'fonts/uthmanic_qaloun_v21.ttf',
-    'fonts/uthmanic_douri_v20.ttf',
-    'fonts/uthmanic_sousi_v20.ttf',
-    'fonts/uthmanic_shuba_v20.ttf'
-];
-
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-    );
+self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-        )
-    );
-    self.clients.claim();
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
 });
 
-self.addEventListener('fetch', event => {
-    // تجاوز ملفات الصوت لتجنب مشاكل سفاري (Safari Range Header Bug) ولا نخبئها لأن حجمها كبير جداً
-    if (event.request.url.endsWith('.mp3') || event.request.url.includes('archive.org')) {
-        return; // المتصفح سيتعامل معها بشكل طبيعي
-    }
-
-    event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            return fetch(event.request).then(response => {
-                // لا نخبئ الصوت هنا
-                if (response.ok && (
-                    event.request.url.endsWith('.json') || 
-                    event.request.url.endsWith('.ttf')
-                )) {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
+    
+    const url = new URL(event.request.url);
+    
+    // We only intercept specific domains that we know we cache (Audio and API)
+    if (url.hostname.includes('archive.org') || url.hostname.includes('surahapp.com') || url.hostname.includes('github.io')) {
+        event.respondWith(
+            caches.open('quran-offline-v1').then(async (cache) => {
+                const cachedResponse = await cache.match(event.request);
+                if (cachedResponse) {
+                    return cachedResponse;
                 }
-                return response;
-            }).catch(() => cached);
-        })
-    );
+                
+                try {
+                    return await fetch(event.request);
+                } catch (err) {
+                    // Offline and not cached
+                    if (url.hostname.includes('surahapp.com')) {
+                        return new Response(JSON.stringify({ error: 'الرجاء الاتصال بالإنترنت. هذه البيانات غير محملة مسبقاً في الجهاز.' }), {
+                            status: 200, // Return 200 so our app can parse the JSON error
+                            headers: new Headers({ 'Content-Type': 'application/json; charset=utf-8' })
+                        });
+                    }
+                    
+                    // For audio, just fail gracefully
+                    return new Response('', { status: 503, statusText: 'Service Unavailable' });
+                }
+            })
+        );
+    }
 });

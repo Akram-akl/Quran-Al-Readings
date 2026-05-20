@@ -141,7 +141,18 @@ const App = {
     }
 };
 
-window.onload = () => App.init();
+// تهيئة التطبيق عند التحميل
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('Service Worker Registered');
+        }).catch(err => {
+            console.error('Service Worker Registration Error:', err);
+        });
+    }
+});
 
 window.switchApiTab = function(tabId) {
     document.querySelectorAll('.api-tab-btn').forEach(b => b.classList.remove('active'));
