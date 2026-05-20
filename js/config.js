@@ -179,6 +179,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ إبراهيم الدوسري',
         jsonPath: 'data/warshData_v2-1.json',
         fontFamily: 'UthmanicWarsh',
+        audioMapKey: 'warsh',
         archiveItem: 'akram-quran-warsh-dossari', 
         getAudioPath(ayah) {
             const sss = String(ayah.sura_no).padStart(3, '0');
@@ -194,6 +195,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
+        audioMapKey: 'qaloun',
         isMonolithic: true,
         archiveItem: 'quran-qaloun-hussary-114', 
         getAudioPath(sura_no) {
@@ -213,6 +215,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ علي بن عبدالرحمن الحذيفي',
         jsonPath: 'data/QalounData_v2-1.json',
         fontFamily: 'UthmanicQaloun',
+        audioMapKey: 'qaloun',
         isMonolithic: true,
         archiveItem: 'qaloun_huthaifyali_al_huthaify', 
         getAudioPath(sura_no) {
@@ -232,6 +235,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ محمود خليل الحصري',
         jsonPath: 'data/DouriData_v2-0.json',
         fontFamily: 'UthmanicDuri',
+        audioMapKey: 'duri',
         isMonolithic: true,
         archiveItem: 'quran-duri-hussary-114', 
         getAudioPath(sura_no) {
@@ -251,6 +255,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ عبدالرشيد صوفي',
         jsonPath: 'data/SousiData_v2-0.json',
         fontFamily: 'UthmanicSusi',
+        audioMapKey: 'susi',
         isMonolithic: true,
         archiveItem: 'quran-susi-sofi-114', 
         getAudioPath(sura_no) {
@@ -270,6 +275,7 @@ const READINGS_CONFIG = {
         reader: 'الشيخ علي بن عبدالرحمن الحذيفي',
         jsonPath: 'data/shubaData_v2-0.json',
         fontFamily: 'UthmanicShubah',
+        audioMapKey: 'shubah',
         isMonolithic: true,
         archiveItem: 'quran-shubah-huthaify-114', 
         getAudioPath(sura_no) {

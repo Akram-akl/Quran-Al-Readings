@@ -199,11 +199,8 @@ const UI = {
                     }
                 }
 
-                span.className = isB ? 'bismillah' : 'ayah-container';
+                span.className = 'ayah-container';
                 
-                // وضع البسملة المدمجة بالآيات في سطر لحالها للتنسيق
-                if (isB && currentSuraNo !== 1) span.style.display = 'block'; 
-
                 span.setAttribute('data-ayah', a.aya_no);
                 span.setAttribute('data-no', a.aya_no);
                 span.setAttribute('data-surah', a.sura_no);
@@ -241,7 +238,9 @@ const UI = {
     },
 
     _isBismillah(a) {
-        return a.aya_no === 1 && (a.aya_text_emlaey || a.aya_text || '').includes('بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ');
+        if (a.aya_no !== 1) return false;
+        const text = (a.aya_text_emlaey || a.aya_text || '').replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656\u200C\u06D6-\u06ED]/g, '');
+        return text.includes('بسم الله الرحمن الرحيم');
     },
 
     showLoader() {

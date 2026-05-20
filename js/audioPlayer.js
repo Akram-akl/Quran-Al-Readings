@@ -186,8 +186,9 @@ const AudioPlayer = {
                 let mappedHafsAyahs = [a.aya_no];
                 
                 if (typeof AUDIO_MAP !== 'undefined') {
-                    const rKey = readingKey.toLowerCase();
-                    if (AUDIO_MAP[rKey] && AUDIO_MAP[rKey][a.sura_no] && AUDIO_MAP[rKey][a.sura_no][a.aya_no]) {
+                    const cfg = READINGS_CONFIG[readingKey] || READINGS_CONFIG[App.currentReading];
+                    const rKey = cfg ? cfg.audioMapKey : null;
+                    if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][a.sura_no] && AUDIO_MAP[rKey][a.sura_no][a.aya_no]) {
                         mappedHafsAyahs = AUDIO_MAP[rKey][a.sura_no][a.aya_no];
                     }
                 }
@@ -333,8 +334,9 @@ const AudioPlayer = {
         this.groupedAyahs = [ayahNo];
 
         if (typeof AUDIO_MAP !== 'undefined') {
-            const readingKey = App.currentReading.toLowerCase(); 
-            if (AUDIO_MAP[readingKey]) {
+            const cfg = READINGS_CONFIG[App.currentReading];
+            const readingKey = cfg ? cfg.audioMapKey : null;
+            if (readingKey && AUDIO_MAP[readingKey]) {
                 const suraMap = AUDIO_MAP[readingKey][suraNo];
                 if (suraMap && suraMap[ayahNo]) {
                     mappedHafsAyahs = suraMap[ayahNo];
@@ -477,8 +479,9 @@ const AudioPlayer = {
         this.groupedAyahs = [ayahNo]; // Default to single ayah
         
         if (typeof AUDIO_MAP !== 'undefined') {
-            const readingKey = App.currentReading.toLowerCase(); 
-            if (AUDIO_MAP[readingKey]) {
+            const cfg = READINGS_CONFIG[App.currentReading];
+            const readingKey = cfg ? cfg.audioMapKey : null;
+            if (readingKey && AUDIO_MAP[readingKey]) {
                 const suraMap = AUDIO_MAP[readingKey][suraNo];
                 if (suraMap && suraMap[ayahNo]) {
                     mappedHafsAyahs = suraMap[ayahNo];
