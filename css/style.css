@@ -50,7 +50,24 @@ body {
 .sidebar-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); }
 .app-logo { width: 50px; height: 50px; border-radius: 8px; margin-bottom: 5px; }
 .sidebar-content { flex: 1; padding: 15px; overflow-y: auto; }
-.sidebar-footer { padding: 10px; border-top: 1px solid var(--border); font-size: 0.75rem; text-align: center; }
+.sidebar-footer {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    text-align: center;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.app-credit {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--text);
+    opacity: 0.75;
+}
 
 .main-body {
     display: grid;

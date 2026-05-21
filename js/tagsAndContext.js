@@ -126,24 +126,28 @@ const TagsAndContext = {
             return;
         }
 
-        // موضع القائمة
+        // موضع القائمة — تظهر قرب الإصبع/المؤشر وتُقلَب للأعلى عند قرب أسفل الشاشة
         menu.style.display = 'block';
-        
-        // التحقق من حدود الشاشة لمنع خروج القائمة باستخدام الأبعاد الحقيقية للقائمة
         const rect = menu.getBoundingClientRect();
         const menuWidth = rect.width || 180;
-        const menuHeight = rect.height || 250; // default to a safe larger height if rect fails
+        const menuHeight = rect.height || 250;
+        const pad = 10;
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
 
         let posX = x;
         let posY = y;
 
-        if (x + menuWidth > screenWidth) posX = screenWidth - menuWidth - 10;
-        if (y + menuHeight > screenHeight) posY = screenHeight - menuHeight - 10;
-        
-        // التأكد من أن القائمة لا تظهر خارج الشاشة من الأعلى أيضاً
-        if (posY < 10) posY = 10;
+        if (posX + menuWidth > screenWidth - pad) posX = screenWidth - menuWidth - pad;
+        if (posX < pad) posX = pad;
+
+        if (posY + menuHeight > screenHeight - pad) {
+            posY = y - menuHeight;
+        }
+        if (posY < pad) posY = pad;
+        if (posY + menuHeight > screenHeight - pad) {
+            posY = screenHeight - menuHeight - pad;
+        }
 
         menu.style.left = `${posX}px`;
         menu.style.top = `${posY}px`;
