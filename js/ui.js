@@ -197,7 +197,9 @@ const UI = {
                 if (currentSuraNo !== 9 && !this._isBismillah(firstAyahInGroup)) {
                     const bas = document.createElement('div');
                     bas.className = 'bismillah';
-                    bas.textContent = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ';
+                    bas.setAttribute('data-surah', currentSuraNo);
+                    const basWords = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ'.split(/\s+/);
+                    bas.innerHTML = basWords.map((w, i) => `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`).join(' ');
                     surahSection.appendChild(bas);
                 }
             }
@@ -236,11 +238,8 @@ const UI = {
                 span.setAttribute('data-no', a.aya_no);
                 span.setAttribute('data-surah', a.sura_no);
                 
-                // تغليف كل كلمة قرآنية بـ span لتسهيل التفاعل الفردي (البحث والعلامات)
-                let formattedText = finalAyahText;
-                if (!isB) {
-                    formattedText = finalAyahText.split(/\s+/).map((w, i) => `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`).join(' ');
-                }
+                // تغليف كل كلمة قرآنية بـ span لتسهيل التفاعل الفردي (حتى آية البسملة في الفاتحة)
+                const formattedText = finalAyahText.split(/\s+/).map((w, i) => `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`).join(' ');
 
                 // تطبيق وضع الاختبار التفاعلي (النقرة الأولى للكشف، الثانية للتشغيل)
                 if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
@@ -270,7 +269,14 @@ const UI = {
 
     _isBismillah(a) {
         if (a.aya_no !== 1) return false;
-        const text = (a.aya_text_emlaey || a.aya_text || '').replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656\u200C\u06D6-\u06ED]/g, '');
+        const raw = (a.aya_text_emlaey || a.aya_text || '');
+        const text = raw
+            .replace(/[\u064B-\u065F\u0670\u0654\u0655\u0656\u200C\u06D6-\u06ED]/g, '')
+            .replace(/[أإآٱ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/ى/g, 'ي')
+            .replace(/\s+/g, ' ')
+            .trim();
         return text.includes('بسم الله الرحمن الرحيم');
     },
 

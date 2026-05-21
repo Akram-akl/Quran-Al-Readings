@@ -92,14 +92,21 @@ const TagsAndContext = {
             if (ctxCopyAya) ctxCopyAya.style.display = 'none';
             if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للاستعاذة';
         } else if (bismillahEl) {
-            this.selectedAyah = null;
-            this.selectedWord = "";
-            this.selectedWordNo = null;
+            const fullList = DataHandler.cache[App.currentReading];
+            const basAyah = fullList ? fullList.find(a => a.sura_no === 1 && a.aya_no === 1) : null;
+            this.selectedAyah = basAyah;
+            this.selectedWord = wordEl ? wordEl.textContent.trim().replace(/[ۖۚۛۗۘ]/g, "") : "";
+            this.selectedWordNo = wordEl ? parseInt(wordEl.dataset.wordIdx) : null;
             this.contextType = "bismillah";
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
             if (ctxCopyAya) ctxCopyAya.style.display = 'none';
             if (ctxPlay) ctxPlay.innerHTML = '<i class="fas fa-play"></i> استماع للبسملة';
+            if (wordEl && basAyah) {
+                if (ctxWordQeraat) ctxWordQeraat.style.display = 'flex';
+                const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
+                if (isHafs && ctxWordMeaning) ctxWordMeaning.style.display = 'flex';
+            }
         } else if (containerEl) {
             const suraNo = parseInt(containerEl.dataset.surah);
             const ayaNo = parseInt(containerEl.dataset.ayah || containerEl.dataset.no);
