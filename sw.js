@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'quran-shell-v5';
+const SHELL_CACHE = 'quran-shell-v7';
 const DATA_CACHE = 'quran-offline-v2'; // DO NOT change this name, so we don't lose old downloaded audio
 
 const APP_SHELL = [

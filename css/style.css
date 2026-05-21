@@ -44,14 +44,18 @@ body {
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
+    position: relative;
     z-index: 100;
+    min-height: 0;
+    overflow: hidden;
+    isolation: isolate;
 }
 
 .sidebar-header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); }
 .app-logo { width: 50px; height: 50px; border-radius: 8px; margin-bottom: 5px; }
-.sidebar-content { flex: 1; padding: 15px; overflow-y: auto; }
+.sidebar-content { flex: 1; padding: 15px; overflow-y: auto; min-height: 0; }
 .sidebar-footer {
-    padding: 10px 12px;
+    padding: 10px 12px 14px;
     border-top: 1px solid var(--border);
     font-size: 0.75rem;
     text-align: center;
@@ -62,54 +66,48 @@ body {
     justify-content: center;
     gap: 10px;
     position: relative;
-    min-height: 48px;
+    z-index: 1;
+    min-height: 44px;
+    background: var(--surface);
 }
+/* نقطة صغيرة — الزاوية اليمنى السفلى للوحة الجانبية */
 .app-credit-badge {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    width: 22px;
-    height: 22px;
+    right: 5px;
+    bottom: 5px;
+    width: 10px;
+    height: 10px;
     padding: 0;
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    background: var(--surface);
-    color: var(--text);
-    font-size: 0.65rem;
-    font-weight: 700;
-    line-height: 1;
+    border: none;
+    border-radius: 1px;
+    background: var(--text);
+    opacity: 0.22;
     cursor: pointer;
-    opacity: 0.55;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-    z-index: 2;
+    z-index: 200;
+    pointer-events: auto;
+    transition: opacity 0.2s;
 }
 .app-credit-badge:hover,
 .app-credit-badge.is-open {
-    opacity: 1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-.app-credit-badge.is-open {
-    transform: scale(1.05);
+    opacity: 0.5;
 }
 .app-credit-popup {
     position: absolute;
-    right: 8px;
-    bottom: 38px;
+    right: 5px;
+    bottom: 20px;
     margin: 0;
-    max-width: calc(100% - 16px);
-    padding: 8px 10px;
-    font-size: 0.72rem;
-    line-height: 1.45;
+    max-width: calc(100% - 10px);
+    padding: 6px 8px;
+    font-size: 0.68rem;
+    line-height: 1.4;
     text-align: center;
     color: var(--text);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
-    z-index: 3;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 201;
+    pointer-events: auto;
 }
 .app-credit-popup:not([hidden]) {
     display: block;
@@ -231,6 +229,7 @@ body {
         transform: translateX(280px); 
         transition: transform 0.3s ease-in-out; 
         box-shadow: none;
+        z-index: 1200;
     }
     .sidebar.open { 
         transform: translateX(0); 
