@@ -8,6 +8,7 @@ const UI = {
 
     init() {
         this._initSidebar();
+        this._initAppCredit();
         this._initTheme();
         this._initPlayerControls();
         this._initPageNav();
@@ -22,6 +23,36 @@ const UI = {
         const closeBtn = document.getElementById('closeSidebarBtn');
         if (openBtn && sidebar) openBtn.onclick = () => sidebar.classList.add('open');
         if (closeBtn && sidebar) closeBtn.onclick = () => sidebar.classList.remove('open');
+    },
+
+    _initAppCredit() {
+        const badge = document.getElementById('appCreditBadge');
+        const text = document.getElementById('appCreditText');
+        if (!badge || !text) return;
+
+        const close = () => {
+            text.hidden = true;
+            badge.classList.remove('is-open');
+            badge.setAttribute('aria-expanded', 'false');
+        };
+
+        badge.onclick = (e) => {
+            e.stopPropagation();
+            const willOpen = text.hidden;
+            if (willOpen) {
+                text.hidden = false;
+                badge.classList.add('is-open');
+                badge.setAttribute('aria-expanded', 'true');
+            } else {
+                close();
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#appCreditBadge') && !e.target.closest('#appCreditText')) {
+                close();
+            }
+        });
     },
 
     _initTheme() {

@@ -1,6 +1,11 @@
 @echo off
 echo Updating Android project from PWA...
-cd ../Quran_Android
-npx cap copy
-echo Done! You can now build the APK in Android Studio.
+cd /d "%~dp0..\Quran_Android"
+call npx cap copy android
+if errorlevel 1 (
+    echo FAILED. Run: npm install   inside Quran_Android folder first.
+    pause
+    exit /b 1
+)
+echo Done! Open folder: Quran_Android\android   in Android Studio, then Build APK.
 pause
