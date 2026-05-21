@@ -540,11 +540,31 @@ body {
 }
 
 /* API Tabs */
-.api-tabs { display: flex; border-bottom: 2px solid rgba(0,0,0,0.1); margin-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
+.api-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 15px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: var(--surface);
+}
 .api-tabs::-webkit-scrollbar { display: none; }
-.api-tab-btn { background: none; border: none; padding: 10px 15px; font-size: 1rem; color: var(--text); cursor: pointer; white-space: nowrap; font-family: inherit; transition: 0.3s; opacity: 0.6; font-weight: bold; }
+.api-tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    font-size: 1rem;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: 0.3s;
+    opacity: 0.65;
+    font-weight: bold;
+}
+.api-tab-btn:hover { opacity: 0.9; }
 .api-tab-btn.active { opacity: 1; color: var(--primary); border-bottom: 3px solid var(--primary); }
-.api-tab-content { display: none; animation: fadeIn 0.3s ease; }
+.api-tab-content { display: none; animation: fadeIn 0.3s ease; color: var(--text); }
 .api-tab-content.active { display: block; }
 
 
@@ -555,10 +575,43 @@ body {
 /* Sticky Modal Headers */
 .modal-content { display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
 .modal-content h2, .modal-content h3 { flex-shrink: 0; }
-.api-tabs { flex-shrink: 0; position: sticky; top: 0; background: #fff; z-index: 10; margin-bottom: 0; border-bottom: 2px solid #ddd; }
-#apiInfoContent { flex-grow: 1; overflow-y: auto; }
+.modal-content .api-tabs {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+    margin-bottom: 0;
+    border-bottom: 2px solid var(--border);
+}
+#apiInfoContent { flex-grow: 1; overflow-y: auto; color: var(--text); }
+#apiInfoContent p,
+#apiInfoContent h3,
+.api-tab-content p,
+.api-tab-content h3 { color: var(--text); }
 /* Footnotes */
-.footnote-section { margin-top: 20px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 0.9em; color: #666; }
+.footnote-section {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    font-size: 0.9em;
+    color: var(--text);
+    opacity: 0.85;
+}
+.footnote-item {
+    background: rgba(0, 0, 0, 0.04);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-right: 2px solid var(--primary);
+}
+[data-theme="dark"] .footnote-item {
+    background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] #apiInfoWarning {
+    background: rgba(255, 193, 7, 0.15) !important;
+    color: #fcd34d !important;
+    border-color: rgba(255, 193, 7, 0.35) !important;
+}
 /* Loaders */
 .inline-loader { display: inline-block; width: 1.5rem; height: 1.5rem; border: 3px solid rgba(16, 185, 129, 0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s ease-in-out infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -344,7 +344,7 @@ const TagsAndContext = {
             footnotes.forEach((fn, idx) => {
                 // Remove ¬ and ¥ from the final displayed text
                 const cleanFn = fn.replace(/[¬¥]/g, '');
-                html += `<div id="fn-text-${scopeId}-${idx + 1}" style="background: rgba(0,0,0,0.03); padding: 4px 8px; border-radius: 4px; border-right: 2px solid var(--primary);"><span style="color:var(--primary); font-weight:bold;">[${idx + 1}]</span> ${cleanFn}</div>`;
+                html += `<div id="fn-text-${scopeId}-${idx + 1}" class="footnote-item"><span style="color:var(--primary); font-weight:bold;">[${idx + 1}]</span> ${cleanFn}</div>`;
             });
             html += `</div>`;
         }
