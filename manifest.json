@@ -1,24 +1,55 @@
 {
+    "id": "/",
     "name": "القرآن الكريم - القراءات",
     "short_name": "القراءات",
-    "description": "تطبيق القرآن الكريم بالروايات الست",
+    "description": "تطبيق القرآن الكريم بالروايات الست مع الاستماع بدون إنترنت",
     "start_url": "index.html",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "background_color": "#064e3b",
     "theme_color": "#064e3b",
     "orientation": "any",
+    "dir": "rtl",
+    "lang": "ar",
+    "categories": ["education", "books", "lifestyle"],
     "icons": [
         {
-            "src": "assets/logo.png",
+            "src": "assets/logo-192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
         },
         {
-            "src": "assets/logo.png",
+            "src": "assets/logo-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
         }
-    ]
+    ],
+    "screenshots": [
+        {
+            "src": "assets/logo-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "واجهة القراءة"
+        },
+        {
+            "src": "assets/logo-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "واجهة الاستماع"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "استئناف القراءة",
+            "short_name": "متابعة",
+            "description": "استئناف آخر ما قرأت",
+            "url": "index.html",
+            "icons": [{"src": "assets/logo-192.png", "sizes": "192x192"}]
+        }
+    ],
+    "prefer_related_applications": false
 }
