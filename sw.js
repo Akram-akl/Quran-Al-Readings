@@ -1,4 +1,6 @@
-const CACHE_NAME = 'quran-offline-v2';
+const SHELL_CACHE = 'quran-shell-v4';
+const DATA_CACHE = 'quran-offline-v2'; // DO NOT change this name, so we don't lose old downloaded audio
+
 const APP_SHELL = [
     './',
     './index.html',
@@ -24,7 +26,7 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
+        caches.open(SHELL_CACHE).then((cache) => {
             return cache.addAll(APP_SHELL);
         })
     );
@@ -32,6 +34,18 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+    // Delete old shell caches, BUT keep DATA_CACHE intact!
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
+                        return caches.delete(key);
+                    }
+                })
+            );
+        })
+    );
     event.waitUntil(clients.claim());
 });
 
@@ -44,15 +58,15 @@ self.addEventListener('fetch', (event) => {
     if (url.origin === location.origin) {
         event.respondWith(
             caches.match(event.request).then((response) => {
-                // Return cached shell if found, else fetch from network
+                // Return cached shell if found, else fetch from network and cache in SHELL_CACHE
                 return response || fetch(event.request).then(fetchRes => {
-                    return caches.open(CACHE_NAME).then(cache => {
+                    return caches.open(SHELL_CACHE).then(cache => {
                         cache.put(event.request, fetchRes.clone());
                         return fetchRes;
                     });
                 });
             }).catch(() => {
-                // If totally offline and not in cache, fallback to index.html
+                // Fallback to index.html if offline
                 if (event.request.mode === 'navigate') {
                     return caches.match('./index.html');
                 }
@@ -61,7 +75,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // 2. External requests (API and Audio)
+    // 2. External requests (API and Audio - stored in DATA_CACHE)
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
