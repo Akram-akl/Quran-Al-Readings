@@ -146,6 +146,14 @@ const AudioPlayer = {
 
         const repeatBtn = document.getElementById('repeatBtn');
         if (repeatBtn) repeatBtn.onclick = () => this.toggleRepeat();
+
+        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
+        if (cancelRepeatBtn) cancelRepeatBtn.onclick = () => {
+            this.maxPlaylistRepeats = 1;
+            cancelRepeatBtn.style.display = 'none';
+            const statusEl = document.getElementById('lsStatus');
+            if (statusEl) statusEl.textContent = 'تم إيقاف التكرار، سيتوقف التشغيل بعد انتهاء المقطع الحالي.';
+        };
     },
 
     async preloadPageAudios(readingKey, ayahs) {
@@ -211,6 +219,11 @@ const AudioPlayer = {
     stop() {
         this.audio.pause();
         this.audioQueue = []; // مسح قائمة الملفات الصوتية عند الإيقاف
+        this.playlist = [];
+        this.playlistIndex = -1;
+        this.maxPlaylistRepeats = 1;
+        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
+        if (cancelRepeatBtn) cancelRepeatBtn.style.display = 'none';
     },
 
     buildPlaylistFromRange(readingKey, ayahs) {
@@ -239,6 +252,15 @@ const AudioPlayer = {
                 const statusEl = document.getElementById('lsStatus');
                 if (statusEl) statusEl.textContent = '✅ انتهى تشغيل المقطع المحدد';
                 return;
+            }
+        }
+        
+        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
+        if (cancelRepeatBtn) {
+            if (this.maxPlaylistRepeats > 1) {
+                cancelRepeatBtn.style.display = 'inline-block';
+            } else {
+                cancelRepeatBtn.style.display = 'none';
             }
         }
 

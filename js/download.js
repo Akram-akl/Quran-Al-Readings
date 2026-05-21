@@ -279,8 +279,8 @@ const DownloadManager = {
                             }
                         }
                         
-                        // البسملة لجميع السور عدا سورة التوبة (9)
-                        if (suraNo !== 9) {
+                        // البسملة لجميع السور عدا سورة التوبة (9) وسورة الفاتحة (1)
+                        if (suraNo !== 9 && suraNo !== 1) {
                             try {
                                 statusEl.textContent = `جاري إدراج البسملة...`;
                                 const basBuffer = await fetchAndDecode(basmalahUrl);

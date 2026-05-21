@@ -321,19 +321,22 @@ const TagsAndContext = {
         const footnotes = [];
         let html = text.replace(/\n/g, '<br>');
         
+        const scopeId = Math.random().toString(36).substring(2, 7);
+        
         // Match references inside brackets, or native API footnote symbols (¬ ... ¥), or as sentences ending with a period
         const regex = /(?:¬[^¥]*¥|\([^)]*(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^)]*\)|\[[^\]]*(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^\]]*\]|(?:[أا]خرجه|[اأ]نظر|رواه|متفق)[^.؛<]*(?:[.؛]|$))/g;
         html = html.replace(regex, (match) => {
             footnotes.push(match.replace(/<br>/g, ' '));
-            return `<sup style="color:var(--primary);cursor:pointer;font-weight:bold;margin:0 2px;" title="${match.replace(/"/g, '&quot;')}">[${footnotes.length}]</sup>`;
+            const fnIdx = footnotes.length;
+            return `<sup id="fn-ref-${scopeId}-${fnIdx}" onclick="document.getElementById('fn-text-${scopeId}-${fnIdx}').scrollIntoView({behavior: 'smooth', block: 'center'})" style="color:var(--primary);cursor:pointer;font-weight:bold;margin:0 2px; text-decoration: underline;" title="${match.replace(/"/g, '&quot;')}">[${fnIdx}]</sup>`;
         });
         
         if (footnotes.length > 0) {
-            html += `<div class="footnote-section" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 0.9rem;">`;
+            html += `<div class="footnote-section" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc; font-size: 0.85rem; display: flex; flex-wrap: wrap; gap: 8px;">`;
             footnotes.forEach((fn, idx) => {
                 // Remove ¬ and ¥ from the final displayed text
                 const cleanFn = fn.replace(/[¬¥]/g, '');
-                html += `<div style="margin-bottom: 5px;">[${idx + 1}] ${cleanFn}</div>`;
+                html += `<div id="fn-text-${scopeId}-${idx + 1}" style="background: rgba(0,0,0,0.03); padding: 4px 8px; border-radius: 4px; border-right: 2px solid var(--primary);"><span style="color:var(--primary); font-weight:bold;">[${idx + 1}]</span> ${cleanFn}</div>`;
             });
             html += `</div>`;
         }

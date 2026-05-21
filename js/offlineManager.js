@@ -136,7 +136,7 @@ const OfflineManager = {
         let data = DataHandler.cache[this.currentReading];
         if (!data) data = await DataHandler.loadReading(this.currentReading);
         if (!data) return;
-        const surahsToDownload = DataHandler.getSurahs(data).map(s => s.number);
+        const surahsToDownload = [...new Set(DataHandler.getSurahs(data).map(s => s.number))];
         await this._startProcess(surahsToDownload);
     },
 
