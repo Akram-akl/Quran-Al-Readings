@@ -49,7 +49,7 @@ const UI = {
         };
 
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#appCreditBadge') && !e.target.closest('#appCreditText')) {
+            if (!e.target.closest('.sidebar-footer')) {
                 close();
             }
         });

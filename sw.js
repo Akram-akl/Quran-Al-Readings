@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v7';
-const DATA_CACHE = 'quran-offline-v2'; // DO NOT change this name, so we don't lose old downloaded audio
+const SHELL_CACHE = 'quran-shell-v8';
+const DATA_CACHE = 'quran-offline-v2';
 
 const APP_SHELL = [
     './',
@@ -24,49 +24,89 @@ const APP_SHELL = [
     './assets/logo-512.png'
 ];
 
+function isNetworkFirstRequest(url, request) {
+    if (request.mode === 'navigate') return true;
+    const path = url.pathname;
+    return (
+        path.endsWith('/index.html') ||
+        path.endsWith('index.html') ||
+        path.endsWith('/sw.js') ||
+        path.endsWith('sw.js') ||
+        path.includes('/css/') ||
+        path.includes('/js/')
+    );
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(SHELL_CACHE).then((cache) => {
-            return cache.addAll(APP_SHELL);
-        })
+        caches.open(SHELL_CACHE).then((cache) => cache.addAll(APP_SHELL))
     );
     self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-    // Delete old shell caches, BUT keep DATA_CACHE intact!
     event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
+        caches.keys().then((keys) =>
+            Promise.all(
                 keys.map((key) => {
                     if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
                         return caches.delete(key);
                     }
                 })
-            );
-        })
+            )
+        )
     );
     event.waitUntil(clients.claim());
 });
 
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
-    
+
     const url = new URL(event.request.url);
-    
-    // 1. Local requests (App Shell)
+
     if (url.origin === location.origin) {
+        if (isNetworkFirstRequest(url, event.request)) {
+            event.respondWith(
+                fetch(event.request)
+                    .then((fetchRes) => {
+                        if (fetchRes && fetchRes.ok) {
+                            caches.open(SHELL_CACHE).then((cache) => {
+                                cache.put(event.request, fetchRes.clone());
+                            });
+                        }
+                        return fetchRes;
+                    })
+                    .catch(() =>
+                        caches.match(event.request).then(
+                            (cached) =>
+                                cached ||
+                                (event.request.mode === 'navigate'
+                                    ? caches.match('./index.html')
+                                    : undefined)
+                        )
+                    )
+            );
+            return;
+        }
+
         event.respondWith(
             caches.match(event.request).then((response) => {
-                // Return cached shell if found, else fetch from network and cache in SHELL_CACHE
-                return response || fetch(event.request).then(fetchRes => {
-                    return caches.open(SHELL_CACHE).then(cache => {
-                        cache.put(event.request, fetchRes.clone());
-                        return fetchRes;
-                    });
-                });
+                return (
+                    response ||
+                    fetch(event.request).then((fetchRes) => {
+                        return caches.open(SHELL_CACHE).then((cache) => {
+                            cache.put(event.request, fetchRes.clone());
+                            return fetchRes;
+                        });
+                    })
+                );
             }).catch(() => {
-                // Fallback to index.html if offline
                 if (event.request.mode === 'navigate') {
                     return caches.match('./index.html');
                 }
@@ -74,22 +114,21 @@ self.addEventListener('fetch', (event) => {
         );
         return;
     }
-    
-    // 2. External requests (API and Audio - stored in DATA_CACHE)
+
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse; // Return downloaded offline data
-            }
-            
-            // Try network
+            if (cachedResponse) return cachedResponse;
             return fetch(event.request).catch(() => {
-                // Offline and not cached
                 if (url.hostname.includes('surahapp.com')) {
-                    return new Response(JSON.stringify({ error: 'الرجاء الاتصال بالإنترنت. هذه البيانات غير محملة مسبقاً في الجهاز.' }), {
-                        status: 200, 
-                        headers: new Headers({ 'Content-Type': 'application/json; charset=utf-8' })
-                    });
+                    return new Response(
+                        JSON.stringify({
+                            error: 'الرجاء الاتصال بالإنترنت. هذه البيانات غير محملة مسبقاً في الجهاز.'
+                        }),
+                        {
+                            status: 200,
+                            headers: new Headers({ 'Content-Type': 'application/json; charset=utf-8' })
+                        }
+                    );
                 }
                 return new Response('', { status: 503, statusText: 'Service Unavailable' });
             });

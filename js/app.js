@@ -146,8 +146,30 @@ document.addEventListener('DOMContentLoaded', () => {
     App.init();
     
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('Service Worker Registered');
+        navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
+            reg.update();
+            const reloadForUpdate = () => {
+                if (reg.waiting) {
+                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    window.location.reload();
+                }
+            };
+            reloadForUpdate();
+            reg.addEventListener('updatefound', () => {
+                const worker = reg.installing;
+                if (!worker) return;
+                worker.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        reloadForUpdate();
+                    }
+                });
+            });
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
+            });
         }).catch(err => {
             console.error('Service Worker Registration Error:', err);
         });
