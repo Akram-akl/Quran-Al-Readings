@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.akram.quran",
+        "sha256_cert_fingerprints": ["E2:18:B0:86:A0:D7:C3:72:ED:AF:23:BF:16:29:F0:08:2D:02:18:C2:08:D2:8F:37:8F:09:FA:D7:93:3C:81:FD"]
+      }
+    }]

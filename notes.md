@@ -71,3 +71,6 @@
 22. **Premium Button Styling**: All buttons in the application, including those inside custom modals (like smart play choices, tagging input, and mutashabihat matching), must use premium glassmorphic button styling classes (like `.btn` or `.btn-primary` with custom HSL borders and box shadows) instead of plain browser defaults.
 
 23. **API Features per Qira'ah**: The SurahApp API features like Tafsir Mokhtasar are based on Hafs. Tafsir is displayed for all readings but with a warning. Features like Tajweed, word Eerab, and Tasreef are STRICTLY limited to Hafs and Shubah readings and hidden for all others (Warsh, Qaloun, etc.). The 'Word Qeraat' feature explicitly compares readings and is available globally.
+
+24. **ãáİ ÑÈØ ÊØÈíŞ ÇáÃäÏÑæíÏ (Digital Asset Links)**: ÚäÏ ÅäÔÇÁ ãáİ APK ÌÏíÏ ãä ãæŞÚ PWABuilder¡ íÊã ÊæáíÏ ãáİ ÇÓãå assetlinks.json ÏÇÎá Çáãáİ ÇáãÖÛæØ. åĞÇ Çáãáİ íÍÊæí Úáì ÈÕãÉ ÇáÊæŞíÚ ÇáÑŞãí ááÊØÈíŞ æåæ ÖÑæÑí áÅÎİÇÁ ÔÑíØ ßÑæã ÇáÚáæí. ãßÇäå ÇáÕÍíÍ åæ: Quran_PWA/.well-known/assetlinks.json. İí ßá ãÑÉ ÊäÔÆ APK ÌÏíÏ ÈãİÊÇÍ ÊæŞíÚ ãÎÊáİ¡ ÇİÊÍ ãáİ assetlinks.json ãä Çáãáİ ÇáãÖÛæØ¡ ÇäÓÎ ãÍÊæÇå¡ æÇáÕŞå İí .well-known/assetlinks.json Ëã ÇÑİÚå áÌíÊåÈ æÇäÊÙÑ ÏŞíŞÉ ÍÊì íÊÍÏË Cloudflare.
+
