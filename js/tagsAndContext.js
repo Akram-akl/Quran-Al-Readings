@@ -129,9 +129,10 @@ const TagsAndContext = {
         // موضع القائمة
         menu.style.display = 'block';
         
-        // التحقق من حدود الشاشة لمنع خروج القائمة
-        const menuWidth = 180;
-        const menuHeight = 120;
+        // التحقق من حدود الشاشة لمنع خروج القائمة باستخدام الأبعاد الحقيقية للقائمة
+        const rect = menu.getBoundingClientRect();
+        const menuWidth = rect.width || 180;
+        const menuHeight = rect.height || 250; // default to a safe larger height if rect fails
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
 
@@ -140,6 +141,9 @@ const TagsAndContext = {
 
         if (x + menuWidth > screenWidth) posX = screenWidth - menuWidth - 10;
         if (y + menuHeight > screenHeight) posY = screenHeight - menuHeight - 10;
+        
+        // التأكد من أن القائمة لا تظهر خارج الشاشة من الأعلى أيضاً
+        if (posY < 10) posY = 10;
 
         menu.style.left = `${posX}px`;
         menu.style.top = `${posY}px`;

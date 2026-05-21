@@ -74,3 +74,6 @@
 
 24. **ãáİ ÑÈØ ÊØÈíŞ ÇáÃäÏÑæíÏ (Digital Asset Links)**: ÚäÏ ÅäÔÇÁ ãáİ APK ÌÏíÏ ãä ãæŞÚ PWABuilder¡ íÊã ÊæáíÏ ãáİ ÇÓãå assetlinks.json ÏÇÎá Çáãáİ ÇáãÖÛæØ. åĞÇ Çáãáİ íÍÊæí Úáì ÈÕãÉ ÇáÊæŞíÚ ÇáÑŞãí ááÊØÈíŞ æåæ ÖÑæÑí áÅÎİÇÁ ÔÑíØ ßÑæã ÇáÚáæí. ãßÇäå ÇáÕÍíÍ åæ: Quran_PWA/.well-known/assetlinks.json. İí ßá ãÑÉ ÊäÔÆ APK ÌÏíÏ ÈãİÊÇÍ ÊæŞíÚ ãÎÊáİ¡ ÇİÊÍ ãáİ assetlinks.json ãä Çáãáİ ÇáãÖÛæØ¡ ÇäÓÎ ãÍÊæÇå¡ æÇáÕŞå İí .well-known/assetlinks.json Ëã ÇÑİÚå áÌíÊåÈ æÇäÊÙÑ ÏŞíŞÉ ÍÊì íÊÍÏË Cloudflare.
 
+
+25. **ÊØÈíŞ ÇáÃäÏÑæíÏ ÇáãÍáí (Android Studio & Capacitor)**: Êã ÅäÔÇÁ ãÔÑæÚ ÃäÏÑæíÏ ãÍáí ÈÇáßÇãá ÈÇÓÊÎÏÇã Capacitor İí ãÌáÏ (Quran_Android). åĞÇ ÇáãÔÑæÚ íÚÊãÏ Úáì ÏãÌ ãáİÇÊ ÇáæíÈ ÏÇÎá ÇáÜ APK áíÚãá 100% ÈÏæä ÅäÊÑäÊ ßãáİ ÏÇÎáí (Local Assets). áİÊÍ ÇáãÔÑæÚ İí Android Studio ÇÎÊÑ ÇáãÓÇÑ (Quran_Android/android). *ãáÇÍÙÉ ãåãÉ ÌÏÇğ:* ÚäÏ ÅÌÑÇÁ Ãí ÊÚÏíá ãÓÊŞÈáí İí ÃßæÇÏ PWA (ãÌáÏ Quran_PWA)¡ íÌÈ İÊÍ ÇáÜ Terminal ÏÇÎá ãÌáÏ (Quran_Android) æÊäİíĞ ÇáÃãÑ: npx cap copy áäŞá ÇáÊÍÏíËÇÊ ÇáÌÏíÏÉ Åáì ÇáÃäÏÑæíÏ ŞÈá Úãá Build ááÜ APK.
+
