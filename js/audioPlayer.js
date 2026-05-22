@@ -45,16 +45,22 @@ const AudioPlayer = {
         this.audio.crossOrigin = 'anonymous';
 
         this.audio.addEventListener('waiting', () => {
-            if (this._cancelRequested || this.audio.paused || !this.currentAyah || this.isLoading) return;
-            this._setPlayerState('loading');
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
         });
         this.audio.addEventListener('stalled', () => {
-            if (this._cancelRequested || this.audio.paused || !this.currentAyah || this.isLoading) return;
-            this._setPlayerState('loading');
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
+        });
+        this.audio.addEventListener('playing', () => {
+            if (this._cancelRequested) return;
+            this.isLoading = false;
+            this._setPlayerState('playing');
         });
         this.audio.addEventListener('canplay', () => {
-            if (this._cancelRequested || this.isLoading) return;
-            if (!this.audio.paused) this._setPlayerState('playing');
+            if (this._cancelRequested) return;
+            if (!this.audio.paused) {
+                this.isLoading = false;
+                this._setPlayerState('playing');
+            }
         });
         this.audio.addEventListener('error', () => {
             this.isLoading = false;
@@ -192,11 +198,8 @@ const AudioPlayer = {
             }
         };
 
-        this.audio.onplay = () => {
-            if (!this._cancelRequested && !this.isLoading) this._setPlayerState('playing');
-        };
         this.audio.onpause = () => {
-            if (!this.isLoading && !this._cancelRequested) this._setPlayerState('paused');
+            if (!this._cancelRequested && !this.isLoading) this._setPlayerState('paused');
         };
 
         const repeatBtn = document.getElementById('repeatBtn');
@@ -905,6 +908,7 @@ const AudioPlayer = {
                         return;
                     }
                     this.isLoading = false;
+                    this._setPlayerState('playing');
                     resolve();
                 }).catch(err => {
                     if (!isStale()) this._setPlayerState('paused');
