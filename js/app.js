@@ -1,6 +1,8 @@
 /**
  * app.js - النسخة المستقرة
  */
+const APP_BUILD = 'v4.6';
+
 const App = {
     currentReading: 'Hafs',
     currentPage: 1,
@@ -22,15 +24,68 @@ const App = {
     },
 
     async init() {
-        console.log("App Init Start...");
+        const needsRefresh = await this._ensureLatestBuild();
+        if (needsRefresh) return;
+
+        console.log("App Init Start...", APP_BUILD);
+        this._patchAudioPlayerUi();
         if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
+        this._patchAudioPlayerUi();
         if (typeof UI !== 'undefined') UI.init();
         
         if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
         if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
 
         this._bind();
+        this._initForceRefreshUi();
         await this.loadPage(1);
+    },
+
+    _patchAudioPlayerUi() {
+        if (typeof AudioPlayer === 'undefined') return;
+        AudioPlayer._setPlayerState = function (state) {
+            const btn = document.getElementById('playPauseBtn');
+            if (!btn) return;
+            if (state === 'loading') state = 'paused';
+            const playing = state === 'playing';
+            AudioPlayer.isPlaying = playing;
+            btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+            btn.removeAttribute('aria-busy');
+        };
+    },
+
+    async _ensureLatestBuild() {
+        const prev = localStorage.getItem('app_build');
+        if (prev === APP_BUILD) return false;
+        localStorage.setItem('app_build', APP_BUILD);
+        if (!prev) return false;
+        await this._forceAppRefresh();
+        return true;
+    },
+
+    _initForceRefreshUi() {
+        const lbl = document.getElementById('appVersionLabel');
+        if (lbl) lbl.textContent = 'نسخة ' + APP_BUILD;
+        const btn = document.getElementById('forceRefreshBtn');
+        if (btn) btn.onclick = () => this._forceAppRefresh();
+    },
+
+    async _forceAppRefresh() {
+        try {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map((r) => r.unregister()));
+            }
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k)));
+            }
+        } catch (e) {
+            console.warn('Cache clear:', e);
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('_refresh', Date.now().toString());
+        window.location.replace(url.toString());
     },
 
     _bind() {
@@ -229,7 +284,7 @@ const App = {
         });
 
         try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=17');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=18');
             this._swRegistration = reg;
             this._checkForSwUpdate(reg);
 

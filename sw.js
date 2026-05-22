@@ -1,21 +1,8 @@
-const SHELL_CACHE = 'quran-shell-v17';
-const SW_VERSION = '17';
-const DATA_CACHE = 'quran-offline-v2';
+const SHELL_CACHE = 'quran-shell-v18';
+const SW_VERSION = '18';
 
-const APP_SHELL = [
-    './',
-    './index.html',
-    './css/style.css',
-    './js/config.js',
-    './js/api.js',
-    './js/db.js',
-    './js/audioPlayer.js',
-    './js/download.js',
-    './js/offlineManager.js',
-    './js/ui.js',
-    './js/tagsAndContext.js',
-    './js/app.js',
-    './js/saveFile.js',
+/** ملفات ثابتة فقط — لا نخزّن JS/CSS/HTML في الكاش (تسبب نسخة قديمة) */
+const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',
     './fonts/uthmanic_warsh_v21.ttf',
     './fonts/uthmanic_qaloun_v21.ttf',
@@ -26,14 +13,14 @@ const APP_SHELL = [
     './assets/logo-512.png'
 ];
 
-function isNetworkFirstRequest(url, request) {
+function isLiveAppRequest(url, request) {
     if (request.mode === 'navigate') return true;
     const path = url.pathname;
     return (
-        path.endsWith('/index.html') ||
-        path.endsWith('index.html') ||
         path.endsWith('/sw.js') ||
         path.endsWith('sw.js') ||
+        path.endsWith('/index.html') ||
+        path.endsWith('index.html') ||
         path.includes('/css/') ||
         path.includes('/js/')
     );
@@ -50,7 +37,7 @@ function notifyClientsUpdateReady() {
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(SHELL_CACHE)
-            .then((cache) => cache.addAll(APP_SHELL))
+            .then((cache) => cache.addAll(STATIC_ASSETS))
             .then(() => notifyClientsUpdateReady())
     );
 });
@@ -59,13 +46,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         Promise.all([
             caches.keys().then((keys) =>
-                Promise.all(
-                    keys.map((key) => {
-                        if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
-                            return caches.delete(key);
-                        }
-                    })
-                )
+                Promise.all(keys.map((key) => caches.delete(key)))
             ),
             self.clients.claim()
         ])
@@ -83,46 +64,29 @@ self.addEventListener('fetch', (event) => {
 
     const url = new URL(event.request.url);
 
-    if (url.origin === location.origin) {
-        if (isNetworkFirstRequest(url, event.request)) {
-            event.respondWith(
-                fetch(event.request)
-                    .then((fetchRes) => {
-                        if (fetchRes && fetchRes.ok) {
-                            caches.open(SHELL_CACHE).then((cache) => {
-                                cache.put(event.request, fetchRes.clone());
-                            });
-                        }
-                        return fetchRes;
-                    })
-                    .catch(() =>
-                        caches.match(event.request).then(
-                            (cached) =>
-                                cached ||
-                                (event.request.mode === 'navigate'
-                                    ? caches.match('./index.html')
-                                    : undefined)
-                        )
-                    )
-            );
-            return;
-        }
-
+    if (url.origin === location.origin && isLiveAppRequest(url, event.request)) {
         event.respondWith(
-            caches.match(event.request).then((response) => {
+            fetch(event.request).catch(() =>
+                event.request.mode === 'navigate'
+                    ? caches.match('./index.html')
+                    : undefined
+            )
+        );
+        return;
+    }
+
+    if (url.origin === location.origin) {
+        event.respondWith(
+            caches.match(event.request).then((cached) => {
                 return (
-                    response ||
-                    fetch(event.request).then((fetchRes) => {
-                        return caches.open(SHELL_CACHE).then((cache) => {
-                            cache.put(event.request, fetchRes.clone());
-                            return fetchRes;
-                        });
+                    cached ||
+                    fetch(event.request).then((res) => {
+                        if (res && res.ok) {
+                            caches.open(SHELL_CACHE).then((cache) => cache.put(event.request, res.clone()));
+                        }
+                        return res;
                     })
                 );
-            }).catch(() => {
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
             })
         );
         return;

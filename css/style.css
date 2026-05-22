@@ -110,6 +110,13 @@ body {
     display: block;
 }
 
+.app-version-label {
+    text-align: center;
+    font-size: 0.75rem;
+    opacity: 0.75;
+    margin: 6px 0 0;
+}
+
 .app-update-bar {
     position: fixed;
     top: 0;
