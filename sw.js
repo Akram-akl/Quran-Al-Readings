@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v16';
-const SW_VERSION = '16';
+const SHELL_CACHE = 'quran-shell-v17';
+const SW_VERSION = '17';
 const DATA_CACHE = 'quran-offline-v2';
 
 const APP_SHELL = [

@@ -4,7 +4,7 @@
 const AudioPlayer = {
     audio: new Audio(),
     isPlaying: false,
-    isLoading: false,
+    _audioFetchActive: false,
     currentAyah: null,
     isRepeat: false,
     currentlyHighlighted: null,
@@ -52,18 +52,18 @@ const AudioPlayer = {
         });
         this.audio.addEventListener('playing', () => {
             if (this._cancelRequested) return;
-            this.isLoading = false;
+            this._audioFetchActive = false;
             this._setPlayerState('playing');
         });
         this.audio.addEventListener('canplay', () => {
             if (this._cancelRequested) return;
             if (!this.audio.paused) {
-                this.isLoading = false;
+                this._audioFetchActive = false;
                 this._setPlayerState('playing');
             }
         });
         this.audio.addEventListener('error', () => {
-            this.isLoading = false;
+            this._audioFetchActive = false;
             this._setPlayerState('paused');
             console.error('Audio playback error:', this.audio.error, this.audio.src);
         });
@@ -199,7 +199,7 @@ const AudioPlayer = {
         };
 
         this.audio.onpause = () => {
-            if (!this._cancelRequested && !this.isLoading) this._setPlayerState('paused');
+            if (!this._cancelRequested && !this._audioFetchActive) this._setPlayerState('paused');
         };
 
         const repeatBtn = document.getElementById('repeatBtn');
@@ -293,7 +293,7 @@ const AudioPlayer = {
             clearTimeout(this._loadTimeoutId);
             this._loadTimeoutId = null;
         }
-        this.isLoading = false;
+        this._audioFetchActive = false;
         this.isTransitioning = false;
         try {
             this.audio.pause();
@@ -709,13 +709,12 @@ const AudioPlayer = {
         }
     },
 
-    isLoadInProgress() {
-        const playBtn = document.getElementById('playPauseBtn');
-        return this.isLoading || !!(playBtn && playBtn.querySelector('.fa-spinner'));
+    isAudioFetching() {
+        return !!this._audioFetchActive;
     },
 
     togglePlayPause() {
-        if (this.isLoadInProgress()) {
+        if (this._audioFetchActive) {
             this.stop();
             return;
         }
@@ -845,16 +844,9 @@ const AudioPlayer = {
     _setPlayerState(state) {
         const btn = document.getElementById('playPauseBtn');
         if (!btn) return;
-        if (state === 'loading') {
-            if (this._cancelRequested) return;
-            this.isLoading = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            btn.setAttribute('aria-busy', 'true');
-            return;
-        }
-        this.isLoading = false;
-        btn.removeAttribute('aria-busy');
-        btn.innerHTML = state === 'playing' ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        const playing = state === 'playing';
+        this.isPlaying = playing;
+        btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
     },
 
     _updateBtn(playing) {
@@ -869,12 +861,13 @@ const AudioPlayer = {
         this._cancelPendingLoad();
         const loadId = ++this._loadId;
         this._cancelRequested = false;
-        this._setPlayerState('loading');
+        this._audioFetchActive = true;
 
         return new Promise((resolve, reject) => {
             const isStale = () => loadId !== this._loadId || !this._isSessionAlive(playSession) || this._cancelRequested;
 
             const cleanup = () => {
+                this._audioFetchActive = false;
                 if (this._loadTimeoutId) {
                     clearTimeout(this._loadTimeoutId);
                     this._loadTimeoutId = null;
@@ -907,7 +900,6 @@ const AudioPlayer = {
                         reject(new Error('aborted'));
                         return;
                     }
-                    this.isLoading = false;
                     this._setPlayerState('playing');
                     resolve();
                 }).catch(err => {

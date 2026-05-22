@@ -220,8 +220,6 @@ body {
 
 .player-controls { display: flex; align-items: center; justify-content: center; gap: 15px; flex: 1; }
 .btn-play-pause { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.2rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-.btn-play-pause[aria-busy="true"] { opacity: 0.9; }
-
 .progress-area input { width: 100%; cursor: pointer; accent-color: var(--primary); height: 4px; }
 
 .btn-icon { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--text); padding: 5px; }

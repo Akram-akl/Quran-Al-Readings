@@ -170,7 +170,7 @@ const TagsAndContext = {
         const btnPlay = document.getElementById('ctxPlay');
         if (btnPlay) {
             btnPlay.onclick = () => {
-                if (typeof AudioPlayer !== 'undefined' && AudioPlayer.isLoadInProgress()) {
+                if (typeof AudioPlayer !== 'undefined' && AudioPlayer.isAudioFetching()) {
                     AudioPlayer.stop();
                     this._hideMenu();
                     return;

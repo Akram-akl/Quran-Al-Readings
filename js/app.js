@@ -229,7 +229,7 @@ const App = {
         });
 
         try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=16');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=17');
             this._swRegistration = reg;
             this._checkForSwUpdate(reg);
 
