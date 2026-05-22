@@ -25,16 +25,22 @@ const AudioPlayer = {
     stopAtEndOfSura: null,
     keepStopBoundary: false,
     _loadId: 0,
+    _playSession: 0,
+    _cancelRequested: false,
+    _pendingLoadCleanup: null,
+    _metadataHandler: null,
     
     init() {
         this.audio.preload = 'auto';
         this.audio.crossOrigin = 'anonymous';
 
         this.audio.addEventListener('waiting', () => {
-            if (!this.audio.paused && this.currentAyah) this._setPlayerState('loading');
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
+            this._setPlayerState('loading');
         });
         this.audio.addEventListener('stalled', () => {
-            if (!this.audio.paused && this.currentAyah) this._setPlayerState('loading');
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
+            this._setPlayerState('loading');
         });
         this.audio.addEventListener('canplay', () => {
             if (!this.audio.paused) this._setPlayerState('playing');
@@ -242,12 +248,29 @@ const AudioPlayer = {
         }
     },
 
+    _cancelPendingLoad() {
+        if (this._pendingLoadCleanup) {
+            this._pendingLoadCleanup();
+            this._pendingLoadCleanup = null;
+        }
+        if (this._metadataHandler) {
+            this.audio.removeEventListener('loadedmetadata', this._metadataHandler);
+            this._metadataHandler = null;
+        }
+    },
+
     cancelLoad() {
+        this._playSession++;
         this._loadId++;
+        this._cancelRequested = true;
+        this._cancelPendingLoad();
         this.isLoading = false;
         this.isTransitioning = false;
-        this.audio.pause();
-        this.audio.src = '';
+        try {
+            this.audio.pause();
+            this.audio.removeAttribute('src');
+            this.audio.load();
+        } catch (e) { /* ignore */ }
         this._setPlayerState('paused');
     },
 
@@ -365,23 +388,15 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            const tempAudio = new Audio();
-            tempAudio.src = audioUrl;
-            if (this.audio.src !== tempAudio.src) {
-                this.audio.src = audioUrl;
+            const playSession = this._playSession;
+            const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            try {
+                await this._playAudioUrl(audioUrl, startSec);
+            } catch (e) {
+                if (e && e.message === 'aborted') return;
+                return;
             }
-
-            const seekAndPlay = () => {
-                this.audio.currentTime = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
-                this.audio.play();
-            };
-
-            if (this.audio.readyState >= 1) {
-                seekAndPlay();
-            } else {
-                this.audio.addEventListener('loadedmetadata', seekAndPlay, { once: true });
-            }
-
+            if (playSession !== this._playSession) return;
             return;
         }
 
@@ -435,8 +450,15 @@ const AudioPlayer = {
             });
         });
 
-        this.audio.src = this.audioQueue.shift();
-        this.audio.play();
+        const playSession = this._playSession;
+        const firstUrl = this.audioQueue.shift();
+        try {
+            await this._playAudioUrl(firstUrl, 0);
+        } catch (e) {
+            if (e && e.message === 'aborted') return;
+            return;
+        }
+        if (playSession !== this._playSession) return;
 
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
@@ -483,6 +505,8 @@ const AudioPlayer = {
         this._highlightSingle(ayahNo, suraNo);
 
         this.cancelLoad();
+        const playSession = this._playSession;
+        this._cancelRequested = false;
         this.audio.pause();
         this.audioQueue = [];
         
@@ -532,7 +556,7 @@ const AudioPlayer = {
                 console.error('Monolithic play failed:', e);
                 return;
             }
-
+            if (playSession !== this._playSession) return;
             return;
         }
         // --- نهاية النظام المدمج ---
@@ -605,6 +629,7 @@ const AudioPlayer = {
             console.error('Ayah play failed:', e);
             return;
         }
+        if (playSession !== this._playSession) return;
         
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
@@ -633,7 +658,9 @@ const AudioPlayer = {
     },
 
     togglePlayPause() {
-        if (this.isLoading) {
+        const playBtn = document.getElementById('playPauseBtn');
+        const showingLoader = playBtn && playBtn.querySelector('.fa-spinner');
+        if (this.isLoading || showingLoader) {
             this.stop();
             return;
         }
@@ -764,6 +791,7 @@ const AudioPlayer = {
         const btn = document.getElementById('playPauseBtn');
         if (!btn) return;
         if (state === 'loading') {
+            if (this._cancelRequested) return;
             this.isLoading = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             btn.setAttribute('aria-busy', 'true');
@@ -779,15 +807,21 @@ const AudioPlayer = {
     },
 
     _playAudioUrl(url, startTimeSec = 0) {
+        this._cancelPendingLoad();
         const loadId = ++this._loadId;
+        const playSession = this._playSession;
+        this._cancelRequested = false;
         this._setPlayerState('loading');
         return new Promise((resolve, reject) => {
-            const isStale = () => loadId !== this._loadId;
+            const isStale = () => loadId !== this._loadId || playSession !== this._playSession || this._cancelRequested;
 
             const cleanup = () => {
                 this.audio.removeEventListener('canplay', onReady);
                 this.audio.removeEventListener('error', onErr);
+                if (this._pendingLoadCleanup === cleanup) this._pendingLoadCleanup = null;
             };
+            this._pendingLoadCleanup = cleanup;
+
             const onReady = () => {
                 if (isStale()) {
                     cleanup();
@@ -798,7 +832,14 @@ const AudioPlayer = {
                 if (startTimeSec > 0) {
                     this.audio.currentTime = startTimeSec;
                 }
-                this.audio.play().then(resolve).catch(err => {
+                this.audio.play().then(() => {
+                    if (isStale()) {
+                        this.audio.pause();
+                        reject(new Error('aborted'));
+                        return;
+                    }
+                    resolve();
+                }).catch(err => {
                     if (!isStale()) this._setPlayerState('paused');
                     reject(err);
                 });
@@ -811,9 +852,7 @@ const AudioPlayer = {
 
             this.audio.addEventListener('canplay', onReady, { once: true });
             this.audio.addEventListener('error', onErr, { once: true });
-            if (this.audio.src !== url) {
-                this.audio.src = url;
-            }
+            this.audio.src = url;
             this.audio.load();
         });
     },

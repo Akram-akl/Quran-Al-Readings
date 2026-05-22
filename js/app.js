@@ -206,7 +206,8 @@ const App = {
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
     
-    if ('serviceWorker' in navigator) {
+    const useServiceWorker = typeof IS_CAPACITOR_NATIVE !== 'undefined' && !IS_CAPACITOR_NATIVE;
+    if (useServiceWorker && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=9').then(reg => {
             App._swRegistration = reg;
             reg.update();
