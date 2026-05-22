@@ -1,4 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v14';
+const SHELL_CACHE = 'quran-shell-v15';
+const SW_VERSION = '15';
 const DATA_CACHE = 'quran-offline-v2';
 
 const APP_SHELL = [
@@ -38,26 +39,37 @@ function isNetworkFirstRequest(url, request) {
     );
 }
 
+function notifyClientsUpdateReady() {
+    return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => {
+            client.postMessage({ type: 'APP_UPDATE_READY', version: SW_VERSION });
+        });
+    });
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(SHELL_CACHE).then((cache) => cache.addAll(APP_SHELL))
+        caches.open(SHELL_CACHE)
+            .then((cache) => cache.addAll(APP_SHELL))
+            .then(() => notifyClientsUpdateReady())
     );
-    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(
-                keys.map((key) => {
-                    if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
-                        return caches.delete(key);
-                    }
-                })
-            )
-        )
+        Promise.all([
+            caches.keys().then((keys) =>
+                Promise.all(
+                    keys.map((key) => {
+                        if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
+                            return caches.delete(key);
+                        }
+                    })
+                )
+            ),
+            self.clients.claim()
+        ])
     );
-    event.waitUntil(clients.claim());
 });
 
 self.addEventListener('message', (event) => {

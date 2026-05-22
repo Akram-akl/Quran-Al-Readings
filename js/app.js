@@ -182,50 +182,86 @@ const App = {
 
     _showUpdateBanner() {
         if (document.getElementById('appUpdateBar')) return;
+        if (typeof IS_CAPACITOR_NATIVE !== 'undefined' && IS_CAPACITOR_NATIVE) return;
         const bar = document.createElement('div');
         bar.id = 'appUpdateBar';
         bar.className = 'app-update-bar';
         bar.innerHTML = '<span>يتوفر تحديث للتطبيق</span><button type="button" id="appUpdateBtn" class="btn btn-primary btn-sm">تحديث الآن</button>';
         document.body.appendChild(bar);
-        document.getElementById('appUpdateBtn').onclick = () => {
-            if (this._swRegistration && this._swRegistration.waiting) {
-                this._swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-            let reloaded = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (reloaded) return;
-                reloaded = true;
-                window.location.reload();
-            });
-            setTimeout(() => { if (!reloaded) window.location.reload(); }, 1500);
+        document.getElementById('appUpdateBtn').onclick = () => App._applyPendingUpdate();
+    },
+
+    _applyPendingUpdate() {
+        if (this._swRegistration && this._swRegistration.waiting) {
+            this._swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        let reloaded = false;
+        const onCtrl = () => {
+            if (reloaded) return;
+            reloaded = true;
+            window.location.reload();
         };
+        navigator.serviceWorker.addEventListener('controllerchange', onCtrl);
+        setTimeout(() => { if (!reloaded) window.location.reload(); }, 1500);
+    },
+
+    _checkForSwUpdate(reg) {
+        if (!reg || !navigator.serviceWorker.controller) return;
+        if (reg.waiting) {
+            this._showUpdateBanner();
+            return;
+        }
+        if (reg.installing) {
+            reg.installing.addEventListener('statechange', () => {
+                if (reg.waiting) this._showUpdateBanner();
+            });
+        }
+    },
+
+    async _initServiceWorker() {
+        if (typeof IS_CAPACITOR_NATIVE !== 'undefined' && IS_CAPACITOR_NATIVE) return;
+        if (!('serviceWorker' in navigator)) return;
+
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'APP_UPDATE_READY' && navigator.serviceWorker.controller) {
+                this._showUpdateBanner();
+            }
+        });
+
+        try {
+            const reg = await navigator.serviceWorker.register('./sw.js?v=15');
+            this._swRegistration = reg;
+            this._checkForSwUpdate(reg);
+
+            reg.addEventListener('updatefound', () => {
+                const worker = reg.installing;
+                if (!worker) return;
+                worker.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        this._showUpdateBanner();
+                    }
+                });
+            });
+
+            await reg.update();
+            this._checkForSwUpdate(reg);
+
+            const poll = () => reg.update().then(() => this._checkForSwUpdate(reg)).catch(() => {});
+            setInterval(poll, 5 * 60 * 1000);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') poll();
+            });
+            window.addEventListener('focus', poll);
+        } catch (err) {
+            console.error('Service Worker Registration Error:', err);
+        }
     }
 };
 
 // تهيئة التطبيق عند التحميل
 document.addEventListener('DOMContentLoaded', () => {
     App.init();
-    
-    const useServiceWorker = typeof IS_CAPACITOR_NATIVE !== 'undefined' && !IS_CAPACITOR_NATIVE;
-    if (useServiceWorker && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=9').then(reg => {
-            App._swRegistration = reg;
-            reg.update();
-            setInterval(() => reg.update(), 60 * 60 * 1000);
-            if (reg.waiting) App._showUpdateBanner();
-            reg.addEventListener('updatefound', () => {
-                const worker = reg.installing;
-                if (!worker) return;
-                worker.addEventListener('statechange', () => {
-                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                        App._showUpdateBanner();
-                    }
-                });
-            });
-        }).catch(err => {
-            console.error('Service Worker Registration Error:', err);
-        });
-    }
+    App._initServiceWorker();
 });
 
 window.switchApiTab = function(tabId, btnElement) {
