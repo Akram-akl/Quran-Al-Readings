@@ -4,6 +4,7 @@
 const AudioPlayer = {
     audio: new Audio(),
     isPlaying: false,
+    isLoading: false,
     currentAyah: null,
     isRepeat: false,
     currentlyHighlighted: null,
@@ -25,6 +26,20 @@ const AudioPlayer = {
     keepStopBoundary: false,
     
     init() {
+        this.audio.preload = 'auto';
+        this.audio.crossOrigin = 'anonymous';
+
+        this.audio.addEventListener('waiting', () => this._setPlayerState('loading'));
+        this.audio.addEventListener('stalled', () => this._setPlayerState('loading'));
+        this.audio.addEventListener('canplay', () => {
+            if (!this.audio.paused) this._setPlayerState('playing');
+        });
+        this.audio.addEventListener('error', () => {
+            this.isLoading = false;
+            this._setPlayerState('paused');
+            console.error('Audio playback error:', this.audio.error, this.audio.src);
+        });
+
         // ربط حدث انتهاء الصوت
         this.audio.onended = () => {
             const config = READINGS_CONFIG[App.currentReading];
@@ -39,8 +54,7 @@ const AudioPlayer = {
                     this._playCurrentTrack();
                 } else {
                     if (this.audioQueue.length > 0) {
-                        this.audio.src = this.audioQueue.shift();
-                        this.audio.play();
+                        this._playAudioUrl(this.audioQueue.shift(), 0).catch(() => this.next());
                     } else {
                         this.playlistIndex++;
                         this._playCurrentTrack();
@@ -53,8 +67,7 @@ const AudioPlayer = {
                     this._updateBtn(false);
                 } else {
                     if (this.audioQueue.length > 0) {
-                        this.audio.src = this.audioQueue.shift();
-                        this.audio.play();
+                        this._playAudioUrl(this.audioQueue.shift(), 0).catch(() => this.next());
                     } else {
                         this.next();
                     }
@@ -141,8 +154,10 @@ const AudioPlayer = {
             }
         };
 
-        this.audio.onplay = () => this._updateBtn(true);
-        this.audio.onpause = () => this._updateBtn(false);
+        this.audio.onplay = () => this._setPlayerState('playing');
+        this.audio.onpause = () => {
+            if (!this.isLoading) this._setPlayerState('paused');
+        };
 
         const repeatBtn = document.getElementById('repeatBtn');
         if (repeatBtn) repeatBtn.onclick = () => this.toggleRepeat();
@@ -463,31 +478,21 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            const tempAudio = new Audio();
-            tempAudio.src = audioUrl;
-            if (this.audio.src !== tempAudio.src) {
-                this.audio.src = audioUrl;
-            }
 
-            // منع تشغيل الآيات المخفية في وضع الاختبار
             if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive) {
                 const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"][data-surah="${suraNo}"]`);
                 if (el && el.classList.contains('hidden-ayah')) {
-                    this._updateBtn(false);
+                    this._setPlayerState('paused');
                     return;
                 }
             }
 
-            // الحل السحري لتأخير الـ Seek لحين جاهزية المتصفح loadedmetadata
-            const seekAndPlay = () => {
-                this.audio.currentTime = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
-                this.audio.play();
-            };
-
-            if (this.audio.readyState >= 1) {
-                seekAndPlay();
-            } else {
-                this.audio.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+            const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            try {
+                await this._playAudioUrl(audioUrl, startSec);
+            } catch (e) {
+                console.error('Monolithic play failed:', e);
+                return;
             }
 
             this.currentlyHighlighted = ayahNo;
@@ -547,19 +552,22 @@ const AudioPlayer = {
             });
         });
 
-        // 3. Play the first file in queue
-        this.audio.src = this.audioQueue.shift();
+        const firstUrl = this.audioQueue.shift();
         
-        // منع تشغيل الآيات المخفية في وضع الاختبار
         if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive) {
             const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"][data-surah="${suraNo}"]`);
             if (el && el.classList.contains('hidden-ayah')) {
-                this._updateBtn(false);
+                this._setPlayerState('paused');
                 return;
             }
         }
 
-        this.audio.play();
+        try {
+            await this._playAudioUrl(firstUrl, 0);
+        } catch (e) {
+            console.error('Ayah play failed:', e);
+            return;
+        }
         
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
@@ -570,24 +578,22 @@ const AudioPlayer = {
         }
     },
 
-    playIstiazah() {
+    async playIstiazah() {
         this.stop();
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
             ? config.getIstiazahPath() 
             : 'assets/fallback_istiazah.mp3';
-        this.audio.src = path;
-        this.audio.play();
+        try { await this._playAudioUrl(path, 0); } catch (e) { console.error(e); }
     },
 
-    playBasmalah() {
+    async playBasmalah() {
         this.stop();
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
             ? config.getBasmalahPath() 
             : 'assets/fallback_basmalah.mp3';
-        this.audio.src = path;
-        this.audio.play();
+        try { await this._playAudioUrl(path, 0); } catch (e) { console.error(e); }
     },
 
     togglePlayPause() {
@@ -726,9 +732,51 @@ const AudioPlayer = {
         }
     },
 
-    _updateBtn(playing) {
+    _setPlayerState(state) {
         const btn = document.getElementById('playPauseBtn');
-        if (btn) btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        if (!btn) return;
+        if (state === 'loading') {
+            this.isLoading = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.setAttribute('aria-busy', 'true');
+            return;
+        }
+        this.isLoading = false;
+        btn.removeAttribute('aria-busy');
+        btn.innerHTML = state === 'playing' ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+    },
+
+    _updateBtn(playing) {
+        this._setPlayerState(playing ? 'playing' : 'paused');
+    },
+
+    _playAudioUrl(url, startTimeSec = 0) {
+        this._setPlayerState('loading');
+        return new Promise((resolve, reject) => {
+            const cleanup = () => {
+                this.audio.removeEventListener('canplay', onReady);
+                this.audio.removeEventListener('error', onErr);
+            };
+            const onReady = () => {
+                cleanup();
+                if (startTimeSec > 0) {
+                    this.audio.currentTime = startTimeSec;
+                }
+                this.audio.play().then(resolve).catch(reject);
+            };
+            const onErr = () => {
+                cleanup();
+                this._setPlayerState('paused');
+                reject(new Error('Audio load failed'));
+            };
+
+            this.audio.addEventListener('canplay', onReady, { once: true });
+            this.audio.addEventListener('error', onErr, { once: true });
+            if (this.audio.src !== url) {
+                this.audio.src = url;
+            }
+            this.audio.load();
+        });
     },
 
     _highlight(no, suraNo = App.currentSurah) {

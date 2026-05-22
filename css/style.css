@@ -140,10 +140,10 @@ body {
     width: 100%;
     max-width: 800px;
     direction: rtl;
-    line-height: 2.1; /* زيادة طفيفة لدعم الحركات ومنع تداخل السطور */
+    line-height: 2;
     text-align: justify;
-    text-align-last: center; /* توسيط السطر الأخير في السورة */
-    word-spacing: 2px;
+    text-align-last: center;
+    word-spacing: normal;
 }
 
 .ayah-container {
@@ -202,7 +202,8 @@ body {
 }
 
 .player-controls { display: flex; align-items: center; justify-content: center; gap: 15px; flex: 1; }
-.btn-play-pause { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.2rem; cursor: pointer; }
+.btn-play-pause { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 1.2rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.btn-play-pause[aria-busy="true"] { opacity: 0.85; pointer-events: none; }
 
 .progress-area input { width: 100%; cursor: pointer; accent-color: var(--primary); height: 4px; }
 
@@ -354,8 +355,8 @@ body {
 .surah-section {
     width: 100%;
     max-width: 800px;
-    margin-bottom: 35px;
-    padding: 25px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
     background: var(--bg);
     border-radius: 16px;
     border: 1px solid var(--border);

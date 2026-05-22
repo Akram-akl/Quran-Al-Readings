@@ -2,7 +2,7 @@
  * offlineManager.js - إدارة المكتبة المحملة (العمل بدون إنترنت)
  */
 const OfflineManager = {
-    cacheName: 'quran-offline-v1',
+    cacheName: 'quran-offline-v2',
     isDownloading: false,
     isPaused: false,
     cancelRequested: false,
@@ -51,6 +51,19 @@ const OfflineManager = {
         }
     },
 
+    _getStoredDownloads() {
+        return JSON.parse(localStorage.getItem('offlineSurahs') || '{}');
+    },
+
+    _saveStoredDownloads(data) {
+        localStorage.setItem('offlineSurahs', JSON.stringify(data));
+    },
+
+    _isSurahDownloaded(readingKey, suraNo) {
+        const list = this._getStoredDownloads()[readingKey] || [];
+        return list.includes(suraNo);
+    },
+
     async openModal() {
         const modal = document.getElementById('offlineLibModal');
         if (modal) modal.classList.add('active');
@@ -78,7 +91,15 @@ const OfflineManager = {
         if (!data) return;
         
         const surahs = DataHandler.getSurahs(data);
-        sel.innerHTML = surahs.map(s => `<option value="${s.number}">${s.number}. ${s.nameAr}</option>`).join('');
+        const downloaded = this._getStoredDownloads()[this.currentReading] || [];
+        const cfg = READINGS_CONFIG[this.currentReading] || {};
+
+        sel.innerHTML = surahs.map(s => {
+            const done = downloaded.includes(s.number);
+            const label = `${s.number}. ${s.nameAr}${done ? ' (محمّلة لهذا القارئ)' : ''}`;
+            return `<option value="${s.number}">${label}</option>`;
+        }).join('');
+
         if (App.currentSurah) {
             sel.value = App.currentSurah;
         }
@@ -88,36 +109,46 @@ const OfflineManager = {
         const listEl = document.getElementById('offlineDownloadedList');
         if (!listEl) return;
         
-        const downloaded = JSON.parse(localStorage.getItem('offlineSurahs') || '{}');
-        const readingDl = downloaded[this.currentReading] || [];
+        const downloaded = this._getStoredDownloads();
+        const readingKeys = Object.keys(downloaded).filter(k => (downloaded[k] || []).length > 0);
         
-        if (readingDl.length === 0) {
+        if (readingKeys.length === 0) {
             listEl.innerHTML = '<p>لا توجد سور محملة بعد.</p>';
             return;
         }
         
-        let data = DataHandler.cache[this.currentReading];
-        if (!data) data = await DataHandler.loadReading(this.currentReading);
-        const surahs = DataHandler.getSurahs(data);
-        
-        let html = '<ul style="list-style:none; padding:0; margin:0;">';
-        readingDl.sort((a,b)=>a-b).forEach(sNo => {
-            const sInfo = surahs.find(s => s.number === sNo);
-            if (sInfo) {
-                html += `<li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                    <span><i class="fas fa-check-circle" style="color:var(--primary)"></i> سورة ${sInfo.nameAr}</span>
-                    <button class="btn btn-sm btn-danger" onclick="OfflineManager.deleteSurah(${sNo})"><i class="fas fa-trash"></i></button>
-                </li>`;
+        let html = '';
+        for (const readingKey of readingKeys.sort()) {
+            const cfg = READINGS_CONFIG[readingKey] || { name: readingKey, reader: '' };
+            let data = DataHandler.cache[readingKey];
+            if (!data) {
+                try { data = await DataHandler.loadReading(readingKey); } catch (e) { data = []; }
             }
-        });
-        html += '</ul>';
+            const surahs = data ? DataHandler.getSurahs(data) : [];
+
+            html += `<div class="offline-reading-group" style="margin-bottom:12px;">
+                <div style="font-weight:bold;color:var(--primary);margin-bottom:6px;">${cfg.name || readingKey}</div>
+                <div style="font-size:0.8rem;opacity:0.8;margin-bottom:6px;"><i class="fas fa-user"></i> ${cfg.reader || ''}</div>
+                <ul style="list-style:none;padding:0;margin:0;">`;
+
+            downloaded[readingKey].sort((a, b) => a - b).forEach(sNo => {
+                const sInfo = surahs.find(s => s.number === sNo);
+                const name = sInfo ? sInfo.nameAr : `سورة ${sNo}`;
+                html += `<li style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                    <span><i class="fas fa-check-circle" style="color:var(--primary)"></i> سورة ${name}</span>
+                    <button class="btn btn-sm btn-danger" onclick="OfflineManager.deleteSurah('${readingKey}', ${sNo})"><i class="fas fa-trash"></i></button>
+                </li>`;
+            });
+            html += '</ul></div>';
+        }
         listEl.innerHTML = html;
     },
 
     async startDownload(allSurahs) {
         if (this.isDownloading) return;
         
-        document.getElementById('offlineAlertBox').style.display = 'none';
+        const alertBox = document.getElementById('offlineAlertBox');
+        if (alertBox) alertBox.style.display = 'none';
 
         if (allSurahs) {
             document.getElementById('offlineConfirmBox').style.display = 'block';
@@ -126,9 +157,18 @@ const OfflineManager = {
 
         const sel = document.getElementById('offlineSurahSelect');
         if (!sel) return;
-        const surahsToDownload = [parseInt(sel.value)];
+        const suraNo = parseInt(sel.value, 10);
+
+        if (this._isSurahDownloaded(this.currentReading, suraNo)) {
+            const cfg = READINGS_CONFIG[this.currentReading] || {};
+            if (alertBox) {
+                alertBox.innerHTML = `<i class="fas fa-info-circle"></i> سورة ${suraNo} محمّلة مسبقاً لـ <strong>${cfg.reader || cfg.name}</strong>. يمكنك اختيار <strong>قارئاً آخر</strong> من القائمة وتحميل نفس السورة له.`;
+                alertBox.style.display = 'block';
+            }
+            return;
+        }
         
-        await this._startProcess(surahsToDownload);
+        await this._startProcess([suraNo]);
     },
     
     async executeDownloadAll() {
@@ -136,7 +176,17 @@ const OfflineManager = {
         let data = DataHandler.cache[this.currentReading];
         if (!data) data = await DataHandler.loadReading(this.currentReading);
         if (!data) return;
-        const surahsToDownload = [...new Set(DataHandler.getSurahs(data).map(s => s.number))];
+        const all = [...new Set(DataHandler.getSurahs(data).map(s => s.number))];
+        const existing = this._getStoredDownloads()[this.currentReading] || [];
+        const surahsToDownload = all.filter(s => !existing.includes(s));
+        if (surahsToDownload.length === 0) {
+            const alertBox = document.getElementById('offlineAlertBox');
+            if (alertBox) {
+                alertBox.textContent = 'كل السور محمّلة مسبقاً لهذا القارئ.';
+                alertBox.style.display = 'block';
+            }
+            return;
+        }
         await this._startProcess(surahsToDownload);
     },
 
@@ -148,35 +198,26 @@ const OfflineManager = {
         this.downloadQueue = [];
         this._downloadingSurahs = surahsToDownload;
         
-        // تجهيز الروابط
         const config = READINGS_CONFIG[this.currentReading];
         if (!config) return;
 
         for (const sNo of surahsToDownload) {
-            // إضافة السورة (البيانات JSON) - Already handled by loadReading caching, but we can queue JSON path explicitly if needed.
-            // Tafsir URLs and Surah Info URLs
             const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
             for (const ayah of ayahs) {
-                // Tafsir URL (Mokhtasar)
                 const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${ayah.aya_no}`;
                 this.downloadQueue.push({ type: 'api', url: tafsirUrl, sura: sNo });
             }
             
-            // Sura Info API
             this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/asmaa-sowar/${sNo}`, sura: sNo });
             this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/fadael-sowar/${sNo}`, sura: sNo });
 
-            // Audio URLs
             if (config.isMonolithic) {
-                // One file per surah
                 const audioUrl = config.getAudioPath(sNo);
                 if (audioUrl) this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
                 
-                // Timing file
                 const timingUrl = config.getTimingPath(sNo);
                 if (timingUrl) this.downloadQueue.push({ type: 'json', url: timingUrl, sura: sNo });
             } else {
-                // One file per ayah
                 for (const ayah of ayahs) {
                     let mappedHafsAyahs = [ayah.aya_no];
                     if (typeof AUDIO_MAP !== 'undefined') {
@@ -224,7 +265,6 @@ const OfflineManager = {
         }
         
         const cache = await caches.open(this.cacheName);
-        let lastSura = null;
 
         while (this.downloadQueue.length > 0) {
             if (this.cancelRequested) break;
@@ -234,17 +274,17 @@ const OfflineManager = {
             }
 
             const item = this.downloadQueue.shift();
-            lastSura = item.sura;
             
             try {
-                // Check if already cached
                 const match = await cache.match(item.url);
                 if (!match) {
-                    await cache.add(item.url);
+                    const res = await fetch(item.url, { mode: 'cors', cache: 'no-store' });
+                    if (res.ok) {
+                        await cache.put(item.url, res);
+                    }
                 }
             } catch (e) {
                 console.error(`Failed to download ${item.url}:`, e);
-                // In case of error, put it back or skip. We will skip and retry later if needed.
             }
             
             this.downloadedItems++;
@@ -254,8 +294,7 @@ const OfflineManager = {
         if (this.cancelRequested) {
             this.updateUIStatus('stop');
         } else {
-            // Save to localStorage
-            const downloaded = JSON.parse(localStorage.getItem('offlineSurahs') || '{}');
+            const downloaded = this._getStoredDownloads();
             if (!downloaded[this.currentReading]) downloaded[this.currentReading] = [];
             
             this._downloadingSurahs.forEach(suraNo => {
@@ -263,28 +302,23 @@ const OfflineManager = {
                     downloaded[this.currentReading].push(suraNo);
                 }
             });
-            localStorage.setItem('offlineSurahs', JSON.stringify(downloaded));
+            this._saveStoredDownloads(downloaded);
             
-            const alertBox = document.getElementById('offlineAlertBox');
-            if (alertBox) {
-                alertBox.textContent = 'تم تحميل البيانات بنجاح! يمكنك الآن الاستماع والقراءة بدون إنترنت.';
-                alertBox.style.background = '#d4edda';
-                alertBox.style.color = '#155724';
-                alertBox.style.border = '1px solid #c3e6cb';
-                alertBox.style.display = 'block';
-            }
-            this.updateUIStatus('finish');
-            this.updateDownloadedList();
+            this.updateUIStatus('done');
+            await this.populateSurahs();
+            await this.updateDownloadedList();
         }
-        
+
         this.isDownloading = false;
     },
 
     togglePause() {
         this.isPaused = !this.isPaused;
-        const pauseBtn = document.getElementById('offlinePauseBtn');
-        if (pauseBtn) {
-            pauseBtn.innerHTML = this.isPaused ? '<i class="fas fa-play"></i> استئناف' : '<i class="fas fa-pause"></i> إيقاف مؤقت';
+        const btn = document.getElementById('offlinePauseBtn');
+        if (btn) {
+            btn.innerHTML = this.isPaused 
+                ? '<i class="fas fa-play"></i> استئناف' 
+                : '<i class="fas fa-pause"></i> إيقاف مؤقت';
         }
     },
 
@@ -295,53 +329,48 @@ const OfflineManager = {
         this.updateUIStatus('stop');
     },
 
-    async deleteSurah(suraNo) {
-        if (!confirm('هل أنت متأكد من حذف هذه السورة من الذاكرة المؤقتة؟')) return;
-        
-        const downloaded = JSON.parse(localStorage.getItem('offlineSurahs') || '{}');
-        if (downloaded[this.currentReading]) {
-            downloaded[this.currentReading] = downloaded[this.currentReading].filter(s => s !== suraNo);
-            localStorage.setItem('offlineSurahs', JSON.stringify(downloaded));
-        }
+    deleteSurah(readingKey, suraNo) {
+        const downloaded = this._getStoredDownloads();
+        if (!downloaded[readingKey]) return;
+        downloaded[readingKey] = downloaded[readingKey].filter(s => s !== suraNo);
+        if (downloaded[readingKey].length === 0) delete downloaded[readingKey];
+        this._saveStoredDownloads(downloaded);
         this.updateDownloadedList();
+        if (readingKey === this.currentReading) this.populateSurahs();
     },
 
-    updateUIStatus(status) {
-        const dsBtn = document.getElementById('offlineDlSurahBtn');
-        const daBtn = document.getElementById('offlineDlAllBtn');
-        const pBtn = document.getElementById('offlinePauseBtn');
-        const sBtn = document.getElementById('offlineStopBtn');
-        const prog = document.getElementById('offlineProgressContainer');
-        const txt = document.getElementById('offlineProgressText');
+    updateUIStatus(state) {
+        const progressC = document.getElementById('offlineProgressContainer');
+        const dlBtns = document.getElementById('offlineDlBtns');
+        const pauseBtn = document.getElementById('offlinePauseBtn');
+        const stopBtn = document.getElementById('offlineStopBtn');
 
-        if (status === 'start') {
-            if (dsBtn) dsBtn.disabled = true;
-            if (daBtn) daBtn.disabled = true;
-            if (pBtn) pBtn.style.display = 'block';
-            if (sBtn) sBtn.style.display = 'block';
-            if (prog) prog.style.display = 'block';
-            if (txt) txt.textContent = 'جاري التحميل...';
-            this.updateUIProgress();
-        } else if (status === 'stop' || status === 'finish') {
-            if (dsBtn) dsBtn.disabled = false;
-            if (daBtn) daBtn.disabled = false;
-            if (pBtn) pBtn.style.display = 'none';
-            if (sBtn) sBtn.style.display = 'none';
-            if (prog) prog.style.display = 'none';
+        if (state === 'start') {
+            if (progressC) progressC.style.display = 'block';
+            if (dlBtns) dlBtns.style.display = 'none';
+            if (pauseBtn) pauseBtn.style.display = 'inline-block';
+            if (stopBtn) stopBtn.style.display = 'inline-block';
+        } else {
+            if (progressC) progressC.style.display = 'none';
+            if (dlBtns) dlBtns.style.display = 'flex';
+            if (pauseBtn) pauseBtn.style.display = 'none';
+            if (stopBtn) stopBtn.style.display = 'none';
         }
     },
 
     updateUIProgress() {
+        const percent = Math.round((this.downloadedItems / this.totalItems) * 100);
         const bar = document.getElementById('offlineProgressBar');
-        const pct = document.getElementById('offlineProgressPercent');
-        if (!bar || !pct) return;
+        const text = document.getElementById('offlineProgressPercent');
+        const status = document.getElementById('offlineProgressText');
+        const cfg = READINGS_CONFIG[this.currentReading] || {};
 
-        const p = Math.floor((this.downloadedItems / this.totalItems) * 100) || 0;
-        bar.style.width = p + '%';
-        pct.textContent = p + '%';
+        if (bar) bar.style.width = percent + '%';
+        if (text) text.textContent = percent + '%';
+        if (status) status.textContent = `جاري التحميل (${cfg.reader || cfg.name})...`;
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     OfflineManager.init();
 });
