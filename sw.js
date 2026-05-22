@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'quran-shell-v11';
+const SHELL_CACHE = 'quran-shell-v12';
 const DATA_CACHE = 'quran-offline-v2';
 
 const APP_SHELL = [
@@ -14,6 +14,7 @@ const APP_SHELL = [
     './js/ui.js',
     './js/tagsAndContext.js',
     './js/app.js',
+    './js/saveFile.js',
     './fonts/uthmanic_hafs_v20.ttf',
     './fonts/uthmanic_warsh_v21.ttf',
     './fonts/uthmanic_qaloun_v21.ttf',

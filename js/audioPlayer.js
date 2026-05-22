@@ -30,8 +30,12 @@ const AudioPlayer = {
         this.audio.preload = 'auto';
         this.audio.crossOrigin = 'anonymous';
 
-        this.audio.addEventListener('waiting', () => this._setPlayerState('loading'));
-        this.audio.addEventListener('stalled', () => this._setPlayerState('loading'));
+        this.audio.addEventListener('waiting', () => {
+            if (!this.audio.paused && this.currentAyah) this._setPlayerState('loading');
+        });
+        this.audio.addEventListener('stalled', () => {
+            if (!this.audio.paused && this.currentAyah) this._setPlayerState('loading');
+        });
         this.audio.addEventListener('canplay', () => {
             if (!this.audio.paused) this._setPlayerState('playing');
         });
@@ -136,6 +140,9 @@ const AudioPlayer = {
                         }
                     }
                 }
+                if (this.currentlyHighlighted && !document.querySelector('.ayah-container.active')) {
+                    this._highlightSingle(this.currentlyHighlighted, App.currentSurah);
+                }
             } else {
                 // التظليل النسبي الذكي للآيات المدمجة (النظام القديم)
                 if (this.groupedAyahs && this.groupedAyahs.length > 1 && this.audio.duration && this.audio.currentTime > 0.2) {
@@ -151,6 +158,9 @@ const AudioPlayer = {
                         this.currentlyHighlighted = activeAya;
                         this._highlightSingle(activeAya, App.currentSurah);
                     }
+                }
+                if (this.currentlyHighlighted && !document.querySelector('.ayah-container.active')) {
+                    this._highlightSingle(this.currentlyHighlighted, App.currentSurah);
                 }
             }
         };
@@ -301,8 +311,7 @@ const AudioPlayer = {
             }
 
             if (!App.isAyahOnPage(track, App.currentPage)) {
-                UI.showLoader();
-                await App.loadPage(targetPage, true);
+                await App.loadPage(targetPage, true, false, true);
             }
 
             await this._playPlaylistAyah(track.aya_no, track.sura_no);
@@ -320,7 +329,9 @@ const AudioPlayer = {
 
         this.currentAyah = ayah;
         App.currentSurah = suraNo;
-        
+        this.currentlyHighlighted = ayahNo;
+        this._highlightSingle(ayahNo, suraNo);
+
         const title = document.getElementById('currentSurahTitle');
         if (title) title.textContent = `سورة ${ayah.sura_name_ar}`;
         const sSel = document.getElementById('surahSelect');
@@ -371,8 +382,6 @@ const AudioPlayer = {
                 this.audio.addEventListener('loadedmetadata', seekAndPlay, { once: true });
             }
 
-            this.currentlyHighlighted = ayahNo;
-            this._highlightSingle(ayahNo);
             return;
         }
 
@@ -438,6 +447,19 @@ const AudioPlayer = {
         }
     },
 
+    _findNextAyah(currentAyah) {
+        const allData = DataHandler.cache[App.currentReading];
+        if (!allData || !currentAyah) return null;
+        const maxInGroup = Math.max(...(this.groupedAyahs && this.groupedAyahs.length ? this.groupedAyahs : [currentAyah.aya_no]));
+        const suraAyahs = allData
+            .filter(a => a.sura_no === currentAyah.sura_no && a.aya_no > 0)
+            .sort((a, b) => a.aya_no - b.aya_no);
+        const idx = suraAyahs.findIndex(a => a.aya_no === maxInGroup);
+        if (idx >= 0 && idx < suraAyahs.length - 1) return suraAyahs[idx + 1];
+        if (this.stopAtEndOfSura === currentAyah.sura_no) return null;
+        return allData.find(a => a.sura_no === currentAyah.sura_no + 1 && a.aya_no === 1) || null;
+    },
+
     async playAyah(ayahNo, suraNo = App.currentSurah) {
         if (!this.keepStopBoundary) {
             this.stopAtEndOfSura = null;
@@ -449,7 +471,6 @@ const AudioPlayer = {
         this.playlistIndex = -1;
         this.playlistReadingKey = "";
 
-        this.stop();
         const config = READINGS_CONFIG[App.currentReading];
         const ayahs = DataHandler.cache[App.currentReading];
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
@@ -458,6 +479,12 @@ const AudioPlayer = {
 
         this.currentAyah = ayah;
         App.currentSurah = suraNo;
+        this.currentlyHighlighted = ayahNo;
+        this._highlightSingle(ayahNo, suraNo);
+
+        this.cancelLoad();
+        this.audio.pause();
+        this.audioQueue = [];
         
         // --- الهيكل الهجين: نظام السورة المدمجة (Monolithic) ---
         if (config.isMonolithic) {
@@ -506,8 +533,6 @@ const AudioPlayer = {
                 return;
             }
 
-            this.currentlyHighlighted = ayahNo;
-            this._highlightSingle(ayahNo, suraNo);
             return;
         }
         // --- نهاية النظام المدمج ---
@@ -585,7 +610,6 @@ const AudioPlayer = {
             this.currentlyHighlighted = this.groupedAyahs[0];
             this._highlightSingle(this.groupedAyahs[0], suraNo);
         } else {
-            this.currentlyHighlighted = ayahNo;
             this._highlightGroup(this.groupedAyahs, suraNo);
         }
     },
@@ -696,44 +720,31 @@ const AudioPlayer = {
     },
 
     async next() {
-        if (!this.currentAyah) return;
+        if (!this.currentAyah || this.isTransitioning) return;
         if (this.isRepeat) {
             this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no);
-        } else {
-            const maxAyahInGroup = Math.max(...this.groupedAyahs);
-            const nextAyahNo = maxAyahInGroup + 1;
-            const suraNo = this.currentAyah.sura_no;
-            
-            // البحث عن الآية التالية في بيانات القراءة الكاملة
-            const allData = DataHandler.cache[App.currentReading];
-            if (allData) {
-                let nextAyah = allData.find(a => a.aya_no === nextAyahNo && a.sura_no === suraNo);
-                
-                // إذا لم توجد آية تالية في نفس السورة، انتقل للآية الأولى من السورة التالية
-                if (!nextAyah) {
-                    if (this.stopAtEndOfSura === suraNo) {
-                        this.stopAtEndOfSura = null;
-                        this.stop();
-                        this._updateBtn(false);
-                        return;
-                    }
-                    nextAyah = allData.find(a => a.sura_no === suraNo + 1 && a.aya_no === 1);
-                }
-                
-                if (nextAyah) {
-                    if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
-                        const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
-                        await App.loadPage(targetPage, true);
-                    }
-                    this.playAyah(nextAyah.aya_no, nextAyah.sura_no);
-                } else {
-                    // انتهى القرآن الكريم
-                    this.stop();
-                    this._updateBtn(false);
-                }
-            } else {
-                this.playAyah(nextAyahNo, suraNo);
+            return;
+        }
+
+        const nextAyah = this._findNextAyah(this.currentAyah);
+        if (!nextAyah) {
+            if (this.stopAtEndOfSura === this.currentAyah.sura_no) {
+                this.stopAtEndOfSura = null;
             }
+            this.stop();
+            this._updateBtn(false);
+            return;
+        }
+
+        try {
+            if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
+                const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
+                await App.loadPage(targetPage, true, false, true);
+            }
+            await this.playAyah(nextAyah.aya_no, nextAyah.sura_no);
+        } catch (e) {
+            console.error('next ayah failed:', e);
+            this._setPlayerState('paused');
         }
     },
 
@@ -754,12 +765,10 @@ const AudioPlayer = {
         if (!btn) return;
         if (state === 'loading') {
             this.isLoading = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin" title="جاري التحميل — اضغط للإيقاف"></i>';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             btn.setAttribute('aria-busy', 'true');
-            btn.setAttribute('title', 'إيقاف التحميل');
             return;
         }
-        btn.removeAttribute('title');
         this.isLoading = false;
         btn.removeAttribute('aria-busy');
         btn.innerHTML = state === 'playing' ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';

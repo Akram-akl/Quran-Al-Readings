@@ -95,8 +95,8 @@ const UI = {
         const prev = document.getElementById('prevPageBtn');
         const next = document.getElementById('nextPageBtn');
         const input = document.getElementById('pageInput');
-        if (prev) prev.onclick = () => { if (this.currentPage > 1) App.loadPage(this.currentPage - 1); };
-        if (next) next.onclick = () => { if (this.currentPage < this.totalPages) App.loadPage(this.currentPage + 1); };
+        if (prev) prev.onclick = () => { if (App.currentPage > 1) App.loadPage(App.currentPage - 1); };
+        if (next) next.onclick = () => { if (App.currentPage < this.totalPages) App.loadPage(App.currentPage + 1); };
         if (input) input.onchange = (e) => App.loadPage(parseInt(e.target.value));
     },
 

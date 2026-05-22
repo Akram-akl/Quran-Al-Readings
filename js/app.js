@@ -130,21 +130,28 @@ const App = {
     },
 
     isAyahOnPage(ayah, pageNo) {
-        if (!ayah || ayah.page == null) return false;
-        const raw = String(ayah.page);
+        if (!ayah) return false;
+        const p = parseInt(pageNo, 10);
+        if (typeof UI !== 'undefined' && UI.currentPageAyahs && UI.currentPageAyahs.length > 0 && p === parseInt(this.currentPage, 10)) {
+            if (UI.currentPageAyahs.some(a => a.sura_no === ayah.sura_no && a.aya_no === ayah.aya_no)) {
+                return true;
+            }
+        }
+        if (ayah.page == null) return false;
+        const raw = String(ayah.page).trim();
         if (raw.includes('-')) {
             const parts = raw.split('-').map(n => parseInt(n, 10));
             const start = parts[0];
             const end = parts[1] || start;
-            return pageNo >= start && pageNo <= end;
+            return p >= start && p <= end;
         }
-        return parseInt(raw, 10) === pageNo;
+        return parseInt(raw, 10) === p;
     },
 
-    async loadPage(page, keepPlaylist = false, forceStop = false) {
+    async loadPage(page, keepPlaylist = false, forceStop = false, silent = false) {
         if (page < 1 || page > 604) return;
         this.currentPage = page;
-        UI.showLoader();
+        if (!silent) UI.showLoader();
         if (typeof AudioPlayer !== 'undefined' && forceStop) AudioPlayer.stop();
 
         try {
@@ -158,6 +165,12 @@ const App = {
 
                 if (typeof AudioPlayer !== 'undefined') {
                     AudioPlayer.preloadPageAudios(this.currentReading, ayahs);
+                    if (AudioPlayer.currentAyah) {
+                        const cur = AudioPlayer.currentAyah;
+                        if (ayahs.some(a => a.sura_no === cur.sura_no && a.aya_no === cur.aya_no)) {
+                            AudioPlayer._highlightSingle(cur.aya_no, cur.sura_no);
+                        }
+                    }
                 }
             }
         } catch (e) {
@@ -165,6 +178,27 @@ const App = {
             const area = document.getElementById('readingArea');
             if (area) area.innerHTML = '<div class="loader">تعذّر تحميل الصفحة</div>';
         }
+    },
+
+    _showUpdateBanner() {
+        if (document.getElementById('appUpdateBar')) return;
+        const bar = document.createElement('div');
+        bar.id = 'appUpdateBar';
+        bar.className = 'app-update-bar';
+        bar.innerHTML = '<span>يتوفر تحديث للتطبيق</span><button type="button" id="appUpdateBtn" class="btn btn-primary btn-sm">تحديث الآن</button>';
+        document.body.appendChild(bar);
+        document.getElementById('appUpdateBtn').onclick = () => {
+            if (this._swRegistration && this._swRegistration.waiting) {
+                this._swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            let reloaded = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (reloaded) return;
+                reloaded = true;
+                window.location.reload();
+            });
+            setTimeout(() => { if (!reloaded) window.location.reload(); }, 1500);
+        };
     }
 };
 
@@ -173,9 +207,20 @@ document.addEventListener('DOMContentLoaded', () => {
     App.init();
     
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
+        navigator.serviceWorker.register('./sw.js?v=9').then(reg => {
+            App._swRegistration = reg;
             reg.update();
-            // بدون إعادة تحميل تلقائية — كانت تسبب إعادة فتح التطبيق أثناء الانتقال بين الصفحات
+            setInterval(() => reg.update(), 60 * 60 * 1000);
+            if (reg.waiting) App._showUpdateBanner();
+            reg.addEventListener('updatefound', () => {
+                const worker = reg.installing;
+                if (!worker) return;
+                worker.addEventListener('statechange', () => {
+                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                        App._showUpdateBanner();
+                    }
+                });
+            });
         }).catch(err => {
             console.error('Service Worker Registration Error:', err);
         });
