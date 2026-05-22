@@ -29,20 +29,31 @@ const AudioPlayer = {
     _cancelRequested: false,
     _pendingLoadCleanup: null,
     _metadataHandler: null,
-    
+    _loadTimeoutId: null,
+
+    _isSessionAlive(session) {
+        return session === this._playSession;
+    },
+
+    _bumpPlaySession() {
+        this._playSession++;
+        return this._playSession;
+    },
+
     init() {
         this.audio.preload = 'auto';
         this.audio.crossOrigin = 'anonymous';
 
         this.audio.addEventListener('waiting', () => {
-            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah || this.isLoading) return;
             this._setPlayerState('loading');
         });
         this.audio.addEventListener('stalled', () => {
-            if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
+            if (this._cancelRequested || this.audio.paused || !this.currentAyah || this.isLoading) return;
             this._setPlayerState('loading');
         });
         this.audio.addEventListener('canplay', () => {
+            if (this._cancelRequested || this.isLoading) return;
             if (!this.audio.paused) this._setPlayerState('playing');
         });
         this.audio.addEventListener('error', () => {
@@ -53,6 +64,7 @@ const AudioPlayer = {
 
         // ربط حدث انتهاء الصوت
         this.audio.onended = () => {
+            if (this._cancelRequested) return;
             const config = READINGS_CONFIG[App.currentReading];
             
             // تحقق من وجود قائمة استماع نشطة
@@ -65,7 +77,10 @@ const AudioPlayer = {
                     this._playCurrentTrack();
                 } else {
                     if (this.audioQueue.length > 0) {
-                        this._playAudioUrl(this.audioQueue.shift(), 0).catch(() => this.next());
+                        const s = this._playSession;
+                        this._playAudioUrl(this.audioQueue.shift(), 0, s).catch(() => {
+                            if (this._isSessionAlive(s)) this.next();
+                        });
                     } else {
                         this.playlistIndex++;
                         this._playCurrentTrack();
@@ -78,7 +93,10 @@ const AudioPlayer = {
                     this._updateBtn(false);
                 } else {
                     if (this.audioQueue.length > 0) {
-                        this._playAudioUrl(this.audioQueue.shift(), 0).catch(() => this.next());
+                        const s = this._playSession;
+                        this._playAudioUrl(this.audioQueue.shift(), 0, s).catch(() => {
+                            if (this._isSessionAlive(s)) this.next();
+                        });
                     } else {
                         this.next();
                     }
@@ -113,7 +131,10 @@ const AudioPlayer = {
                     const activeAyaNo = activeAyaData.ayah;
                     if (this.currentlyHighlighted !== activeAyaNo && this.audio.currentTime > 0.2) {
                         this.currentlyHighlighted = activeAyaNo;
-                        this.currentAyah = DataHandler.cache[App.currentReading].find(a => a.aya_no === activeAyaNo && a.sura_no === App.currentSurah);
+                        const allAyahs = DataHandler.cache[App.currentReading];
+                        if (allAyahs) {
+                            this.currentAyah = allAyahs.find(a => a.aya_no === activeAyaNo && a.sura_no === App.currentSurah);
+                        }
                         this._highlightSingle(activeAyaNo, App.currentSurah);
                     }
                     
@@ -171,9 +192,11 @@ const AudioPlayer = {
             }
         };
 
-        this.audio.onplay = () => this._setPlayerState('playing');
+        this.audio.onplay = () => {
+            if (!this._cancelRequested && !this.isLoading) this._setPlayerState('playing');
+        };
         this.audio.onpause = () => {
-            if (!this.isLoading) this._setPlayerState('paused');
+            if (!this.isLoading && !this._cancelRequested) this._setPlayerState('paused');
         };
 
         const repeatBtn = document.getElementById('repeatBtn');
@@ -259,11 +282,14 @@ const AudioPlayer = {
         }
     },
 
-    cancelLoad() {
-        this._playSession++;
+    _hardStopAudio() {
         this._loadId++;
         this._cancelRequested = true;
         this._cancelPendingLoad();
+        if (this._loadTimeoutId) {
+            clearTimeout(this._loadTimeoutId);
+            this._loadTimeoutId = null;
+        }
         this.isLoading = false;
         this.isTransitioning = false;
         try {
@@ -274,8 +300,13 @@ const AudioPlayer = {
         this._setPlayerState('paused');
     },
 
+    cancelLoad() {
+        this._hardStopAudio();
+    },
+
     stop() {
-        this.cancelLoad();
+        this._bumpPlaySession();
+        this._hardStopAudio();
         this.audioQueue = [];
         this.playlist = [];
         this.playlistIndex = -1;
@@ -344,8 +375,10 @@ const AudioPlayer = {
     },
 
     async _playPlaylistAyah(ayahNo, suraNo) {
+        const playSession = this._playSession;
         const config = READINGS_CONFIG[App.currentReading];
         const ayahs = DataHandler.cache[App.currentReading];
+        if (!ayahs || !ayahs.length) return;
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
 
         if (!ayah) return;
@@ -380,6 +413,7 @@ const AudioPlayer = {
                     return;
                 }
             }
+            if (!this._isSessionAlive(playSession)) return;
 
             const ayahTiming = this.currentTimingData.find(t => t.ayah === ayahNo);
             if (!ayahTiming) {
@@ -388,15 +422,14 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            const playSession = this._playSession;
             const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
             try {
-                await this._playAudioUrl(audioUrl, startSec);
+                await this._playAudioUrl(audioUrl, startSec, playSession);
             } catch (e) {
                 if (e && e.message === 'aborted') return;
                 return;
             }
-            if (playSession !== this._playSession) return;
+            if (!this._isSessionAlive(playSession)) return;
             return;
         }
 
@@ -450,15 +483,14 @@ const AudioPlayer = {
             });
         });
 
-        const playSession = this._playSession;
         const firstUrl = this.audioQueue.shift();
         try {
-            await this._playAudioUrl(firstUrl, 0);
+            await this._playAudioUrl(firstUrl, 0, playSession);
         } catch (e) {
             if (e && e.message === 'aborted') return;
             return;
         }
-        if (playSession !== this._playSession) return;
+        if (!this._isSessionAlive(playSession)) return;
 
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
@@ -493,22 +525,28 @@ const AudioPlayer = {
         this.playlistIndex = -1;
         this.playlistReadingKey = "";
 
-        const config = READINGS_CONFIG[App.currentReading];
-        const ayahs = DataHandler.cache[App.currentReading];
-        const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
+        const playSession = this._bumpPlaySession();
+        this._hardStopAudio();
+        this.audioQueue = [];
 
+        const config = READINGS_CONFIG[App.currentReading];
+        if (!config) return;
+
+        if (!DataHandler.cache[App.currentReading]) {
+            await DataHandler.loadReading(App.currentReading);
+        }
+        if (!this._isSessionAlive(playSession)) return;
+
+        const ayahs = DataHandler.cache[App.currentReading];
+        if (!ayahs || !ayahs.length) return;
+
+        const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
         if (!ayah) return;
 
         this.currentAyah = ayah;
         App.currentSurah = suraNo;
         this.currentlyHighlighted = ayahNo;
         this._highlightSingle(ayahNo, suraNo);
-
-        this.cancelLoad();
-        const playSession = this._playSession;
-        this._cancelRequested = false;
-        this.audio.pause();
-        this.audioQueue = [];
         
         // --- الهيكل الهجين: نظام السورة المدمجة (Monolithic) ---
         if (config.isMonolithic) {
@@ -530,6 +568,7 @@ const AudioPlayer = {
                     return;
                 }
             }
+            if (!this._isSessionAlive(playSession)) return;
 
             const ayahTiming = this.currentTimingData.find(t => t.ayah === ayahNo);
             
@@ -550,13 +589,14 @@ const AudioPlayer = {
 
             const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
             try {
-                await this._playAudioUrl(audioUrl, startSec);
+                await this._playAudioUrl(audioUrl, startSec, playSession);
             } catch (e) {
                 if (e && e.message === 'aborted') return;
+                if (!this._isSessionAlive(playSession)) return;
                 console.error('Monolithic play failed:', e);
                 return;
             }
-            if (playSession !== this._playSession) return;
+            if (!this._isSessionAlive(playSession)) return;
             return;
         }
         // --- نهاية النظام المدمج ---
@@ -622,14 +662,17 @@ const AudioPlayer = {
             }
         }
 
+        if (!this._isSessionAlive(playSession)) return;
+
         try {
-            await this._playAudioUrl(firstUrl, 0);
+            await this._playAudioUrl(firstUrl, 0, playSession);
         } catch (e) {
             if (e && e.message === 'aborted') return;
+            if (!this._isSessionAlive(playSession)) return;
             console.error('Ayah play failed:', e);
             return;
         }
-        if (playSession !== this._playSession) return;
+        if (!this._isSessionAlive(playSession)) return;
         
         if (this.groupedAyahs.length > 1) {
             this.currentlyHighlighted = this.groupedAyahs[0];
@@ -640,27 +683,36 @@ const AudioPlayer = {
     },
 
     async playIstiazah() {
-        this.stop();
+        const session = this._bumpPlaySession();
+        this._hardStopAudio();
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
             ? config.getIstiazahPath() 
             : 'assets/fallback_istiazah.mp3';
-        try { await this._playAudioUrl(path, 0); } catch (e) { console.error(e); }
+        try { await this._playAudioUrl(path, 0, session); } catch (e) {
+            if (e && e.message !== 'aborted') console.error(e);
+        }
     },
 
     async playBasmalah() {
-        this.stop();
+        const session = this._bumpPlaySession();
+        this._hardStopAudio();
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
             ? config.getBasmalahPath() 
             : 'assets/fallback_basmalah.mp3';
-        try { await this._playAudioUrl(path, 0); } catch (e) { console.error(e); }
+        try { await this._playAudioUrl(path, 0, session); } catch (e) {
+            if (e && e.message !== 'aborted') console.error(e);
+        }
+    },
+
+    isLoadInProgress() {
+        const playBtn = document.getElementById('playPauseBtn');
+        return this.isLoading || !!(playBtn && playBtn.querySelector('.fa-spinner'));
     },
 
     togglePlayPause() {
-        const playBtn = document.getElementById('playPauseBtn');
-        const showingLoader = playBtn && playBtn.querySelector('.fa-spinner');
-        if (this.isLoading || showingLoader) {
+        if (this.isLoadInProgress()) {
             this.stop();
             return;
         }
@@ -806,23 +858,35 @@ const AudioPlayer = {
         this._setPlayerState(playing ? 'playing' : 'paused');
     },
 
-    _playAudioUrl(url, startTimeSec = 0) {
+    _playAudioUrl(url, startTimeSec = 0, playSession = this._playSession) {
+        if (!this._isSessionAlive(playSession)) {
+            return Promise.reject(new Error('aborted'));
+        }
+
         this._cancelPendingLoad();
         const loadId = ++this._loadId;
-        const playSession = this._playSession;
         this._cancelRequested = false;
         this._setPlayerState('loading');
+
         return new Promise((resolve, reject) => {
-            const isStale = () => loadId !== this._loadId || playSession !== this._playSession || this._cancelRequested;
+            const isStale = () => loadId !== this._loadId || !this._isSessionAlive(playSession) || this._cancelRequested;
 
             const cleanup = () => {
+                if (this._loadTimeoutId) {
+                    clearTimeout(this._loadTimeoutId);
+                    this._loadTimeoutId = null;
+                }
                 this.audio.removeEventListener('canplay', onReady);
+                this.audio.removeEventListener('loadeddata', onReady);
                 this.audio.removeEventListener('error', onErr);
                 if (this._pendingLoadCleanup === cleanup) this._pendingLoadCleanup = null;
             };
             this._pendingLoadCleanup = cleanup;
 
+            let readyHandled = false;
             const onReady = () => {
+                if (readyHandled) return;
+                readyHandled = true;
                 if (isStale()) {
                     cleanup();
                     reject(new Error('aborted'));
@@ -830,7 +894,9 @@ const AudioPlayer = {
                 }
                 cleanup();
                 if (startTimeSec > 0) {
-                    this.audio.currentTime = startTimeSec;
+                    try {
+                        this.audio.currentTime = startTimeSec;
+                    } catch (e) { /* ignore seek errors */ }
                 }
                 this.audio.play().then(() => {
                     if (isStale()) {
@@ -838,6 +904,7 @@ const AudioPlayer = {
                         reject(new Error('aborted'));
                         return;
                     }
+                    this.isLoading = false;
                     resolve();
                 }).catch(err => {
                     if (!isStale()) this._setPlayerState('paused');
@@ -850,7 +917,18 @@ const AudioPlayer = {
                 reject(new Error('Audio load failed'));
             };
 
+            this._loadTimeoutId = setTimeout(() => {
+                cleanup();
+                if (!isStale()) {
+                    this._setPlayerState('paused');
+                    reject(new Error('Audio load timeout'));
+                } else {
+                    reject(new Error('aborted'));
+                }
+            }, 90000);
+
             this.audio.addEventListener('canplay', onReady, { once: true });
+            this.audio.addEventListener('loadeddata', onReady, { once: true });
             this.audio.addEventListener('error', onErr, { once: true });
             this.audio.src = url;
             this.audio.load();

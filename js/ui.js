@@ -77,7 +77,23 @@ const UI = {
 
     _initPlayerControls() {
         const playBtn = document.getElementById('playPauseBtn');
-        if (playBtn) playBtn.onclick = () => AudioPlayer.togglePlayPause();
+        if (playBtn) {
+            playBtn.addEventListener('pointerdown', (e) => {
+                if (typeof AudioPlayer !== 'undefined' && AudioPlayer.isLoadInProgress()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    AudioPlayer.stop();
+                    playBtn._abortLoadClick = true;
+                }
+            }, { capture: true });
+            playBtn.onclick = () => {
+                if (playBtn._abortLoadClick) {
+                    playBtn._abortLoadClick = false;
+                    return;
+                }
+                AudioPlayer.togglePlayPause();
+            };
+        }
         const nextBtn = document.getElementById('nextAyahBtn');
         if (nextBtn) nextBtn.onclick = () => AudioPlayer.next();
         const prevBtn = document.getElementById('prevAyahBtn');

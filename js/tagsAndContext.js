@@ -170,6 +170,11 @@ const TagsAndContext = {
         const btnPlay = document.getElementById('ctxPlay');
         if (btnPlay) {
             btnPlay.onclick = () => {
+                if (typeof AudioPlayer !== 'undefined' && AudioPlayer.isLoadInProgress()) {
+                    AudioPlayer.stop();
+                    this._hideMenu();
+                    return;
+                }
                 this._hideMenu();
                 if (this.contextType === "istiazah") {
                     AudioPlayer.playIstiazah();
