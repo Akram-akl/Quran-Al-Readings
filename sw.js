@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'quran-shell-v10';
+const SHELL_CACHE = 'quran-shell-v11';
 const DATA_CACHE = 'quran-offline-v2';
 
 const APP_SHELL = [

@@ -181,16 +181,28 @@ const DownloadManager = {
                 statusEl.textContent = 'مكتبة الصور لم يتم تحميلها بشكل صحيح!';
                 return;
             }
-            const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true });
-            canvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `quran_${readingKey}_${ayahs[0].sura_no}_${ayahs[0].aya_no}.png`;
-                a.click();
-                URL.revokeObjectURL(url);
-                statusEl.textContent = 'تم التحميل بنجاح ✓';
-            });
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+            await new Promise(r => setTimeout(r, 200));
+
+            const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) {
+                statusEl.textContent = 'فشل إنشاء ملف الصورة';
+                return;
+            }
+            const filename = `quran_${readingKey}_${ayahs[0].sura_no}_${ayahs[0].aya_no}.png`;
+            const result = await SaveFile.save(blob, filename);
+            if (result.ok) {
+                statusEl.textContent = result.method === 'filesystem'
+                    ? 'تم الحفظ في مجلد المستندات/Quran ✓'
+                    : 'تم التحميل بنجاح ✓';
+            } else if (result.cancelled) {
+                statusEl.textContent = 'تم الإلغاء';
+            } else {
+                statusEl.textContent = result.message || 'تعذّر حفظ الصورة على هذا الجهاز';
+            }
         } catch (err) {
             statusEl.textContent = 'حدث خطأ أثناء إنشاء الصورة';
             console.error(err);
@@ -306,7 +318,7 @@ const DownloadManager = {
                         // في الروايات غير المدمجة (1:1)
                         let mappedHafsAyahs = [ayah.aya_no];
                         if (typeof AUDIO_MAP !== 'undefined') {
-                            const rKey = readingKey.toLowerCase();
+                            const rKey = config.audioMapKey || readingKey;
                             if (AUDIO_MAP[rKey] && AUDIO_MAP[rKey][suraNo] && AUDIO_MAP[rKey][suraNo][ayah.aya_no]) {
                                 mappedHafsAyahs = AUDIO_MAP[rKey][suraNo][ayah.aya_no];
                             }
@@ -343,14 +355,17 @@ const DownloadManager = {
 
             statusEl.textContent = 'جاري تشفير وتجهيز ملف التحميل (WAV)...';
             const wavBlob = this._bufferToWav(mergedBuffer);
-            const url = URL.createObjectURL(wavBlob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `quran_${readingKey}_${ayahs[0].sura_no}-${ayahs[0].aya_no}_to_${ayahs[ayahs.length-1].sura_no}-${ayahs[ayahs.length-1].aya_no}.wav`;
-            a.click();
-            URL.revokeObjectURL(url);
-            statusEl.textContent = 'تم التحميل بنجاح ✓';
+            const filename = `quran_${readingKey}_${ayahs[0].sura_no}-${ayahs[0].aya_no}_to_${ayahs[ayahs.length-1].sura_no}-${ayahs[ayahs.length-1].aya_no}.wav`;
+            const result = await SaveFile.save(wavBlob, filename);
+            if (result.ok) {
+                statusEl.textContent = result.method === 'filesystem'
+                    ? 'تم الحفظ في مجلد المستندات/Quran ✓'
+                    : 'تم التحميل بنجاح ✓';
+            } else if (result.cancelled) {
+                statusEl.textContent = 'تم الإلغاء';
+            } else {
+                statusEl.textContent = result.message || 'تعذّر حفظ الملف الصوتي على هذا الجهاز';
+            }
 
         } catch (err) {
             console.error(err);
