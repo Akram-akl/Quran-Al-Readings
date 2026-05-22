@@ -24,6 +24,7 @@ const AudioPlayer = {
     preloadedAudioObjects: [],
     stopAtEndOfSura: null,
     keepStopBoundary: false,
+    _loadId: 0,
     
     init() {
         this.audio.preload = 'auto';
@@ -231,9 +232,18 @@ const AudioPlayer = {
         }
     },
 
-    stop() {
+    cancelLoad() {
+        this._loadId++;
+        this.isLoading = false;
+        this.isTransitioning = false;
         this.audio.pause();
-        this.audioQueue = []; // مسح قائمة الملفات الصوتية عند الإيقاف
+        this.audio.src = '';
+        this._setPlayerState('paused');
+    },
+
+    stop() {
+        this.cancelLoad();
+        this.audioQueue = [];
         this.playlist = [];
         this.playlistIndex = -1;
         this.maxPlaylistRepeats = 1;
@@ -281,24 +291,24 @@ const AudioPlayer = {
 
         this.isTransitioning = true;
         const track = this.playlist[this.playlistIndex];
-        const targetPage = track.page;
-        
-        // تحديث الرواية النشطة لتطابق الرواية المطلوبة بالاستماع
-        if (this.playlistReadingKey && App.currentReading !== this.playlistReadingKey) {
-            App.currentReading = this.playlistReadingKey;
-            const rSel = document.getElementById('readingSelect');
-            if (rSel) rSel.value = this.playlistReadingKey;
-        }
+        const targetPage = App.resolvePageForAyah(track, App.currentPage);
 
-        // إذا كانت الآية تقع في صفحة مختلفة، نقوم بالانتقال للصفحة أولاً
-        if (App.currentPage !== targetPage) {
-            UI.showLoader();
-            await App.loadPage(targetPage, true);
-        }
+        try {
+            if (this.playlistReadingKey && App.currentReading !== this.playlistReadingKey) {
+                App.currentReading = this.playlistReadingKey;
+                const rSel = document.getElementById('readingSelect');
+                if (rSel) rSel.value = this.playlistReadingKey;
+            }
 
-        // تشغيل الآية المطلوبة بداخل قائمة الاستماع دون مسح القائمة
-        await this._playPlaylistAyah(track.aya_no, track.sura_no);
-        this.isTransitioning = false;
+            if (!App.isAyahOnPage(track, App.currentPage)) {
+                UI.showLoader();
+                await App.loadPage(targetPage, true);
+            }
+
+            await this._playPlaylistAyah(track.aya_no, track.sura_no);
+        } finally {
+            this.isTransitioning = false;
+        }
     },
 
     async _playPlaylistAyah(ayahNo, suraNo) {
@@ -491,6 +501,7 @@ const AudioPlayer = {
             try {
                 await this._playAudioUrl(audioUrl, startSec);
             } catch (e) {
+                if (e && e.message === 'aborted') return;
                 console.error('Monolithic play failed:', e);
                 return;
             }
@@ -565,6 +576,7 @@ const AudioPlayer = {
         try {
             await this._playAudioUrl(firstUrl, 0);
         } catch (e) {
+            if (e && e.message === 'aborted') return;
             console.error('Ayah play failed:', e);
             return;
         }
@@ -597,6 +609,11 @@ const AudioPlayer = {
     },
 
     togglePlayPause() {
+        if (this.isLoading) {
+            this.stop();
+            return;
+        }
+
         const isCurrentAyahOnPage = this.currentAyah && typeof UI !== 'undefined' && UI.currentPageAyahs && 
             UI.currentPageAyahs.some(a => a.sura_no === this.currentAyah.sura_no && a.aya_no === this.currentAyah.aya_no);
 
@@ -704,9 +721,9 @@ const AudioPlayer = {
                 }
                 
                 if (nextAyah) {
-                    // إذا كانت الآية التالية في صفحة مختلفة، انتقل للصفحة أولاً
-                    if (parseInt(nextAyah.page) !== App.currentPage) {
-                        await App.loadPage(parseInt(nextAyah.page));
+                    if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
+                        const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
+                        await App.loadPage(targetPage, true);
                     }
                     this.playAyah(nextAyah.aya_no, nextAyah.sura_no);
                 } else {
@@ -737,10 +754,12 @@ const AudioPlayer = {
         if (!btn) return;
         if (state === 'loading') {
             this.isLoading = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin" title="جاري التحميل — اضغط للإيقاف"></i>';
             btn.setAttribute('aria-busy', 'true');
+            btn.setAttribute('title', 'إيقاف التحميل');
             return;
         }
+        btn.removeAttribute('title');
         this.isLoading = false;
         btn.removeAttribute('aria-busy');
         btn.innerHTML = state === 'playing' ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
@@ -751,22 +770,33 @@ const AudioPlayer = {
     },
 
     _playAudioUrl(url, startTimeSec = 0) {
+        const loadId = ++this._loadId;
         this._setPlayerState('loading');
         return new Promise((resolve, reject) => {
+            const isStale = () => loadId !== this._loadId;
+
             const cleanup = () => {
                 this.audio.removeEventListener('canplay', onReady);
                 this.audio.removeEventListener('error', onErr);
             };
             const onReady = () => {
+                if (isStale()) {
+                    cleanup();
+                    reject(new Error('aborted'));
+                    return;
+                }
                 cleanup();
                 if (startTimeSec > 0) {
                     this.audio.currentTime = startTimeSec;
                 }
-                this.audio.play().then(resolve).catch(reject);
+                this.audio.play().then(resolve).catch(err => {
+                    if (!isStale()) this._setPlayerState('paused');
+                    reject(err);
+                });
             };
             const onErr = () => {
                 cleanup();
-                this._setPlayerState('paused');
+                if (!isStale()) this._setPlayerState('paused');
                 reject(new Error('Audio load failed'));
             };
 

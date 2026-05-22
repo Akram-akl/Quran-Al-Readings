@@ -114,11 +114,37 @@ const App = {
         return isHafs ? hafsMap[jozz] : otherMap[jozz];
     },
 
+    /** رقم الصفحة المناسب لعرض الآية (يدعم الآيات الممتدة عبر صفحتين) */
+    resolvePageForAyah(ayah, preferPage = this.currentPage) {
+        if (!ayah || ayah.page == null) return preferPage;
+        const raw = String(ayah.page);
+        if (raw.includes('-')) {
+            const parts = raw.split('-').map(n => parseInt(n, 10));
+            const start = parts[0];
+            const end = parts[1] || start;
+            if (preferPage >= start && preferPage <= end) return preferPage;
+            return start;
+        }
+        const p = parseInt(raw, 10);
+        return Number.isNaN(p) ? preferPage : p;
+    },
+
+    isAyahOnPage(ayah, pageNo) {
+        if (!ayah || ayah.page == null) return false;
+        const raw = String(ayah.page);
+        if (raw.includes('-')) {
+            const parts = raw.split('-').map(n => parseInt(n, 10));
+            const start = parts[0];
+            const end = parts[1] || start;
+            return pageNo >= start && pageNo <= end;
+        }
+        return parseInt(raw, 10) === pageNo;
+    },
+
     async loadPage(page, keepPlaylist = false, forceStop = false) {
         if (page < 1 || page > 604) return;
         this.currentPage = page;
         UI.showLoader();
-        // إيقاف الصوت فقط عند تغيير الرواية، وليس عند تصفح الصفحات
         if (typeof AudioPlayer !== 'undefined' && forceStop) AudioPlayer.stop();
 
         try {
@@ -130,13 +156,14 @@ const App = {
                 const sSel = document.getElementById('surahSelect');
                 if (sSel) sSel.value = this.currentSurah;
 
-                // التمهيد الصوتي المسبق للصفحة في الخلفية
                 if (typeof AudioPlayer !== 'undefined') {
                     AudioPlayer.preloadPageAudios(this.currentReading, ayahs);
                 }
             }
         } catch (e) {
             console.error("Load Error:", e);
+            const area = document.getElementById('readingArea');
+            if (area) area.innerHTML = '<div class="loader">تعذّر تحميل الصفحة</div>';
         }
     }
 };
@@ -148,28 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js?v=8').then(reg => {
             reg.update();
-            const reloadForUpdate = () => {
-                if (reg.waiting) {
-                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                }
-            };
-            reloadForUpdate();
-            reg.addEventListener('updatefound', () => {
-                const worker = reg.installing;
-                if (!worker) return;
-                worker.addEventListener('statechange', () => {
-                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                        reloadForUpdate();
-                    }
-                });
-            });
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (refreshing) return;
-                refreshing = true;
-                window.location.reload();
-            });
+            // بدون إعادة تحميل تلقائية — كانت تسبب إعادة فتح التطبيق أثناء الانتقال بين الصفحات
         }).catch(err => {
             console.error('Service Worker Registration Error:', err);
         });
