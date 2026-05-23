@@ -1002,10 +1002,7 @@ const AudioPlayer = {
 
         const prevSura = this.currentAyah ? this.currentAyah.sura_no : null;
         const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura;
-        // البسملة تعمل عند الانتقال لسورة جديدة (إلا التوبة) بغض النظر عن رقم الآية
         const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9;
-
-        console.log('_continueToAyah basmalah check:', { prevSura, nextSura: nextAyah.sura_no, nextAyahNo: nextAyah.aya_no, isNewSurah, needsBasmalah });
 
         if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
@@ -1014,7 +1011,6 @@ const AudioPlayer = {
         }
 
         if (needsBasmalah) {
-            console.log('Playing basmalah before surah', nextAyah.sura_no);
             const config = READINGS_CONFIG[App.currentReading];
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
                 ? config.getBasmalahPath()
@@ -1028,7 +1024,7 @@ const AudioPlayer = {
             if (!this._isSessionAlive(playSession)) return;
         }
 
-        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession, skipBasmalah: true });
+        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession });
     },
 
     async next() {
