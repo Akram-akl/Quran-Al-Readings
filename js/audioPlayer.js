@@ -715,11 +715,10 @@ const AudioPlayer = {
         // تجهيز مسبق فوري للآية المطلوبة لتبدأ فوراً بعد انتهاء البسملة
         this.preloadAyahImmediate(App.currentReading, ayah);
 
-        // تشغيل البسملة تلقائياً في الفاتحة (إذا لم يكن القارئ حفص) وفي باقي السور (ما عدا التوبة)
-        const isHafs = App.currentReading.startsWith('Hafs');
+        // تشغيل البسملة تلقائياً قبل كل سورة (إلا التوبة)
         const needsBasmalah = ayahNo === 1 && suraNo !== 9 && !opts.skipBasmalah;
 
-        console.log('playAyah basmalah check:', { ayahNo, suraNo, isHafs, needsBasmalah, skipBasmalah: opts.skipBasmalah });
+        console.log('playAyah basmalah check:', { ayahNo, suraNo, needsBasmalah, skipBasmalah: opts.skipBasmalah });
         if (needsBasmalah) {
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
                 ? config.getBasmalahPath() 
