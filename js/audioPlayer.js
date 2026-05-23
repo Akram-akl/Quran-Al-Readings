@@ -716,7 +716,7 @@ const AudioPlayer = {
         this.preloadAyahImmediate(App.currentReading, ayah);
 
         // تشغيل البسملة تلقائياً قبل كل سورة (إلا التوبة)
-        const needsBasmalah = ayahNo === 1 && suraNo !== 9 && !opts.skipBasmalah;
+        const needsBasmalah = ayahNo === 1 && suraNo !== 9;
 
         console.log('playAyah basmalah check:', { ayahNo, suraNo, needsBasmalah, skipBasmalah: opts.skipBasmalah, config: config.name });
 
