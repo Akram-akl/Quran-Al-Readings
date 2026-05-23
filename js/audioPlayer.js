@@ -898,9 +898,12 @@ const AudioPlayer = {
     async playBasmalah() {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
+        this.playlist = [];
+        this.playlistIndex = -1;
+        this.playlistReadingKey = "";
         const config = READINGS_CONFIG[App.currentReading];
-        const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
-            ? config.getBasmalahPath() 
+        const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
+            ? config.getBasmalahPath()
             : 'assets/fallback_basmalah.mp3';
         try { await this._playAudioUrl(path, 0, session); } catch (e) {
             if (e && e.message !== 'aborted') console.error(e);
