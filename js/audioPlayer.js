@@ -23,6 +23,9 @@ const AudioPlayer = {
     timingCache: {},
     preloadedAudioObjects: [],
     _warmedUrls: new Set(),
+    _preloadQueue: [],
+    _activePreloads: 0,
+    _maxConcurrentPreloads: 1,
     _toastTimer: null,
     stopAtEndOfSura: null,
     keepStopBoundary: false,
@@ -263,6 +266,17 @@ const AudioPlayer = {
     /** تجهيز الصفحات في الخلفية: الحالية ثم التالية ثم السابقة */
     scheduleBackgroundPreload(readingKey, centerPage) {
         if (!readingKey || !centerPage) return;
+        
+        // إذا كان الصوت يعمل حالياً، نتجنب التحميل المسبق الكامل للصفحات المجاورة
+        // لمنع خنق الشبكة وبطء الانتقال بين الآيات
+        if (this.isPlaying) {
+            const config = READINGS_CONFIG[readingKey];
+            if (config && config.isMonolithic) {
+                this._warmTiming(readingKey, App.currentSurah, config);
+            }
+            return;
+        }
+
         const run = async (page) => {
             if (page < 1 || page > 604) return;
             const ayahs = await DataHandler.getPageAyahs(readingKey, page);
@@ -312,9 +326,42 @@ const AudioPlayer = {
     _warmAudioElement(url) {
         if (!url || this._warmedUrls.has(url)) return;
         this._warmedUrls.add(url);
+        
+        this._preloadQueue.push(url);
+        this._processPreloadQueue();
+    },
+
+    _processPreloadQueue() {
+        if (this._activePreloads >= this._maxConcurrentPreloads || this._preloadQueue.length === 0) return;
+        
+        // إذا كان الصوت يعمل حالياً أو يحاول البدء، نوقف تحميل الخلفية تماماً
+        // لفتح الشبكة بنسبة 100% للتشغيل الفوري والمباشر
+        if (this.isPlaying || this._audioFetchActive) {
+            return;
+        }
+
+        const url = this._preloadQueue.shift();
+        this._activePreloads++;
+
         const preloadAudio = new Audio();
         preloadAudio.preload = 'auto';
         preloadAudio.src = url;
+
+        const done = () => {
+            this._activePreloads--;
+            setTimeout(() => this._processPreloadQueue(), 150);
+        };
+
+        preloadAudio.addEventListener('canplaythrough', done, { once: true });
+        preloadAudio.addEventListener('error', done, { once: true });
+        
+        // وقت أمان 2.5 ثانية في حال تأخر الاستجابة لتحرير القناة
+        setTimeout(() => {
+            preloadAudio.removeEventListener('canplaythrough', done);
+            preloadAudio.removeEventListener('error', done);
+            done();
+        }, 2500);
+
         if (!this.preloadedAudioObjects) this.preloadedAudioObjects = [];
         this.preloadedAudioObjects.push(preloadAudio);
     },
@@ -328,10 +375,20 @@ const AudioPlayer = {
         if (!this._warmedUrls) this._warmedUrls = new Set();
 
         const surahsForTiming = new Set();
+        const isMonolithic = config.isMonolithic;
+        let count = 0;
+        
         for (const a of ayahs) {
             if (!a || a.aya_no <= 0) continue;
+            
+            // في حالة القراء غير المدمجين (ملف لكل آية)، نكتفي بتحميل أول 5 آيات فقط
+            // لتجنب تحميل عشرات الملفات الصوتية في الخلفية دفعة واحدة
+            if (!isMonolithic) {
+                if (count++ > 5) continue;
+            }
+            
             this._collectAyahAudioUrls(readingKey, a, config).forEach((u) => this._warmAudioElement(u));
-            if (config.isMonolithic) surahsForTiming.add(a.sura_no);
+            if (isMonolithic) surahsForTiming.add(a.sura_no);
         }
         surahsForTiming.forEach((suraNo) => this._warmTiming(readingKey, suraNo, config));
     },
@@ -357,6 +414,11 @@ const AudioPlayer = {
         }
         this._audioFetchActive = false;
         this.isTransitioning = false;
+        
+        // تفريغ طابور التحميل المسبق لفتح القنوات فوراً عند طلب تشغيل أو إيقاف
+        this._preloadQueue = [];
+        this._activePreloads = 0;
+        
         try {
             this.audio.pause();
             this.audio.removeAttribute('src');
@@ -447,6 +509,24 @@ const AudioPlayer = {
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
 
         if (!ayah) return;
+
+        // تجهيز مسبق فوري للآية الحالية لتبدأ فوراً بعد انتهاء البسملة
+        this.preloadAyahImmediate(App.currentReading, ayah);
+
+        // تشغيل البسملة تلقائياً في الفاتحة (إذا لم يكن القارئ حفص) وفي باقي السور (ما عدا التوبة)
+        const isHafs = App.currentReading.startsWith('Hafs');
+        const needsBasmalah = ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs);
+        if (needsBasmalah) {
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
+                ? config.getBasmalahPath() 
+                : 'assets/fallback_basmalah.mp3';
+            try {
+                await this._playAudioUrl(path, 0, playSession);
+            } catch (e) {
+                if (e && e.message === 'aborted') return;
+            }
+            if (!this._isSessionAlive(playSession)) return;
+        }
 
         this.currentAyah = ayah;
         App.currentSurah = suraNo;
@@ -625,11 +705,28 @@ const AudioPlayer = {
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
         if (!ayah) return;
 
-        this.preloadAyahImmediate(App.currentReading, ayah);
-
+        // الانتقال البصري للصفحة فوراً إذا لم تكن معروضة
         if (!App.isAyahOnPage(ayah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(ayah, App.currentPage);
             await App.loadPage(targetPage, true, false, true);
+            if (!this._isSessionAlive(playSession)) return;
+        }
+
+        // تجهيز مسبق فوري للآية المطلوبة لتبدأ فوراً بعد انتهاء البسملة
+        this.preloadAyahImmediate(App.currentReading, ayah);
+
+        // تشغيل البسملة تلقائياً في الفاتحة (إذا لم يكن القارئ حفص) وفي باقي السور (ما عدا التوبة)
+        const isHafs = App.currentReading.startsWith('Hafs');
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs)) && !opts.skipBasmalah;
+        if (needsBasmalah) {
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
+                ? config.getBasmalahPath() 
+                : 'assets/fallback_basmalah.mp3';
+            try {
+                await this._playAudioUrl(path, 0, playSession);
+            } catch (e) {
+                if (e && e.message === 'aborted') return;
+            }
             if (!this._isSessionAlive(playSession)) return;
         }
 
@@ -922,14 +1019,14 @@ const AudioPlayer = {
             if (!this._isSessionAlive(playSession)) return;
         }
 
-        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession });
+        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession, skipBasmalah: true });
     },
 
     async next() {
         if (!this.currentAyah || this.isTransitioning) return;
         const playSession = this._playSession;
         if (this.isRepeat) {
-            await this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no, { session: playSession });
+            await this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no, { session: playSession, skipBasmalah: true });
             return;
         }
 
