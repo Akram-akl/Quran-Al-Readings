@@ -1,0 +1,2423 @@
+{
+  "note": "Ibrahim Al-Dosari uses audioMapKey warsh — MP3 filenames follow HAFS numbers in AUDIO_MAP",
+  "surahsDifferentCount": [
+    {
+      "sura": 2,
+      "name": "البَقَرَة",
+      "warshAyahs": 285,
+      "hafsAyahs": 286
+    },
+    {
+      "sura": 4,
+      "name": "النِّسَاء",
+      "warshAyahs": 175,
+      "hafsAyahs": 176
+    },
+    {
+      "sura": 5,
+      "name": "المَائدة",
+      "warshAyahs": 122,
+      "hafsAyahs": 120
+    },
+    {
+      "sura": 6,
+      "name": "الأنعَام",
+      "warshAyahs": 167,
+      "hafsAyahs": 165
+    },
+    {
+      "sura": 8,
+      "name": "الأنفَال",
+      "warshAyahs": 76,
+      "hafsAyahs": 75
+    },
+    {
+      "sura": 9,
+      "name": "التوبَة",
+      "warshAyahs": 130,
+      "hafsAyahs": 129
+    },
+    {
+      "sura": 11,
+      "name": "هُود",
+      "warshAyahs": 121,
+      "hafsAyahs": 123
+    },
+    {
+      "sura": 13,
+      "name": "الرَّعد",
+      "warshAyahs": 44,
+      "hafsAyahs": 43
+    },
+    {
+      "sura": 14,
+      "name": "إبراهِيم",
+      "warshAyahs": 54,
+      "hafsAyahs": 52
+    },
+    {
+      "sura": 17,
+      "name": "الإسرَاء",
+      "warshAyahs": 110,
+      "hafsAyahs": 111
+    },
+    {
+      "sura": 18,
+      "name": "الكَهف",
+      "warshAyahs": 105,
+      "hafsAyahs": 110
+    },
+    {
+      "sura": 19,
+      "name": "مَريَم",
+      "warshAyahs": 99,
+      "hafsAyahs": 98
+    },
+    {
+      "sura": 20,
+      "name": "طه",
+      "warshAyahs": 134,
+      "hafsAyahs": 135
+    },
+    {
+      "sura": 21,
+      "name": "الأنبيَاء",
+      "warshAyahs": 111,
+      "hafsAyahs": 112
+    },
+    {
+      "sura": 22,
+      "name": "الحج",
+      "warshAyahs": 76,
+      "hafsAyahs": 78
+    },
+    {
+      "sura": 23,
+      "name": "المؤمنُون",
+      "warshAyahs": 119,
+      "hafsAyahs": 118
+    },
+    {
+      "sura": 24,
+      "name": "النور",
+      "warshAyahs": 62,
+      "hafsAyahs": 64
+    },
+    {
+      "sura": 26,
+      "name": "الشعراء",
+      "warshAyahs": 226,
+      "hafsAyahs": 227
+    },
+    {
+      "sura": 27,
+      "name": "النَّمل",
+      "warshAyahs": 95,
+      "hafsAyahs": 93
+    },
+    {
+      "sura": 30,
+      "name": "الرُّوم",
+      "warshAyahs": 59,
+      "hafsAyahs": 60
+    },
+    {
+      "sura": 31,
+      "name": "لُقمَان",
+      "warshAyahs": 33,
+      "hafsAyahs": 34
+    },
+    {
+      "sura": 35,
+      "name": "فَاطِر",
+      "warshAyahs": 46,
+      "hafsAyahs": 45
+    },
+    {
+      "sura": 36,
+      "name": "يسٓ",
+      "warshAyahs": 82,
+      "hafsAyahs": 83
+    },
+    {
+      "sura": 38,
+      "name": "صٓ",
+      "warshAyahs": 86,
+      "hafsAyahs": 88
+    },
+    {
+      "sura": 39,
+      "name": "الزُّمَر",
+      "warshAyahs": 72,
+      "hafsAyahs": 75
+    },
+    {
+      "sura": 40,
+      "name": "غَافِر",
+      "warshAyahs": 84,
+      "hafsAyahs": 85
+    },
+    {
+      "sura": 41,
+      "name": "فُصِّلَت",
+      "warshAyahs": 53,
+      "hafsAyahs": 54
+    },
+    {
+      "sura": 42,
+      "name": "الشُّوري",
+      "warshAyahs": 50,
+      "hafsAyahs": 53
+    },
+    {
+      "sura": 44,
+      "name": "الدُّخان",
+      "warshAyahs": 56,
+      "hafsAyahs": 59
+    },
+    {
+      "sura": 45,
+      "name": "الجاثِية",
+      "warshAyahs": 36,
+      "hafsAyahs": 37
+    },
+    {
+      "sura": 46,
+      "name": "الأحقَاف",
+      "warshAyahs": 34,
+      "hafsAyahs": 35
+    },
+    {
+      "sura": 47,
+      "name": "مُحمد",
+      "warshAyahs": 39,
+      "hafsAyahs": 38
+    },
+    {
+      "sura": 52,
+      "name": "الطُّور",
+      "warshAyahs": 47,
+      "hafsAyahs": 49
+    },
+    {
+      "sura": 53,
+      "name": "النَّجم",
+      "warshAyahs": 61,
+      "hafsAyahs": 62
+    },
+    {
+      "sura": 55,
+      "name": "الرَّحمٰن",
+      "warshAyahs": 77,
+      "hafsAyahs": 78
+    },
+    {
+      "sura": 56,
+      "name": "الوَاقِعة",
+      "warshAyahs": 99,
+      "hafsAyahs": 96
+    },
+    {
+      "sura": 57,
+      "name": "الحدِيد",
+      "warshAyahs": 28,
+      "hafsAyahs": 29
+    },
+    {
+      "sura": 58,
+      "name": "المُجَادلة",
+      "warshAyahs": 21,
+      "hafsAyahs": 22
+    },
+    {
+      "sura": 67,
+      "name": "المُلك",
+      "warshAyahs": 31,
+      "hafsAyahs": 30
+    },
+    {
+      "sura": 71,
+      "name": "نُوح",
+      "warshAyahs": 30,
+      "hafsAyahs": 28
+    },
+    {
+      "sura": 73,
+      "name": "المُزمل",
+      "warshAyahs": 18,
+      "hafsAyahs": 20
+    },
+    {
+      "sura": 74,
+      "name": "المُدثر",
+      "warshAyahs": 55,
+      "hafsAyahs": 56
+    },
+    {
+      "sura": 75,
+      "name": "القِيَامة",
+      "warshAyahs": 39,
+      "hafsAyahs": 40
+    },
+    {
+      "sura": 79,
+      "name": "النَّازعَات",
+      "warshAyahs": 45,
+      "hafsAyahs": 46
+    },
+    {
+      "sura": 89,
+      "name": "الفَجر",
+      "warshAyahs": 32,
+      "hafsAyahs": 30
+    },
+    {
+      "sura": 96,
+      "name": "العَلَق",
+      "warshAyahs": 20,
+      "hafsAyahs": 19
+    },
+    {
+      "sura": 99,
+      "name": "الزَّلزَلة",
+      "warshAyahs": 9,
+      "hafsAyahs": 8
+    },
+    {
+      "sura": 101,
+      "name": "القَارعَة",
+      "warshAyahs": 10,
+      "hafsAyahs": 11
+    },
+    {
+      "sura": 106,
+      "name": "قُرَيش",
+      "warshAyahs": 5,
+      "hafsAyahs": 4
+    },
+    {
+      "sura": 107,
+      "name": "المَاعُون",
+      "warshAyahs": 6,
+      "hafsAyahs": 7
+    }
+  ],
+  "surahsWithMappingDifferences": [
+    {
+      "sura": 1,
+      "name": "الفَاتِحة",
+      "ayahCount": 6,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 2,
+      "name": "البَقَرَة",
+      "ayahCount": 285,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 3,
+      "name": "آل عِمران",
+      "ayahCount": 47,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 48,
+          "hafs": [
+            48,
+            49
+          ]
+        },
+        {
+          "warsh": 49,
+          "hafs": [
+            50
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 4,
+      "name": "النِّسَاء",
+      "ayahCount": 132,
+      "examples": [
+        {
+          "warsh": 44,
+          "hafs": [
+            44,
+            45
+          ]
+        },
+        {
+          "warsh": 45,
+          "hafs": [
+            46
+          ]
+        },
+        {
+          "warsh": 46,
+          "hafs": [
+            47
+          ]
+        },
+        {
+          "warsh": 47,
+          "hafs": [
+            48
+          ]
+        },
+        {
+          "warsh": 48,
+          "hafs": [
+            49
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 5,
+      "name": "المَائدة",
+      "ayahCount": 121,
+      "examples": [
+        {
+          "warsh": 2,
+          "hafs": [
+            1
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            2
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 6,
+      "name": "الأنعَام",
+      "ayahCount": 160,
+      "examples": [
+        {
+          "warsh": 2,
+          "hafs": [
+            1
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            2
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 7,
+      "name": "الأعرَاف",
+      "ayahCount": 136,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 8,
+      "name": "الأنفَال",
+      "ayahCount": 34,
+      "examples": [
+        {
+          "warsh": 43,
+          "hafs": [
+            42
+          ]
+        },
+        {
+          "warsh": 44,
+          "hafs": [
+            43
+          ]
+        },
+        {
+          "warsh": 45,
+          "hafs": [
+            44
+          ]
+        },
+        {
+          "warsh": 46,
+          "hafs": [
+            45
+          ]
+        },
+        {
+          "warsh": 47,
+          "hafs": [
+            46
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 9,
+      "name": "التوبَة",
+      "ayahCount": 60,
+      "examples": [
+        {
+          "warsh": 71,
+          "hafs": [
+            70
+          ]
+        },
+        {
+          "warsh": 72,
+          "hafs": [
+            71
+          ]
+        },
+        {
+          "warsh": 73,
+          "hafs": [
+            72
+          ]
+        },
+        {
+          "warsh": 74,
+          "hafs": [
+            73
+          ]
+        },
+        {
+          "warsh": 75,
+          "hafs": [
+            74
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 11,
+      "name": "هُود",
+      "ayahCount": 36,
+      "examples": [
+        {
+          "warsh": 54,
+          "hafs": [
+            54,
+            55
+          ]
+        },
+        {
+          "warsh": 55,
+          "hafs": [
+            56
+          ]
+        },
+        {
+          "warsh": 56,
+          "hafs": [
+            57
+          ]
+        },
+        {
+          "warsh": 57,
+          "hafs": [
+            58
+          ]
+        },
+        {
+          "warsh": 58,
+          "hafs": [
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 13,
+      "name": "الرَّعد",
+      "ayahCount": 39,
+      "examples": [
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 7,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 8,
+          "hafs": [
+            7
+          ]
+        },
+        {
+          "warsh": 9,
+          "hafs": [
+            8
+          ]
+        },
+        {
+          "warsh": 10,
+          "hafs": [
+            9
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 14,
+      "name": "إبراهِيم",
+      "ayahCount": 53,
+      "examples": [
+        {
+          "warsh": 2,
+          "hafs": [
+            1
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            2
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 17,
+      "name": "الإسرَاء",
+      "ayahCount": 4,
+      "examples": [
+        {
+          "warsh": 107,
+          "hafs": [
+            107,
+            108
+          ]
+        },
+        {
+          "warsh": 108,
+          "hafs": [
+            109
+          ]
+        },
+        {
+          "warsh": 109,
+          "hafs": [
+            110
+          ]
+        },
+        {
+          "warsh": 110,
+          "hafs": [
+            111
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 18,
+      "name": "الكَهف",
+      "ayahCount": 73,
+      "examples": [
+        {
+          "warsh": 23,
+          "hafs": [
+            22
+          ]
+        },
+        {
+          "warsh": 24,
+          "hafs": [
+            23,
+            24
+          ]
+        },
+        {
+          "warsh": 35,
+          "hafs": [
+            35,
+            36
+          ]
+        },
+        {
+          "warsh": 36,
+          "hafs": [
+            37
+          ]
+        },
+        {
+          "warsh": 37,
+          "hafs": [
+            38
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 19,
+      "name": "مَريَم",
+      "ayahCount": 64,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 20,
+      "name": "طه",
+      "ayahCount": 132,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 21,
+      "name": "الأنبيَاء",
+      "ayahCount": 46,
+      "examples": [
+        {
+          "warsh": 66,
+          "hafs": [
+            66,
+            67
+          ]
+        },
+        {
+          "warsh": 67,
+          "hafs": [
+            68
+          ]
+        },
+        {
+          "warsh": 68,
+          "hafs": [
+            69
+          ]
+        },
+        {
+          "warsh": 69,
+          "hafs": [
+            70
+          ]
+        },
+        {
+          "warsh": 70,
+          "hafs": [
+            71
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 22,
+      "name": "الحج",
+      "ayahCount": 58,
+      "examples": [
+        {
+          "warsh": 19,
+          "hafs": [
+            19,
+            20,
+            21
+          ]
+        },
+        {
+          "warsh": 20,
+          "hafs": [
+            22
+          ]
+        },
+        {
+          "warsh": 21,
+          "hafs": [
+            23
+          ]
+        },
+        {
+          "warsh": 22,
+          "hafs": [
+            24
+          ]
+        },
+        {
+          "warsh": 23,
+          "hafs": [
+            25
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 23,
+      "name": "المؤمنُون",
+      "ayahCount": 74,
+      "examples": [
+        {
+          "warsh": 46,
+          "hafs": [
+            45
+          ]
+        },
+        {
+          "warsh": 47,
+          "hafs": [
+            46
+          ]
+        },
+        {
+          "warsh": 48,
+          "hafs": [
+            47
+          ]
+        },
+        {
+          "warsh": 49,
+          "hafs": [
+            48
+          ]
+        },
+        {
+          "warsh": 50,
+          "hafs": [
+            49
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 24,
+      "name": "النور",
+      "ayahCount": 27,
+      "examples": [
+        {
+          "warsh": 36,
+          "hafs": [
+            36,
+            37
+          ]
+        },
+        {
+          "warsh": 37,
+          "hafs": [
+            38
+          ]
+        },
+        {
+          "warsh": 38,
+          "hafs": [
+            39
+          ]
+        },
+        {
+          "warsh": 39,
+          "hafs": [
+            40
+          ]
+        },
+        {
+          "warsh": 40,
+          "hafs": [
+            41
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 26,
+      "name": "الشعراء",
+      "ayahCount": 65,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 27,
+      "name": "النَّمل",
+      "ayahCount": 62,
+      "examples": [
+        {
+          "warsh": 34,
+          "hafs": [
+            33
+          ]
+        },
+        {
+          "warsh": 35,
+          "hafs": [
+            34
+          ]
+        },
+        {
+          "warsh": 36,
+          "hafs": [
+            35
+          ]
+        },
+        {
+          "warsh": 37,
+          "hafs": [
+            36
+          ]
+        },
+        {
+          "warsh": 38,
+          "hafs": [
+            37
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 28,
+      "name": "القَصَص",
+      "ayahCount": 22,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 29,
+      "name": "العَنكبُوت",
+      "ayahCount": 28,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 30,
+      "name": "الرُّوم",
+      "ayahCount": 59,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 31,
+      "name": "لُقمَان",
+      "ayahCount": 33,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 32,
+      "name": "السَّجدة",
+      "ayahCount": 9,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 35,
+      "name": "فَاطِر",
+      "ayahCount": 3,
+      "examples": [
+        {
+          "warsh": 44,
+          "hafs": [
+            43
+          ]
+        },
+        {
+          "warsh": 45,
+          "hafs": [
+            44
+          ]
+        },
+        {
+          "warsh": 46,
+          "hafs": [
+            45
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 36,
+      "name": "يسٓ",
+      "ayahCount": 82,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 38,
+      "name": "صٓ",
+      "ayahCount": 86,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 39,
+      "name": "الزُّمَر",
+      "ayahCount": 68,
+      "examples": [
+        {
+          "warsh": 4,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 7,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 8,
+          "hafs": [
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 40,
+      "name": "غَافِر",
+      "ayahCount": 34,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 41,
+      "name": "فُصِّلَت",
+      "ayahCount": 53,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 42,
+      "name": "الشُّوري",
+      "ayahCount": 50,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 43,
+      "name": "الزُّخرُف",
+      "ayahCount": 51,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 44,
+      "name": "الدُّخان",
+      "ayahCount": 56,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 45,
+      "name": "الجاثِية",
+      "ayahCount": 36,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 46,
+      "name": "الأحقَاف",
+      "ayahCount": 34,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 47,
+      "name": "مُحمد",
+      "ayahCount": 35,
+      "examples": [
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 6,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 7,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 8,
+          "hafs": [
+            7
+          ]
+        },
+        {
+          "warsh": 9,
+          "hafs": [
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 52,
+      "name": "الطُّور",
+      "ayahCount": 47,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 53,
+      "name": "النَّجم",
+      "ayahCount": 34,
+      "examples": [
+        {
+          "warsh": 28,
+          "hafs": [
+            28,
+            29
+          ]
+        },
+        {
+          "warsh": 29,
+          "hafs": [
+            30
+          ]
+        },
+        {
+          "warsh": 30,
+          "hafs": [
+            31
+          ]
+        },
+        {
+          "warsh": 31,
+          "hafs": [
+            32
+          ]
+        },
+        {
+          "warsh": 32,
+          "hafs": [
+            33
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 55,
+      "name": "الرَّحمٰن",
+      "ayahCount": 77,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3,
+            4
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            7
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 56,
+      "name": "الوَاقِعة",
+      "ayahCount": 91,
+      "examples": [
+        {
+          "warsh": 9,
+          "hafs": [
+            8
+          ]
+        },
+        {
+          "warsh": 10,
+          "hafs": [
+            9
+          ]
+        },
+        {
+          "warsh": 11,
+          "hafs": [
+            9
+          ]
+        },
+        {
+          "warsh": 12,
+          "hafs": [
+            10
+          ]
+        },
+        {
+          "warsh": 13,
+          "hafs": [
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 57,
+      "name": "الحدِيد",
+      "ayahCount": 16,
+      "examples": [
+        {
+          "warsh": 13,
+          "hafs": [
+            13,
+            14
+          ]
+        },
+        {
+          "warsh": 14,
+          "hafs": [
+            15
+          ]
+        },
+        {
+          "warsh": 15,
+          "hafs": [
+            16
+          ]
+        },
+        {
+          "warsh": 16,
+          "hafs": [
+            17
+          ]
+        },
+        {
+          "warsh": 17,
+          "hafs": [
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 58,
+      "name": "المُجَادلة",
+      "ayahCount": 2,
+      "examples": [
+        {
+          "warsh": 20,
+          "hafs": [
+            20,
+            21
+          ]
+        },
+        {
+          "warsh": 21,
+          "hafs": [
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 67,
+      "name": "المُلك",
+      "ayahCount": 22,
+      "examples": [
+        {
+          "warsh": 10,
+          "hafs": [
+            9
+          ]
+        },
+        {
+          "warsh": 11,
+          "hafs": [
+            10
+          ]
+        },
+        {
+          "warsh": 12,
+          "hafs": [
+            11
+          ]
+        },
+        {
+          "warsh": 13,
+          "hafs": [
+            12
+          ]
+        },
+        {
+          "warsh": 14,
+          "hafs": [
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 69,
+      "name": "الحَاقة",
+      "ayahCount": 24,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 71,
+      "name": "نُوح",
+      "ayahCount": 7,
+      "examples": [
+        {
+          "warsh": 24,
+          "hafs": [
+            23
+          ]
+        },
+        {
+          "warsh": 25,
+          "hafs": [
+            24
+          ]
+        },
+        {
+          "warsh": 26,
+          "hafs": [
+            25
+          ]
+        },
+        {
+          "warsh": 27,
+          "hafs": [
+            25
+          ]
+        },
+        {
+          "warsh": 28,
+          "hafs": [
+            26
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 73,
+      "name": "المُزمل",
+      "ayahCount": 18,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 74,
+      "name": "المُدثر",
+      "ayahCount": 16,
+      "examples": [
+        {
+          "warsh": 40,
+          "hafs": [
+            40,
+            41
+          ]
+        },
+        {
+          "warsh": 41,
+          "hafs": [
+            42
+          ]
+        },
+        {
+          "warsh": 42,
+          "hafs": [
+            43
+          ]
+        },
+        {
+          "warsh": 43,
+          "hafs": [
+            44
+          ]
+        },
+        {
+          "warsh": 44,
+          "hafs": [
+            45
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 75,
+      "name": "القِيَامة",
+      "ayahCount": 24,
+      "examples": [
+        {
+          "warsh": 16,
+          "hafs": [
+            16,
+            17
+          ]
+        },
+        {
+          "warsh": 17,
+          "hafs": [
+            18
+          ]
+        },
+        {
+          "warsh": 18,
+          "hafs": [
+            19
+          ]
+        },
+        {
+          "warsh": 19,
+          "hafs": [
+            20
+          ]
+        },
+        {
+          "warsh": 20,
+          "hafs": [
+            21
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 79,
+      "name": "النَّازعَات",
+      "ayahCount": 9,
+      "examples": [
+        {
+          "warsh": 37,
+          "hafs": [
+            37,
+            38
+          ]
+        },
+        {
+          "warsh": 38,
+          "hafs": [
+            39
+          ]
+        },
+        {
+          "warsh": 39,
+          "hafs": [
+            40
+          ]
+        },
+        {
+          "warsh": 40,
+          "hafs": [
+            41
+          ]
+        },
+        {
+          "warsh": 41,
+          "hafs": [
+            42
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 89,
+      "name": "الفَجر",
+      "ayahCount": 17,
+      "examples": [
+        {
+          "warsh": 16,
+          "hafs": [
+            15
+          ]
+        },
+        {
+          "warsh": 17,
+          "hafs": [
+            16
+          ]
+        },
+        {
+          "warsh": 18,
+          "hafs": [
+            16
+          ]
+        },
+        {
+          "warsh": 19,
+          "hafs": [
+            17
+          ]
+        },
+        {
+          "warsh": 20,
+          "hafs": [
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 96,
+      "name": "العَلَق",
+      "ayahCount": 5,
+      "examples": [
+        {
+          "warsh": 16,
+          "hafs": [
+            15
+          ]
+        },
+        {
+          "warsh": 17,
+          "hafs": [
+            16
+          ]
+        },
+        {
+          "warsh": 18,
+          "hafs": [
+            17
+          ]
+        },
+        {
+          "warsh": 19,
+          "hafs": [
+            18
+          ]
+        },
+        {
+          "warsh": 20,
+          "hafs": [
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 99,
+      "name": "الزَّلزَلة",
+      "ayahCount": 3,
+      "examples": [
+        {
+          "warsh": 7,
+          "hafs": [
+            6
+          ]
+        },
+        {
+          "warsh": 8,
+          "hafs": [
+            7
+          ]
+        },
+        {
+          "warsh": 9,
+          "hafs": [
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 101,
+      "name": "القَارعَة",
+      "ayahCount": 10,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        },
+        {
+          "warsh": 3,
+          "hafs": [
+            4
+          ]
+        },
+        {
+          "warsh": 4,
+          "hafs": [
+            5
+          ]
+        },
+        {
+          "warsh": 5,
+          "hafs": [
+            6
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 103,
+      "name": "العَصر",
+      "ayahCount": 2,
+      "examples": [
+        {
+          "warsh": 1,
+          "hafs": [
+            1,
+            2
+          ]
+        },
+        {
+          "warsh": 2,
+          "hafs": [
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 106,
+      "name": "قُرَيش",
+      "ayahCount": 1,
+      "examples": [
+        {
+          "warsh": 5,
+          "hafs": [
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "sura": 107,
+      "name": "المَاعُون",
+      "ayahCount": 1,
+      "examples": [
+        {
+          "warsh": 6,
+          "hafs": [
+            6,
+            7
+          ]
+        }
+      ]
+    }
+  ]
+}

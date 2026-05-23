@@ -113,8 +113,13 @@ const AudioPlayer = {
             } else {
                 // التشغيل العادي الفردي للآيات
                 if (config.isMonolithic) {
-                    this.stop();
-                    this._updateBtn(false);
+                    if (this.stopAtEndOfSura === App.currentSurah) {
+                        this.stop();
+                        this._updateBtn(false);
+                    } else {
+                        const s = this._playSession;
+                        this.next().catch(() => {});
+                    }
                 } else {
                     if (this.audioQueue.length > 0) {
                         const s = this._playSession;
@@ -245,15 +250,27 @@ const AudioPlayer = {
         this._showToast(message || 'تعذّر تشغيل الصوت. تحقق من الاتصال أو جرّب لاحقاً.');
     },
 
-    async preloadNeighborPages(readingKey, centerPage) {
+    /** تجهيز فوري لآية واحدة — لا يؤخر التشغيل */
+    preloadAyahImmediate(readingKey, ayah) {
+        if (!readingKey || !ayah || ayah.aya_no <= 0) return;
+        const config = READINGS_CONFIG[readingKey];
+        if (!config) return;
+        if (!this._warmedUrls) this._warmedUrls = new Set();
+        this._collectAyahAudioUrls(readingKey, ayah, config).forEach((u) => this._warmAudioElement(u));
+        if (config.isMonolithic) this._warmTiming(readingKey, ayah.sura_no, config);
+    },
+
+    /** تجهيز الصفحات في الخلفية: الحالية ثم التالية ثم السابقة */
+    scheduleBackgroundPreload(readingKey, centerPage) {
         if (!readingKey || !centerPage) return;
-        const pages = [centerPage - 1, centerPage, centerPage + 1].filter(p => p >= 1 && p <= 604);
-        const allAyahs = [];
-        for (const p of pages) {
-            const ayahs = await DataHandler.getPageAyahs(readingKey, p);
-            if (ayahs && ayahs.length) allAyahs.push(...ayahs);
-        }
-        await this.preloadPageAudios(readingKey, allAyahs);
+        const run = async (page) => {
+            if (page < 1 || page > 604) return;
+            const ayahs = await DataHandler.getPageAyahs(readingKey, page);
+            if (ayahs && ayahs.length) this._preloadAyahsIncremental(readingKey, ayahs);
+        };
+        run(centerPage);
+        setTimeout(() => run(centerPage + 1), 80);
+        setTimeout(() => run(centerPage - 1), 160);
     },
 
     _collectAyahAudioUrls(readingKey, ayah, config) {
@@ -302,34 +319,21 @@ const AudioPlayer = {
         this.preloadedAudioObjects.push(preloadAudio);
     },
 
-    async preloadPageAudios(readingKey, ayahs) {
+    _preloadAyahsIncremental(readingKey, ayahs) {
         if (!readingKey || !ayahs || ayahs.length === 0) return;
         const config = READINGS_CONFIG[readingKey];
         if (!config) return;
-
         if (!this.timingCache) this.timingCache = {};
         if (!this.preloadedAudioObjects) this.preloadedAudioObjects = [];
         if (!this._warmedUrls) this._warmedUrls = new Set();
 
-        this.preloadedAudioObjects = [];
-        this._warmedUrls.clear();
-
-        const uniqueUrls = new Set();
         const surahsForTiming = new Set();
-
         for (const a of ayahs) {
             if (!a || a.aya_no <= 0) continue;
-            this._collectAyahAudioUrls(readingKey, a, config).forEach(u => uniqueUrls.add(u));
+            this._collectAyahAudioUrls(readingKey, a, config).forEach((u) => this._warmAudioElement(u));
             if (config.isMonolithic) surahsForTiming.add(a.sura_no);
         }
-
-        if (config.isMonolithic) {
-            for (const suraNo of surahsForTiming) {
-                this._warmTiming(readingKey, suraNo, config);
-            }
-        }
-
-        uniqueUrls.forEach(url => this._warmAudioElement(url));
+        surahsForTiming.forEach((suraNo) => this._warmTiming(readingKey, suraNo, config));
     },
 
     _cancelPendingLoad() {
@@ -590,20 +594,22 @@ const AudioPlayer = {
         return allData.find(a => a.sura_no === currentAyah.sura_no + 1 && a.aya_no === 1) || null;
     },
 
-    async playAyah(ayahNo, suraNo = App.currentSurah) {
+    async playAyah(ayahNo, suraNo = App.currentSurah, opts = {}) {
         if (!this.keepStopBoundary) {
             this.stopAtEndOfSura = null;
         }
         this.keepStopBoundary = false;
 
-        // مسح وتصفير قائمة الاستماع عند الضغط الفردي المباشر على الآية
-        this.playlist = [];
-        this.playlistIndex = -1;
-        this.playlistReadingKey = "";
+        const reuseSession = !!opts.session;
+        const playSession = reuseSession ? opts.session : this._bumpPlaySession();
 
-        const playSession = this._bumpPlaySession();
-        this._hardStopAudio();
-        this.audioQueue = [];
+        if (!reuseSession) {
+            this.playlist = [];
+            this.playlistIndex = -1;
+            this.playlistReadingKey = "";
+            this._hardStopAudio();
+            this.audioQueue = [];
+        }
 
         const config = READINGS_CONFIG[App.currentReading];
         if (!config) return;
@@ -618,6 +624,8 @@ const AudioPlayer = {
 
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
         if (!ayah) return;
+
+        this.preloadAyahImmediate(App.currentReading, ayah);
 
         if (!App.isAyahOnPage(ayah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(ayah, App.currentPage);
@@ -887,10 +895,41 @@ const AudioPlayer = {
         }
     },
 
+    async _continueToAyah(nextAyah, playSession) {
+        if (!nextAyah || !this._isSessionAlive(playSession)) return;
+
+        const prevSura = this.currentAyah ? this.currentAyah.sura_no : null;
+        const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura && nextAyah.aya_no === 1;
+        const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9 && nextAyah.sura_no !== 1;
+
+        if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
+            const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
+            await App.loadPage(targetPage, true, false, true);
+            if (!this._isSessionAlive(playSession)) return;
+        }
+
+        if (needsBasmalah) {
+            const config = READINGS_CONFIG[App.currentReading];
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
+                ? config.getBasmalahPath()
+                : 'assets/fallback_basmalah.mp3';
+            this.preloadAyahImmediate(App.currentReading, nextAyah);
+            try {
+                await this._playAudioUrl(path, 0, playSession);
+            } catch (e) {
+                if (e && e.message === 'aborted') return;
+            }
+            if (!this._isSessionAlive(playSession)) return;
+        }
+
+        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession });
+    },
+
     async next() {
         if (!this.currentAyah || this.isTransitioning) return;
+        const playSession = this._playSession;
         if (this.isRepeat) {
-            this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no);
+            await this.playAyah(this.currentAyah.aya_no, this.currentAyah.sura_no, { session: playSession });
             return;
         }
 
@@ -905,11 +944,7 @@ const AudioPlayer = {
         }
 
         try {
-            if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
-                const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
-                await App.loadPage(targetPage, true, false, true);
-            }
-            await this.playAyah(nextAyah.aya_no, nextAyah.sura_no);
+            await this._continueToAyah(nextAyah, playSession);
         } catch (e) {
             console.error('next ayah failed:', e);
             this._setPlayerState('paused');
