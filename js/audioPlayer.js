@@ -728,7 +728,9 @@ const AudioPlayer = {
             console.log('Basmalah path:', path);
             try {
                 await this._playAudioUrl(path, 0, playSession);
+                console.log('Basmalah played successfully');
             } catch (e) {
+                console.error('Basmalah play error:', e);
                 if (e && e.message === 'aborted') return;
             }
             if (!this._isSessionAlive(playSession)) return;
