@@ -14,10 +14,14 @@
     <link rel="preload" href="fonts/uthmanic_douri_v20.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="fonts/uthmanic_shuba_v20.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="preload" href="fonts/uthmanic_sousi_v20.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="css/style.css?v=4.6">
+    <link rel="stylesheet" href="css/style.css?v=4.7">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <div id="appUpdateBar" class="app-update-bar" hidden>
+        <span class="app-update-text">يتوفر تحديث للتطبيق</span>
+        <button type="button" id="appUpdateBtn" class="btn btn-primary btn-sm">تحديث الآن</button>
+    </div>
     <div class="app-layout">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -64,7 +68,7 @@
                 </button>
                 <button id="offlineLibOpenBtn" class="btn btn-warning w-100 mt-2 mb-2" title="المكتبة المحملة"><i class="fas fa-save"></i> المكتبة المحملة (بدون نت)</button>
                 <button id="downloadOpenBtn" class="btn btn-secondary w-100 mt-2" title="تحميل الصوت والصورة"><i class="fas fa-download"></i> تحميل الصوت والصورة</button>
-                <button type="button" id="forceRefreshBtn" class="btn btn-info w-100 mt-2" title="تحديث التطبيق ومسح الكاش"><i class="fas fa-sync-alt"></i> تحديث التطبيق</button>
+                <button type="button" id="forceRefreshBtn" class="btn btn-secondary w-100 mt-2" title="إعادة تعيين عند تعطل التطبيق فقط"><i class="fas fa-sync-alt"></i> إعادة تعيين (مشاكل الكاش)</button>
                 <p id="appVersionLabel" class="app-version-label"></p>
                 
                 <hr>
@@ -350,31 +354,15 @@
     <script src="js/dataHandler.js?v=2.9"></script>
     <script src="js/supabase.js"></script>
     <script src="js/audioMap.js"></script>
-    <script src="js/audioPlayer.js?v=4.6"></script>
-    <script>
-    (function () {
-        function noSpinnerPlayerUi() {
-            if (!window.AudioPlayer) return;
-            AudioPlayer._setPlayerState = function (state) {
-                var btn = document.getElementById('playPauseBtn');
-                if (!btn) return;
-                if (state === 'loading') state = 'paused';
-                btn.innerHTML = state === 'playing' ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-                btn.removeAttribute('aria-busy');
-            };
-        }
-        noSpinnerPlayerUi();
-        document.addEventListener('DOMContentLoaded', noSpinnerPlayerUi);
-    })();
-    </script>
+    <script src="js/audioPlayer.js?v=4.7"></script>
     <script src="js/api.js?v=2.9"></script>
     <script src="js/search.js?v=2.9"></script>
     <script src="js/saveFile.js?v=3.8"></script>
     <script src="js/download.js?v=3.8"></script>
     <script src="js/listen.js?v=2.9"></script>
-    <script src="js/tagsAndContext.js?v=4.6"></script>
-    <script src="js/ui.js?v=4.6"></script>
-    <script src="js/app.js?v=4.6"></script>
+    <script src="js/tagsAndContext.js?v=4.7"></script>
+    <script src="js/ui.js?v=4.7"></script>
+    <script src="js/app.js?v=4.7"></script>
     <script src="js/offlineManager.js?v=3.7"></script>
 </body>
 </html>

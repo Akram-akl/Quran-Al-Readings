@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v4.6';
+const APP_BUILD = 'v4.7';
 
 const App = {
     currentReading: 'Hafs',
@@ -24,53 +24,50 @@ const App = {
     },
 
     async init() {
-        const needsRefresh = await this._ensureLatestBuild();
-        if (needsRefresh) return;
-
         console.log("App Init Start...", APP_BUILD);
-        this._patchAudioPlayerUi();
+        this._initVersionUi();
         if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
-        this._patchAudioPlayerUi();
         if (typeof UI !== 'undefined') UI.init();
         
         if (typeof SURAHS !== 'undefined') UI.populateSurahs(SURAHS);
         if (typeof JOZZ_LIST !== 'undefined') UI.populateJozzList(JOZZ_LIST);
 
         this._bind();
-        this._initForceRefreshUi();
+        this._startUpdateChecks();
         await this.loadPage(1);
     },
 
-    _patchAudioPlayerUi() {
-        if (typeof AudioPlayer === 'undefined') return;
-        AudioPlayer._setPlayerState = function (state) {
-            const btn = document.getElementById('playPauseBtn');
-            if (!btn) return;
-            if (state === 'loading') state = 'paused';
-            const playing = state === 'playing';
-            AudioPlayer.isPlaying = playing;
-            btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-            btn.removeAttribute('aria-busy');
-        };
-    },
-
-    async _ensureLatestBuild() {
-        const prev = localStorage.getItem('app_build');
-        if (prev === APP_BUILD) return false;
-        localStorage.setItem('app_build', APP_BUILD);
-        if (!prev) return false;
-        await this._forceAppRefresh();
-        return true;
-    },
-
-    _initForceRefreshUi() {
+    _initVersionUi() {
         const lbl = document.getElementById('appVersionLabel');
         if (lbl) lbl.textContent = 'نسخة ' + APP_BUILD;
-        const btn = document.getElementById('forceRefreshBtn');
-        if (btn) btn.onclick = () => this._forceAppRefresh();
+        const resetBtn = document.getElementById('forceRefreshBtn');
+        if (resetBtn) resetBtn.onclick = () => this._hardResetApp();
+        const updateBtn = document.getElementById('appUpdateBtn');
+        if (updateBtn) updateBtn.onclick = () => this._applyPendingUpdate();
     },
 
-    async _forceAppRefresh() {
+    _startUpdateChecks() {
+        this._checkRemoteVersion();
+        setInterval(() => this._checkRemoteVersion(), 90 * 1000);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') this._checkRemoteVersion();
+        });
+        window.addEventListener('focus', () => this._checkRemoteVersion());
+    },
+
+    async _checkRemoteVersion() {
+        if (typeof IS_CAPACITOR_NATIVE !== 'undefined' && IS_CAPACITOR_NATIVE) return;
+        try {
+            const res = await fetch('./version.json?nocache=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data && data.build && data.build !== APP_BUILD) {
+                this._showUpdateBanner(data.build);
+            }
+        } catch (e) { /* offline */ }
+    },
+
+    async _hardResetApp() {
         try {
             if ('serviceWorker' in navigator) {
                 const regs = await navigator.serviceWorker.getRegistrations();
@@ -81,11 +78,9 @@ const App = {
                 await Promise.all(keys.map((k) => caches.delete(k)));
             }
         } catch (e) {
-            console.warn('Cache clear:', e);
+            console.warn('Reset:', e);
         }
-        const url = new URL(window.location.href);
-        url.searchParams.set('_refresh', Date.now().toString());
-        window.location.replace(url.toString());
+        window.location.reload();
     },
 
     _bind() {
@@ -235,15 +230,15 @@ const App = {
         }
     },
 
-    _showUpdateBanner() {
-        if (document.getElementById('appUpdateBar')) return;
+    _showUpdateBanner(remoteBuild) {
         if (typeof IS_CAPACITOR_NATIVE !== 'undefined' && IS_CAPACITOR_NATIVE) return;
-        const bar = document.createElement('div');
-        bar.id = 'appUpdateBar';
-        bar.className = 'app-update-bar';
-        bar.innerHTML = '<span>يتوفر تحديث للتطبيق</span><button type="button" id="appUpdateBtn" class="btn btn-primary btn-sm">تحديث الآن</button>';
-        document.body.appendChild(bar);
-        document.getElementById('appUpdateBtn').onclick = () => App._applyPendingUpdate();
+        const bar = document.getElementById('appUpdateBar');
+        if (!bar) return;
+        const label = bar.querySelector('.app-update-text');
+        if (label && remoteBuild) {
+            label.textContent = 'يتوفر تحديث (' + remoteBuild + ') — اضغط للتطبيق';
+        }
+        bar.hidden = false;
     },
 
     _applyPendingUpdate() {
@@ -256,21 +251,28 @@ const App = {
             reloaded = true;
             window.location.reload();
         };
-        navigator.serviceWorker.addEventListener('controllerchange', onCtrl);
-        setTimeout(() => { if (!reloaded) window.location.reload(); }, 1500);
+        navigator.serviceWorker.addEventListener('controllerchange', onCtrl, { once: true });
+        setTimeout(() => { if (!reloaded) window.location.reload(); }, 800);
     },
 
-    _checkForSwUpdate(reg) {
-        if (!reg || !navigator.serviceWorker.controller) return;
-        if (reg.waiting) {
-            this._showUpdateBanner();
-            return;
+    _onSwUpdateReady() {
+        this._checkRemoteVersion();
+    },
+
+    _watchSwRegistration(reg) {
+        if (!reg) return;
+        if (reg.waiting && navigator.serviceWorker.controller) {
+            this._onSwUpdateReady();
         }
-        if (reg.installing) {
-            reg.installing.addEventListener('statechange', () => {
-                if (reg.waiting) this._showUpdateBanner();
+        reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+                if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                    this._onSwUpdateReady();
+                }
             });
-        }
+        });
     },
 
     async _initServiceWorker() {
@@ -278,35 +280,18 @@ const App = {
         if (!('serviceWorker' in navigator)) return;
 
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'APP_UPDATE_READY' && navigator.serviceWorker.controller) {
-                this._showUpdateBanner();
+            if (event.data && event.data.type === 'APP_UPDATE_READY') {
+                this._onSwUpdateReady();
             }
         });
 
         try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=18');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=19');
             this._swRegistration = reg;
-            this._checkForSwUpdate(reg);
-
-            reg.addEventListener('updatefound', () => {
-                const worker = reg.installing;
-                if (!worker) return;
-                worker.addEventListener('statechange', () => {
-                    if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-                        this._showUpdateBanner();
-                    }
-                });
-            });
-
+            this._watchSwRegistration(reg);
             await reg.update();
-            this._checkForSwUpdate(reg);
-
-            const poll = () => reg.update().then(() => this._checkForSwUpdate(reg)).catch(() => {});
-            setInterval(poll, 5 * 60 * 1000);
-            document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') poll();
-            });
-            window.addEventListener('focus', poll);
+            this._watchSwRegistration(reg);
+            setInterval(() => reg.update().catch(() => {}), 3 * 60 * 1000);
         } catch (err) {
             console.error('Service Worker Registration Error:', err);
         }

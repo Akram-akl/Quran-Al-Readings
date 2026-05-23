@@ -1,7 +1,6 @@
-const SHELL_CACHE = 'quran-shell-v18';
-const SW_VERSION = '18';
+const SHELL_CACHE = 'quran-shell-v19';
+const SW_VERSION = '19';
 
-/** ملفات ثابتة فقط — لا نخزّن JS/CSS/HTML في الكاش (تسبب نسخة قديمة) */
 const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',
     './fonts/uthmanic_warsh_v21.ttf',
@@ -21,12 +20,14 @@ function isLiveAppRequest(url, request) {
         path.endsWith('sw.js') ||
         path.endsWith('/index.html') ||
         path.endsWith('index.html') ||
+        path.endsWith('version.json') ||
+        path.endsWith('/version.json') ||
         path.includes('/css/') ||
         path.includes('/js/')
     );
 }
 
-function notifyClientsUpdateReady() {
+function notifyUpdateReady() {
     return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
         clients.forEach((client) => {
             client.postMessage({ type: 'APP_UPDATE_READY', version: SW_VERSION });
@@ -38,7 +39,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(SHELL_CACHE)
             .then((cache) => cache.addAll(STATIC_ASSETS))
-            .then(() => notifyClientsUpdateReady())
+            .then(() => notifyUpdateReady())
     );
 });
 
@@ -46,7 +47,13 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         Promise.all([
             caches.keys().then((keys) =>
-                Promise.all(keys.map((key) => caches.delete(key)))
+                Promise.all(
+                    keys.map((key) => {
+                        if (key.startsWith('quran-shell-') && key !== SHELL_CACHE) {
+                            return caches.delete(key);
+                        }
+                    })
+                )
             ),
             self.clients.claim()
         ])

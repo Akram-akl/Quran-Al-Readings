@@ -40,9 +40,25 @@ const AudioPlayer = {
         return this._playSession;
     },
 
+    _guardPlayButtonNoSpinner() {
+        const btn = document.getElementById('playPauseBtn');
+        if (!btn || btn._spinnerGuard) return;
+        btn._spinnerGuard = true;
+        const fix = () => {
+            if (btn.querySelector('.fa-spinner, .fa-spin')) {
+                const playing = this.audio && !this.audio.paused && !!this.audio.src;
+                btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+            }
+            btn.removeAttribute('aria-busy');
+        };
+        new MutationObserver(fix).observe(btn, { childList: true, subtree: true, attributes: true });
+        fix();
+    },
+
     init() {
         this.audio.preload = 'auto';
         this.audio.crossOrigin = 'anonymous';
+        this._guardPlayButtonNoSpinner();
 
         this.audio.addEventListener('waiting', () => {
             if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
@@ -844,9 +860,11 @@ const AudioPlayer = {
     _setPlayerState(state) {
         const btn = document.getElementById('playPauseBtn');
         if (!btn) return;
+        if (state === 'loading') return;
         const playing = state === 'playing';
         this.isPlaying = playing;
         btn.innerHTML = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        btn.removeAttribute('aria-busy');
     },
 
     _updateBtn(playing) {
