@@ -15,12 +15,15 @@ const SurahAPI = {
         // 1. Check Offline Cache Storage
         if ('caches' in window) {
             try {
-                const offlineCache = await caches.open('quran-offline-v1');
-                const match = await offlineCache.match(url);
-                if (match) {
-                    const data = await match.json();
-                    this.cache.set(endpoint, data);
-                    return data;
+                const cacheNames = ['quran-offline-v2', 'quran-offline-v1'];
+                for (const cacheName of cacheNames) {
+                    const offlineCache = await caches.open(cacheName);
+                    const match = await offlineCache.match(url);
+                    if (match) {
+                        const data = await match.json();
+                        this.cache.set(endpoint, data);
+                        return data;
+                    }
                 }
             } catch (e) {
                 console.error('Cache API error:', e);

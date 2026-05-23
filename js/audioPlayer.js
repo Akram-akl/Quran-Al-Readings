@@ -22,6 +22,8 @@ const AudioPlayer = {
     maxPlaylistRepeats: 1,  // التكرارات المحددة للمقطع بالكامل
     timingCache: {},
     preloadedAudioObjects: [],
+    _warmedUrls: new Set(),
+    _toastTimer: null,
     stopAtEndOfSura: null,
     keepStopBoundary: false,
     _loadId: 0,
@@ -230,6 +232,76 @@ const AudioPlayer = {
         };
     },
 
+    _showToast(message) {
+        const el = document.getElementById('appToast');
+        if (!el) return;
+        el.textContent = message;
+        el.hidden = false;
+        if (this._toastTimer) clearTimeout(this._toastTimer);
+        this._toastTimer = setTimeout(() => { el.hidden = true; }, 4500);
+    },
+
+    _showPlayError(message) {
+        this._showToast(message || 'تعذّر تشغيل الصوت. تحقق من الاتصال أو جرّب لاحقاً.');
+    },
+
+    async preloadNeighborPages(readingKey, centerPage) {
+        if (!readingKey || !centerPage) return;
+        const pages = [centerPage - 1, centerPage, centerPage + 1].filter(p => p >= 1 && p <= 604);
+        const allAyahs = [];
+        for (const p of pages) {
+            const ayahs = await DataHandler.getPageAyahs(readingKey, p);
+            if (ayahs && ayahs.length) allAyahs.push(...ayahs);
+        }
+        await this.preloadPageAudios(readingKey, allAyahs);
+    },
+
+    _collectAyahAudioUrls(readingKey, ayah, config) {
+        const urls = [];
+        if (config.isMonolithic) {
+            const u = config.getAudioPath(ayah.sura_no);
+            if (u) urls.push(u);
+            return urls;
+        }
+        let mappedHafsAyahs = [ayah.aya_no];
+        if (typeof AUDIO_MAP !== 'undefined') {
+            const rKey = config.audioMapKey || readingKey;
+            if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][ayah.sura_no] && AUDIO_MAP[rKey][ayah.sura_no][ayah.aya_no]) {
+                mappedHafsAyahs = AUDIO_MAP[rKey][ayah.sura_no][ayah.aya_no];
+            }
+        }
+        for (const hafsAya of mappedHafsAyahs) {
+            const u = config.getAudioPath({
+                sura_no: ayah.sura_no,
+                aya_no: hafsAya,
+                jozz: ayah.jozz
+            });
+            if (u) urls.push(u);
+        }
+        return urls;
+    },
+
+    async _warmTiming(readingKey, suraNo, config) {
+        if (!config.getTimingPath) return;
+        const cacheKey = `${readingKey}_${suraNo}`;
+        if (!this.timingCache) this.timingCache = {};
+        if (this.timingCache[cacheKey]) return;
+        try {
+            const res = await fetch(config.getTimingPath(suraNo));
+            if (res.ok) this.timingCache[cacheKey] = await res.json();
+        } catch (e) { /* ignore */ }
+    },
+
+    _warmAudioElement(url) {
+        if (!url || this._warmedUrls.has(url)) return;
+        this._warmedUrls.add(url);
+        const preloadAudio = new Audio();
+        preloadAudio.preload = 'auto';
+        preloadAudio.src = url;
+        if (!this.preloadedAudioObjects) this.preloadedAudioObjects = [];
+        this.preloadedAudioObjects.push(preloadAudio);
+    },
+
     async preloadPageAudios(readingKey, ayahs) {
         if (!readingKey || !ayahs || ayahs.length === 0) return;
         const config = READINGS_CONFIG[readingKey];
@@ -237,57 +309,27 @@ const AudioPlayer = {
 
         if (!this.timingCache) this.timingCache = {};
         if (!this.preloadedAudioObjects) this.preloadedAudioObjects = [];
+        if (!this._warmedUrls) this._warmedUrls = new Set();
 
-        // تنظيف ذاكرة الكائنات لتفريغ الذاكرة
         this.preloadedAudioObjects = [];
+        this._warmedUrls.clear();
+
+        const uniqueUrls = new Set();
+        const surahsForTiming = new Set();
+
+        for (const a of ayahs) {
+            if (!a || a.aya_no <= 0) continue;
+            this._collectAyahAudioUrls(readingKey, a, config).forEach(u => uniqueUrls.add(u));
+            if (config.isMonolithic) surahsForTiming.add(a.sura_no);
+        }
 
         if (config.isMonolithic) {
-            const surahs = [...new Set(ayahs.map(a => a.sura_no))];
-            for (const suraNo of surahs) {
-                const cacheKey = `${readingKey}_${suraNo}`;
-                if (!this.timingCache[cacheKey]) {
-                    const timingUrl = config.getTimingPath(suraNo);
-                    fetch(timingUrl)
-                        .then(res => res.json())
-                        .then(data => {
-                            this.timingCache[cacheKey] = data;
-                        })
-                        .catch(e => console.warn("Preload timing failed:", e));
-                }
-
-                const audioUrl = config.getAudioPath(suraNo);
-                const preloadAudio = new Audio();
-                preloadAudio.src = audioUrl;
-                preloadAudio.preload = 'auto';
-                this.preloadedAudioObjects.push(preloadAudio);
-            }
-        } else {
-            const preloadCount = Math.min(5, ayahs.length);
-            for (let i = 0; i < preloadCount; i++) {
-                const a = ayahs[i];
-                let mappedHafsAyahs = [a.aya_no];
-                
-                if (typeof AUDIO_MAP !== 'undefined') {
-                    const cfg = READINGS_CONFIG[readingKey] || READINGS_CONFIG[App.currentReading];
-                    const rKey = cfg ? cfg.audioMapKey : null;
-                    if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][a.sura_no] && AUDIO_MAP[rKey][a.sura_no][a.aya_no]) {
-                        mappedHafsAyahs = AUDIO_MAP[rKey][a.sura_no][a.aya_no];
-                    }
-                }
-
-                for (const hafsAya of mappedHafsAyahs) {
-                    const audioUrl = config.getAudioPath({
-                        sura_no: a.sura_no,
-                        aya_no: hafsAya,
-                        jozz: a.jozz
-                    });
-                    const preloadAudio = new Audio();
-                    preloadAudio.src = audioUrl;
-                    preloadAudio.preload = 'auto';
-                    this.preloadedAudioObjects.push(preloadAudio);
-                }
+            for (const suraNo of surahsForTiming) {
+                this._warmTiming(readingKey, suraNo, config);
             }
         }
+
+        uniqueUrls.forEach(url => this._warmAudioElement(url));
     },
 
     _cancelPendingLoad() {
@@ -520,6 +562,21 @@ const AudioPlayer = {
         }
     },
 
+    _findPrevAyah(currentAyah) {
+        const allData = DataHandler.cache[App.currentReading];
+        if (!allData || !currentAyah) return null;
+        const minInGroup = Math.min(...(this.groupedAyahs && this.groupedAyahs.length ? this.groupedAyahs : [currentAyah.aya_no]));
+        const suraAyahs = allData
+            .filter(a => a.sura_no === currentAyah.sura_no && a.aya_no > 0)
+            .sort((a, b) => a.aya_no - b.aya_no);
+        const idx = suraAyahs.findIndex(a => a.aya_no === minInGroup);
+        if (idx > 0) return suraAyahs[idx - 1];
+        if (currentAyah.sura_no <= 1) return null;
+        const prevSura = allData.filter(a => a.sura_no === currentAyah.sura_no - 1 && a.aya_no > 0);
+        if (!prevSura.length) return null;
+        return prevSura.reduce((best, a) => (a.aya_no > best.aya_no ? a : best), prevSura[0]);
+    },
+
     _findNextAyah(currentAyah) {
         const allData = DataHandler.cache[App.currentReading];
         if (!allData || !currentAyah) return null;
@@ -562,6 +619,12 @@ const AudioPlayer = {
         const ayah = ayahs.find(a => a.aya_no === ayahNo && a.sura_no === suraNo);
         if (!ayah) return;
 
+        if (!App.isAyahOnPage(ayah, App.currentPage)) {
+            const targetPage = App.resolvePageForAyah(ayah, App.currentPage);
+            await App.loadPage(targetPage, true, false, true);
+            if (!this._isSessionAlive(playSession)) return;
+        }
+
         this.currentAyah = ayah;
         App.currentSurah = suraNo;
         this.currentlyHighlighted = ayahNo;
@@ -584,6 +647,7 @@ const AudioPlayer = {
                     this.timingCache[cacheKey] = this.currentTimingData;
                 } catch (e) {
                     console.error("Failed to load timing data:", e);
+                    this._showPlayError('تعذّر تحميل توقيت الآية.');
                     return;
                 }
             }
@@ -593,6 +657,7 @@ const AudioPlayer = {
             
             if (!ayahTiming) {
                 console.log("Ayah timing not found for target:", ayahNo);
+                this._showPlayError('توقيت هذه الآية غير متوفر لهذا القارئ.');
                 return;
             }
 
@@ -613,6 +678,7 @@ const AudioPlayer = {
                 if (e && e.message === 'aborted') return;
                 if (!this._isSessionAlive(playSession)) return;
                 console.error('Monolithic play failed:', e);
+                this._showPlayError();
                 return;
             }
             if (!this._isSessionAlive(playSession)) return;
@@ -672,6 +738,10 @@ const AudioPlayer = {
         });
 
         const firstUrl = this.audioQueue.shift();
+        if (!firstUrl) {
+            this._showPlayError('رابط الصوت غير متوفر لهذه الآية.');
+            return;
+        }
         
         if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive) {
             const el = document.querySelector(`.ayah-container[data-no="${ayahNo}"][data-surah="${suraNo}"]`);
@@ -689,6 +759,7 @@ const AudioPlayer = {
             if (e && e.message === 'aborted') return;
             if (!this._isSessionAlive(playSession)) return;
             console.error('Ayah play failed:', e);
+            this._showPlayError();
             return;
         }
         if (!this._isSessionAlive(playSession)) return;
@@ -845,8 +916,20 @@ const AudioPlayer = {
         }
     },
 
-    prev() {
-        if (this.currentAyah) this.playAyah(Math.max(1, this.currentAyah.aya_no - 1), this.currentAyah.sura_no);
+    async prev() {
+        if (!this.currentAyah || this.isTransitioning) return;
+        const prevAyah = this._findPrevAyah(this.currentAyah);
+        if (!prevAyah) return;
+        try {
+            if (!App.isAyahOnPage(prevAyah, App.currentPage)) {
+                const targetPage = App.resolvePageForAyah(prevAyah, App.currentPage);
+                await App.loadPage(targetPage, true, false, true);
+            }
+            await this.playAyah(prevAyah.aya_no, prevAyah.sura_no);
+        } catch (e) {
+            console.error('prev ayah failed:', e);
+            this._setPlayerState('paused');
+        }
     },
 
     toggleRepeat() {
@@ -927,7 +1010,10 @@ const AudioPlayer = {
             };
             const onErr = () => {
                 cleanup();
-                if (!isStale()) this._setPlayerState('paused');
+                if (!isStale()) {
+                    this._setPlayerState('paused');
+                    this._showPlayError();
+                }
                 reject(new Error('Audio load failed'));
             };
 
@@ -935,6 +1021,7 @@ const AudioPlayer = {
                 cleanup();
                 if (!isStale()) {
                     this._setPlayerState('paused');
+                    this._showPlayError('انتهت مهلة تحميل الصوت. تحقق من الاتصال.');
                     reject(new Error('Audio load timeout'));
                 } else {
                     reject(new Error('aborted'));

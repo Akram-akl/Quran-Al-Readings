@@ -190,6 +190,42 @@ const OfflineManager = {
         await this._startProcess(surahsToDownload);
     },
 
+    _queueItemsForSurah(readingKey, sNo, ayahs, config) {
+        const items = [];
+        for (const ayah of ayahs) {
+            const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${ayah.aya_no}`;
+            items.push({ type: 'api', url: tafsirUrl, sura: sNo });
+        }
+        items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/asmaa-sowar/${sNo}`, sura: sNo });
+        items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/fadael-sowar/${sNo}`, sura: sNo });
+
+        if (config.isMonolithic) {
+            const audioUrl = config.getAudioPath(sNo);
+            if (audioUrl) items.push({ type: 'audio', url: audioUrl, sura: sNo });
+            const timingUrl = config.getTimingPath(sNo);
+            if (timingUrl) items.push({ type: 'json', url: timingUrl, sura: sNo });
+        } else {
+            for (const ayah of ayahs) {
+                let mappedHafsAyahs = [ayah.aya_no];
+                if (typeof AUDIO_MAP !== 'undefined') {
+                    const rKey = config.audioMapKey || readingKey;
+                    if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][sNo] && AUDIO_MAP[rKey][sNo][ayah.aya_no]) {
+                        mappedHafsAyahs = AUDIO_MAP[rKey][sNo][ayah.aya_no];
+                    }
+                }
+                for (const hafsAya of mappedHafsAyahs) {
+                    const audioUrl = config.getAudioPath({
+                        sura_no: sNo,
+                        aya_no: hafsAya,
+                        jozz: ayah.jozz
+                    });
+                    if (audioUrl) items.push({ type: 'audio', url: audioUrl, sura: sNo });
+                }
+            }
+        }
+        return items;
+    },
+
     async _startProcess(surahsToDownload) {
         let data = DataHandler.cache[this.currentReading];
         if (!data) data = await DataHandler.loadReading(this.currentReading);
@@ -197,48 +233,16 @@ const OfflineManager = {
 
         this.downloadQueue = [];
         this._downloadingSurahs = surahsToDownload;
+        this._surahItemStats = {};
         
         const config = READINGS_CONFIG[this.currentReading];
         if (!config) return;
 
         for (const sNo of surahsToDownload) {
             const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
-            for (const ayah of ayahs) {
-                const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${ayah.aya_no}`;
-                this.downloadQueue.push({ type: 'api', url: tafsirUrl, sura: sNo });
-            }
-            
-            this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/asmaa-sowar/${sNo}`, sura: sNo });
-            this.downloadQueue.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/fadael-sowar/${sNo}`, sura: sNo });
-
-            if (config.isMonolithic) {
-                const audioUrl = config.getAudioPath(sNo);
-                if (audioUrl) this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
-                
-                const timingUrl = config.getTimingPath(sNo);
-                if (timingUrl) this.downloadQueue.push({ type: 'json', url: timingUrl, sura: sNo });
-            } else {
-                for (const ayah of ayahs) {
-                    let mappedHafsAyahs = [ayah.aya_no];
-                    if (typeof AUDIO_MAP !== 'undefined') {
-                        const rKey = config.audioMapKey || this.currentReading;
-                        if (rKey && AUDIO_MAP[rKey] && AUDIO_MAP[rKey][sNo] && AUDIO_MAP[rKey][sNo][ayah.aya_no]) {
-                            mappedHafsAyahs = AUDIO_MAP[rKey][sNo][ayah.aya_no];
-                        }
-                    }
-
-                    for (const hafsAya of mappedHafsAyahs) {
-                        const audioUrl = config.getAudioPath({
-                            sura_no: sNo,
-                            aya_no: hafsAya,
-                            jozz: ayah.jozz
-                        });
-                        if (audioUrl) {
-                            this.downloadQueue.push({ type: 'audio', url: audioUrl, sura: sNo });
-                        }
-                    }
-                }
-            }
+            const items = this._queueItemsForSurah(this.currentReading, sNo, ayahs, config);
+            this._surahItemStats[sNo] = { total: items.length, failed: 0 };
+            this.downloadQueue.push(...items);
         }
 
         if (this.downloadQueue.length === 0) return;
@@ -275,16 +279,23 @@ const OfflineManager = {
 
             const item = this.downloadQueue.shift();
             
+            let itemFailed = false;
             try {
                 const match = await cache.match(item.url);
                 if (!match) {
                     const res = await fetch(item.url, { mode: 'cors', cache: 'no-store' });
                     if (res.ok) {
                         await cache.put(item.url, res);
+                    } else {
+                        itemFailed = true;
                     }
                 }
             } catch (e) {
+                itemFailed = true;
                 console.error(`Failed to download ${item.url}:`, e);
+            }
+            if (itemFailed && this._surahItemStats[item.sura]) {
+                this._surahItemStats[item.sura].failed++;
             }
             
             this.downloadedItems++;
@@ -296,13 +307,24 @@ const OfflineManager = {
         } else {
             const downloaded = this._getStoredDownloads();
             if (!downloaded[this.currentReading]) downloaded[this.currentReading] = [];
-            
+            const incomplete = [];
+
             this._downloadingSurahs.forEach(suraNo => {
-                if (!downloaded[this.currentReading].includes(suraNo)) {
+                const st = this._surahItemStats[suraNo];
+                const ok = st && st.failed === 0 && st.total > 0;
+                if (ok && !downloaded[this.currentReading].includes(suraNo)) {
                     downloaded[this.currentReading].push(suraNo);
+                } else if (!ok) {
+                    incomplete.push(suraNo);
                 }
             });
             this._saveStoredDownloads(downloaded);
+
+            const alertBox = document.getElementById('offlineAlertBox');
+            if (incomplete.length > 0 && alertBox) {
+                alertBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> لم تُكتمل تحميلات السور: ${incomplete.join('، ')}. أعد المحاولة مع اتصال أفضل.`;
+                alertBox.style.display = 'block';
+            }
             
             this.updateUIStatus('done');
             await this.populateSurahs();
@@ -329,14 +351,29 @@ const OfflineManager = {
         this.updateUIStatus('stop');
     },
 
-    deleteSurah(readingKey, suraNo) {
+    async deleteSurah(readingKey, suraNo) {
         const downloaded = this._getStoredDownloads();
         if (!downloaded[readingKey]) return;
+        await this._purgeSurahFromCache(readingKey, suraNo);
         downloaded[readingKey] = downloaded[readingKey].filter(s => s !== suraNo);
         if (downloaded[readingKey].length === 0) delete downloaded[readingKey];
         this._saveStoredDownloads(downloaded);
-        this.updateDownloadedList();
-        if (readingKey === this.currentReading) this.populateSurahs();
+        await this.updateDownloadedList();
+        if (readingKey === this.currentReading) await this.populateSurahs();
+    },
+
+    async _purgeSurahFromCache(readingKey, suraNo) {
+        if (!('caches' in window)) return;
+        let data = DataHandler.cache[readingKey];
+        if (!data) {
+            try { data = await DataHandler.loadReading(readingKey); } catch (e) { data = []; }
+        }
+        const config = READINGS_CONFIG[readingKey];
+        if (!config || !data) return;
+        const ayahs = data.filter(a => parseInt(a.sura_no) === suraNo && parseInt(a.aya_no) > 0);
+        const items = this._queueItemsForSurah(readingKey, suraNo, ayahs, config);
+        const cache = await caches.open(this.cacheName);
+        await Promise.all(items.map(item => cache.delete(item.url)));
     },
 
     updateUIStatus(state) {

@@ -155,7 +155,7 @@ const UI = {
         const config = READINGS_CONFIG[reading];
 
         // فرز الآيات لضمان الترتيب الصحيح حسب aya_no
-        const sortedAyahs = ayahs.sort((a, b) => a.aya_no - b.aya_no);
+        const sortedAyahs = ayahs.slice().sort((a, b) => a.aya_no - b.aya_no);
         this.currentPageAyahs = sortedAyahs; // حفظ آيات الصفحة الحالية للاستماع المتتابع
 
         // تقسيم آيات الصفحة الحالية إلى مجموعات حسب رقم السورة (دعم تداخل السور وجزء عم)

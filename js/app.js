@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v4.8';
+const APP_BUILD = 'v4.9';
 
 const App = {
     currentReading: 'Hafs',
@@ -190,7 +190,7 @@ const App = {
                 if (sSel) sSel.value = this.currentSurah;
 
                 if (typeof AudioPlayer !== 'undefined') {
-                    AudioPlayer.preloadPageAudios(this.currentReading, ayahs);
+                    AudioPlayer.preloadNeighborPages(this.currentReading, page);
                     if (AudioPlayer.currentAyah) {
                         const cur = AudioPlayer.currentAyah;
                         if (ayahs.some(a => a.sura_no === cur.sura_no && a.aya_no === cur.aya_no)) {

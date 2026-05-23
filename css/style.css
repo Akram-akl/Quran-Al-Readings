@@ -110,6 +110,25 @@ body {
     display: block;
 }
 
+.app-toast {
+    position: fixed;
+    bottom: 72px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    max-width: min(92vw, 420px);
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #1e293b;
+    color: #f8fafc;
+    font-size: 0.9rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.app-toast[hidden] {
+    display: none !important;
+}
+
 .app-update-bar[hidden] {
     display: none !important;
 }
