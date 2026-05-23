@@ -717,7 +717,9 @@ const AudioPlayer = {
 
         // تشغيل البسملة تلقائياً في الفاتحة (إذا لم يكن القارئ حفص) وفي باقي السور (ما عدا التوبة)
         const isHafs = App.currentReading.startsWith('Hafs');
-        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs)) && !opts.skipBasmalah;
+        const needsBasmalah = ayahNo === 1 && suraNo !== 9 && !opts.skipBasmalah;
+
+        console.log('playAyah basmalah check:', { ayahNo, suraNo, isHafs, needsBasmalah, skipBasmalah: opts.skipBasmalah });
         if (needsBasmalah) {
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
                 ? config.getBasmalahPath() 
@@ -997,7 +999,9 @@ const AudioPlayer = {
 
         const prevSura = this.currentAyah ? this.currentAyah.sura_no : null;
         const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura;
-        const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9 && nextAyah.sura_no !== 1;
+        const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9;
+
+        console.log('_continueToAyah:', { prevSura, nextSura: nextAyah.sura_no, isNewSurah, needsBasmalah });
 
         if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
