@@ -675,6 +675,8 @@ const AudioPlayer = {
     },
 
     async playAyah(ayahNo, suraNo = App.currentSurah, opts = {}) {
+        console.log('playAyah called:', { ayahNo, suraNo, opts });
+
         if (!this.keepStopBoundary) {
             this.stopAtEndOfSura = null;
         }
