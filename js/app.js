@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v4.7';
+const APP_BUILD = 'v4.8';
 
 const App = {
     currentReading: 'Hafs',
@@ -25,7 +25,8 @@ const App = {
 
     async init() {
         console.log("App Init Start...", APP_BUILD);
-        this._initVersionUi();
+        const updateBtn = document.getElementById('appUpdateBtn');
+        if (updateBtn) updateBtn.onclick = () => this._applyPendingUpdate();
         if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
         if (typeof UI !== 'undefined') UI.init();
         
@@ -35,15 +36,6 @@ const App = {
         this._bind();
         this._startUpdateChecks();
         await this.loadPage(1);
-    },
-
-    _initVersionUi() {
-        const lbl = document.getElementById('appVersionLabel');
-        if (lbl) lbl.textContent = 'نسخة ' + APP_BUILD;
-        const resetBtn = document.getElementById('forceRefreshBtn');
-        if (resetBtn) resetBtn.onclick = () => this._hardResetApp();
-        const updateBtn = document.getElementById('appUpdateBtn');
-        if (updateBtn) updateBtn.onclick = () => this._applyPendingUpdate();
     },
 
     _startUpdateChecks() {
@@ -65,22 +57,6 @@ const App = {
                 this._showUpdateBanner(data.build);
             }
         } catch (e) { /* offline */ }
-    },
-
-    async _hardResetApp() {
-        try {
-            if ('serviceWorker' in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                await Promise.all(regs.map((r) => r.unregister()));
-            }
-            if ('caches' in window) {
-                const keys = await caches.keys();
-                await Promise.all(keys.map((k) => caches.delete(k)));
-            }
-        } catch (e) {
-            console.warn('Reset:', e);
-        }
-        window.location.reload();
     },
 
     _bind() {
@@ -246,13 +222,15 @@ const App = {
             this._swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
         let reloaded = false;
-        const onCtrl = () => {
+        const reload = () => {
             if (reloaded) return;
             reloaded = true;
             window.location.reload();
         };
-        navigator.serviceWorker.addEventListener('controllerchange', onCtrl, { once: true });
-        setTimeout(() => { if (!reloaded) window.location.reload(); }, 800);
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true });
+        }
+        setTimeout(reload, 800);
     },
 
     _onSwUpdateReady() {

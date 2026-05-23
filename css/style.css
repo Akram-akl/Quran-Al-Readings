@@ -110,13 +110,6 @@ body {
     display: block;
 }
 
-.app-version-label {
-    text-align: center;
-    font-size: 0.75rem;
-    opacity: 0.75;
-    margin: 6px 0 0;
-}
-
 .app-update-bar[hidden] {
     display: none !important;
 }
@@ -136,6 +129,18 @@ body {
     color: #fff;
     font-size: 0.9rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.app-update-bar .btn {
+    width: auto;
+    flex-shrink: 0;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.15);
+}
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    width: auto;
 }
 
 .main-body {
