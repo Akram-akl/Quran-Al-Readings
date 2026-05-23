@@ -218,6 +218,10 @@ const App = {
     },
 
     _applyPendingUpdate() {
+        // إخفاء شريط التحديث فوراً
+        const bar = document.getElementById('appUpdateBar');
+        if (bar) bar.hidden = true;
+        
         if (this._swRegistration && this._swRegistration.waiting) {
             this._swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }

@@ -996,7 +996,7 @@ const AudioPlayer = {
         if (!nextAyah || !this._isSessionAlive(playSession)) return;
 
         const prevSura = this.currentAyah ? this.currentAyah.sura_no : null;
-        const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura && nextAyah.aya_no === 1;
+        const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura;
         const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9 && nextAyah.sura_no !== 1;
 
         if (!App.isAyahOnPage(nextAyah, App.currentPage)) {

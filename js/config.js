@@ -208,7 +208,7 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicQaloun',
         audioMapKey: 'qaloun',
         isMonolithic: true,
-        archiveItem: 'quran-qaloun-hussary-114', 
+        archiveItem: 'quran-qaloun-hussary-114',
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             if (IS_LOCAL) {
@@ -219,6 +219,9 @@ const READINGS_CONFIG = {
         getTimingPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             return `data/timings/Qaloun/${sss}.json`;
+        },
+        getBasmalahPath() {
+            return 'assets/fallback_basmalah.mp3';
         }
     },
     QalounHuthaify: {
@@ -228,7 +231,7 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicQaloun',
         audioMapKey: 'qaloun',
         isMonolithic: true,
-        archiveItem: 'qaloun_huthaifyali_al_huthaify', 
+        archiveItem: 'qaloun_huthaifyali_al_huthaify',
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             if (IS_LOCAL) {
@@ -239,6 +242,9 @@ const READINGS_CONFIG = {
         getTimingPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             return `data/timings/Qaloun_Huthaify/${sss}.json`;
+        },
+        getBasmalahPath() {
+            return 'assets/fallback_basmalah.mp3';
         }
     },
     Duri: {
@@ -248,7 +254,7 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicDuri',
         audioMapKey: 'duri',
         isMonolithic: true,
-        archiveItem: 'quran-duri-hussary-114', 
+        archiveItem: 'quran-duri-hussary-114',
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             if (IS_LOCAL) {
@@ -259,6 +265,9 @@ const READINGS_CONFIG = {
         getTimingPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             return `data/timings/Duri/${sss}.json`;
+        },
+        getBasmalahPath() {
+            return 'assets/fallback_basmalah.mp3';
         }
     },
     Susi: {
@@ -268,7 +277,7 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicSusi',
         audioMapKey: 'susi',
         isMonolithic: true,
-        archiveItem: 'quran-susi-sofi-114', 
+        archiveItem: 'quran-susi-sofi-114',
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             if (IS_LOCAL) {
@@ -279,6 +288,9 @@ const READINGS_CONFIG = {
         getTimingPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             return `data/timings/Susi/${sss}.json`;
+        },
+        getBasmalahPath() {
+            return 'assets/fallback_basmalah.mp3';
         }
     },
     Shubah: {
@@ -288,7 +300,7 @@ const READINGS_CONFIG = {
         fontFamily: 'UthmanicShubah',
         audioMapKey: 'shubah',
         isMonolithic: true,
-        archiveItem: 'quran-shubah-huthaify-114', 
+        archiveItem: 'quran-shubah-huthaify-114',
         getAudioPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             if (IS_LOCAL) {
@@ -299,6 +311,9 @@ const READINGS_CONFIG = {
         getTimingPath(sura_no) {
             const sss = String(sura_no).padStart(3, '0');
             return `data/timings/Shubah/${sss}.json`;
+        },
+        getBasmalahPath() {
+            return 'assets/fallback_basmalah.mp3';
         }
     }
 };
