@@ -718,10 +718,10 @@ const AudioPlayer = {
         // تشغيل البسملة تلقائياً قبل كل سورة (إلا التوبة)
         const needsBasmalah = ayahNo === 1 && suraNo !== 9 && !opts.skipBasmalah;
 
-        console.log('playAyah basmalah check:', { ayahNo, suraNo, needsBasmalah, skipBasmalah: opts.skipBasmalah });
         if (needsBasmalah) {
-            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
-                ? config.getBasmalahPath() 
+            console.log('Playing basmalah for surah', suraNo);
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
+                ? config.getBasmalahPath()
                 : 'assets/fallback_basmalah.mp3';
             try {
                 await this._playAudioUrl(path, 0, playSession);

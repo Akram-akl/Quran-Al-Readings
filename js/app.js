@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v5.1';
+const APP_BUILD = 'v5.2';
 
 const App = {
     currentReading: 'Hafs',
@@ -27,11 +27,6 @@ const App = {
         console.log("App Init Start...", APP_BUILD);
         const updateBtn = document.getElementById('appUpdateBtn');
         if (updateBtn) updateBtn.onclick = () => this._applyPendingUpdate();
-
-        const incrementVersionBtn = document.getElementById('incrementVersionBtn');
-        if (incrementVersionBtn) {
-            incrementVersionBtn.onclick = () => this._showIncrementVersionGuide();
-        }
 
         if (typeof AudioPlayer !== 'undefined') AudioPlayer.init();
         if (typeof UI !== 'undefined') UI.init();
@@ -241,24 +236,6 @@ const App = {
             navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true });
         }
         setTimeout(reload, 800);
-    },
-
-    _showIncrementVersionGuide() {
-        const guide = `
-إرشادات زيادة الإصدار يدوياً:
-
-1. افتح ملف version.json في المجلد الرئيسي
-2. قم بزيادة رقم الإصدار (مثال: v5.1 إلى v5.2)
-3. افتح ملف js/app.js
-4. قم بتحديث const APP_BUILD ليطابق الإصدار الجديد
-5. احفظ الملفات وارفع التغييرات إلى GitHub:
-   git add .
-   git commit -m "Update version"
-   git push origin main
-
-الإصدار الحالي: ${APP_BUILD}
-        `;
-        alert(guide);
     },
 
     _onSwUpdateReady() {
