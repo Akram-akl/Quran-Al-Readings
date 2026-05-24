@@ -719,13 +719,11 @@ const AudioPlayer = {
 
         // تشغيل البسملة تلقائياً قبل أول آية من كل سورة (إلا التوبة)
         if (ayahNo === 1 && suraNo !== 9) {
-            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
-                ? config.getBasmalahPath()
-                : 'assets/fallback_basmalah.mp3';
+            const path = 'assets/fallback_basmalah.mp3';
             try {
                 await this._playAudioUrl(path, 0, playSession);
             } catch (e) {
-                if (e && e.message === 'aborted') return;
+                console.error('Basmalah error:', e);
             }
             if (!this._isSessionAlive(playSession)) return;
         }
