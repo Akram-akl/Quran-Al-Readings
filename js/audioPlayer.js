@@ -676,8 +676,12 @@ const AudioPlayer = {
             this.playlist = [];
             this.playlistIndex = -1;
             this.playlistReadingKey = "";
-            this._hardStopAudio();
+            this.groupedAyahs = [];
             this.audioQueue = [];
+            this.maxPlaylistRepeats = 1;
+            const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
+            if (cancelRepeatBtn) cancelRepeatBtn.style.display = 'none';
+            this._hardStopAudio();
         }
 
         const config = READINGS_CONFIG[App.currentReading];
@@ -1057,10 +1061,25 @@ const AudioPlayer = {
         this._setPlayerState(playing ? 'playing' : 'paused');
     },
 
-    _playAudioUrl(url, startTimeSec = 0, playSession = this._playSession) {
+    async _playAudioUrl(url, startTimeSec = 0, playSession = this._playSession) {
         if (!this._isSessionAlive(playSession)) {
             return Promise.reject(new Error('aborted'));
         }
+
+        let finalUrl = url;
+        if (window.Capacitor?.isNativePlatform?.() && 'caches' in window && url.startsWith('http')) {
+            try {
+                const cacheRes = await caches.match(url, { ignoreSearch: true });
+                if (cacheRes) {
+                    const blob = await cacheRes.blob();
+                    finalUrl = URL.createObjectURL(blob);
+                }
+            } catch (e) {
+                console.warn("Native cache read failed:", e);
+            }
+        }
+
+        if (!this._isSessionAlive(playSession)) return Promise.reject(new Error('aborted'));
 
         this._cancelPendingLoad();
         const loadId = ++this._loadId;
@@ -1134,7 +1153,7 @@ const AudioPlayer = {
             this.audio.addEventListener('canplay', onReady, { once: true });
             this.audio.addEventListener('loadeddata', onReady, { once: true });
             this.audio.addEventListener('error', onErr, { once: true });
-            this.audio.src = url;
+            this.audio.src = finalUrl;
             this.audio.load();
         });
     },

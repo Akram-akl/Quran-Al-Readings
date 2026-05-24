@@ -25,7 +25,8 @@
     </div>
     <div class="app-layout">
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
+            <div class="sidebar-header" style="position: relative;">
+                <button id="aboutAppBtn" class="btn-icon" style="position: absolute; right: 10px; top: 10px; font-size: 0.9rem; opacity: 0.7;" title="عن التطبيق"><i class="fas fa-info-circle"></i></button>
                 <img src="assets/logo.png" alt="logo" class="app-logo">
                 <h2>القرآن الكريم</h2>
                 <button id="closeSidebarBtn" class="btn-icon mobile-only" title="إغلاق"><i class="fas fa-times"></i></button>
@@ -79,7 +80,6 @@
                 </div>
             </div>
             <div class="sidebar-footer" style="flex-direction: column; align-items: center;">
-                <p style="font-size: 0.75rem; opacity: 0.4; margin-bottom: 8px; text-align: center; user-select: none;">تم صنع هذا البرنامج بواسطة أكرم عقل</p>
                 <button id="themeToggleBtn" class="btn-icon" title="مظهر"><i class="fas fa-moon"></i></button>
             </div>
         </aside>

@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v5.5'
+const APP_BUILD = 'v5.6'
 
 const App = {
     currentReading: 'Hafs',
@@ -112,6 +112,13 @@ const App = {
                     if (isFirst) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
                     TagsAndContext.openApiModal(`سورة ${document.getElementById('currentSurahTitle').textContent.replace('سورة ', '')}`, html);
                 }
+            };
+        }
+        
+        const aboutAppBtn = document.getElementById('aboutAppBtn');
+        if (aboutAppBtn) {
+            aboutAppBtn.onclick = () => {
+                alert('تم صنع هذا التطبيق بواسطة أكرم عقل');
             };
         }
     },

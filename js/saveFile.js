@@ -15,6 +15,28 @@ const SaveFile = {
     },
 
     async _saveViaShare(blob, filename) {
+        if (window.Capacitor?.isNativePlatform?.() === true && window.Capacitor?.Plugins?.Share) {
+            try {
+                const base64Data = await this._blobToBase64(blob);
+                const savedFile = await window.Capacitor.Plugins.Filesystem.writeFile({
+                    path: `Quran/share_temp_${Date.now()}.${filename.split('.').pop()}`,
+                    data: base64Data,
+                    directory: 'CACHE',
+                    recursive: true
+                });
+                await window.Capacitor.Plugins.Share.share({
+                    title: 'مشاركة',
+                    text: 'تطبيق القراءات الميسرة',
+                    url: savedFile.uri,
+                    dialogTitle: 'مشاركة الملف'
+                });
+                return { ok: true, method: 'share' };
+            } catch (err) {
+                console.warn("Capacitor share failed:", err);
+                return { ok: false };
+            }
+        }
+        
         if (!navigator.share) return { ok: false };
         const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
         if (navigator.canShare && !navigator.canShare({ files: [file] })) {
@@ -48,7 +70,20 @@ const SaveFile = {
                 const fs = await this._saveViaFilesystem(blob, filename);
                 if (fs.ok) return fs;
             } catch (e) {
-                console.warn('Filesystem save failed:', e);
+                console.warn('Filesystem save to public dir failed, trying CACHE:', e);
+                try {
+                    const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+                    const base64 = await this._blobToBase64(blob);
+                    const result = await Filesystem.writeFile({
+                        path: `Quran/${filename}`,
+                        data: base64,
+                        directory: 'CACHE',
+                        recursive: true
+                    });
+                    return { ok: true, method: 'cache', uri: result.uri };
+                } catch (cacheErr) {
+                    console.warn('Filesystem CACHE save failed:', cacheErr);
+                }
             }
             try {
                 const shared = await this._saveViaShare(blob, filename);
@@ -59,7 +94,7 @@ const SaveFile = {
             }
             return {
                 ok: false,
-                message: 'لم يُحفظ الملف. ثبّت آخر APK بعد sync الإضافات، أو استخدم الموقع من المتصفح.'
+                message: 'لم يُحفظ الملف، يرجى إعطاء التطبيق صلاحيات التخزين أو مشاركته.'
             };
         }
 

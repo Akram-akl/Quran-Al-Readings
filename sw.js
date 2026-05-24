@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v5.5';
-const SW_VERSION = 'v5.5';
+const SHELL_CACHE = 'quran-shell-v5.6';
+const SW_VERSION = 'v5.6';
 
 const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',

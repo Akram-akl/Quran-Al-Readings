@@ -373,7 +373,7 @@ const OfflineManager = {
         const ayahs = data.filter(a => parseInt(a.sura_no) === suraNo && parseInt(a.aya_no) > 0);
         const items = this._queueItemsForSurah(readingKey, suraNo, ayahs, config);
         const cache = await caches.open(this.cacheName);
-        await Promise.all(items.map(item => cache.delete(item.url)));
+        await Promise.all(items.map(item => cache.delete(item.url, { ignoreSearch: true })));
     },
 
     updateUIStatus(state) {
