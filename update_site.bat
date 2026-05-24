@@ -1,11 +1,10 @@
 @echo off
 set "version=Akram-akl"
-echo Updating %version%...
-
+echo Updating %version% Version...
 git add .
-git commit -m "Update %version% - %date% %time%"
+git commit -m "Auto Update %version% - %date% %time%"
 git push origin main
 echo.
-echo Pushed Successfully!
+echo Version %version% Pushed Successfully!
 echo https://akram-akl.github.io/Quran-Al-Readings/
 pause

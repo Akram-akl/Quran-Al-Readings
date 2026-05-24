@@ -675,8 +675,6 @@ const AudioPlayer = {
     },
 
     async playAyah(ayahNo, suraNo = App.currentSurah, opts = {}) {
-        console.log('playAyah called:', { ayahNo, suraNo, opts });
-
         if (!this.keepStopBoundary) {
             this.stopAtEndOfSura = null;
         }
@@ -717,13 +715,17 @@ const AudioPlayer = {
         // تجهيز مسبق فوري للآية المطلوبة لتبدأ فوراً بعد انتهاء البسملة
         this.preloadAyahImmediate(App.currentReading, ayah);
 
-        // تشغيل البسملة تلقائياً قبل أول آية من كل سورة (إلا التوبة)
-        if (ayahNo === 1 && suraNo !== 9) {
-            const path = 'assets/fallback_basmalah.mp3';
+        // تشغيل البسملة تلقائياً في الفاتحة (إذا لم يكن القارئ حفص) وفي باقي السور (ما عدا التوبة)
+        const isHafs = App.currentReading.startsWith('Hafs');
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs)) && !opts.skipBasmalah;
+        if (needsBasmalah) {
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
+                ? config.getBasmalahPath() 
+                : 'assets/fallback_basmalah.mp3';
             try {
                 await this._playAudioUrl(path, 0, playSession);
             } catch (e) {
-                console.error('Basmalah error:', e);
+                if (e && e.message === 'aborted') return;
             }
             if (!this._isSessionAlive(playSession)) return;
         }
@@ -890,12 +892,9 @@ const AudioPlayer = {
     async playBasmalah() {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
-        this.playlist = [];
-        this.playlistIndex = -1;
-        this.playlistReadingKey = "";
         const config = READINGS_CONFIG[App.currentReading];
-        const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
-            ? config.getBasmalahPath()
+        const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
+            ? config.getBasmalahPath() 
             : 'assets/fallback_basmalah.mp3';
         try { await this._playAudioUrl(path, 0, session); } catch (e) {
             if (e && e.message !== 'aborted') console.error(e);
@@ -997,8 +996,8 @@ const AudioPlayer = {
         if (!nextAyah || !this._isSessionAlive(playSession)) return;
 
         const prevSura = this.currentAyah ? this.currentAyah.sura_no : null;
-        const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura;
-        const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9;
+        const isNewSurah = prevSura !== null && nextAyah.sura_no !== prevSura && nextAyah.aya_no === 1;
+        const needsBasmalah = isNewSurah && nextAyah.sura_no !== 9 && nextAyah.sura_no !== 1;
 
         if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
@@ -1020,7 +1019,7 @@ const AudioPlayer = {
             if (!this._isSessionAlive(playSession)) return;
         }
 
-        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession });
+        await this.playAyah(nextAyah.aya_no, nextAyah.sura_no, { session: playSession, skipBasmalah: true });
     },
 
     async next() {
