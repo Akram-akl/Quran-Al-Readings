@@ -604,6 +604,15 @@ const AudioPlayer = {
             });
         });
 
+        const isHafs = App.currentReading.startsWith('Hafs');
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs));
+        if (needsBasmalah) {
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
+                ? config.getBasmalahPath()
+                : 'assets/fallback_basmalah.mp3';
+            this.audioQueue.unshift(path);
+        }
+
         const firstUrl = this.audioQueue.shift();
         try {
             await this._playAudioUrl(firstUrl, 0, playSession);
@@ -806,6 +815,15 @@ const AudioPlayer = {
                 jozz: ayah.jozz
             });
         });
+
+        const isHafs = App.currentReading.startsWith('Hafs');
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs)) && (!opts || !opts.skipBasmalah);
+        if (needsBasmalah) {
+            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
+                ? config.getBasmalahPath()
+                : 'assets/fallback_basmalah.mp3';
+            this.audioQueue.unshift(path);
+        }
 
         const firstUrl = this.audioQueue.shift();
         if (!firstUrl) {
