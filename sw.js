@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v5.3';
-const SW_VERSION = 'v5.3';
+const SHELL_CACHE = 'quran-shell-v5.5';
+const SW_VERSION = 'v5.5';
 
 const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',
@@ -100,8 +100,32 @@ self.addEventListener('fetch', (event) => {
     }
 
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
+        caches.match(event.request).then(async (cachedResponse) => {
+            if (cachedResponse) {
+                const rangeHeader = event.request.headers.get('range');
+                if (rangeHeader && cachedResponse.headers.has('content-length') && cachedResponse.status === 200) {
+                    const buffer = await cachedResponse.clone().arrayBuffer();
+                    const total = buffer.byteLength;
+                    const parts = rangeHeader.replace(/bytes=/, "").split("-");
+                    const start = parseInt(parts[0], 10);
+                    const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
+                    if (start >= total || end >= total) {
+                        return new Response(null, { status: 416, statusText: 'Range Not Satisfiable', headers: { 'Content-Range': `bytes */${total}` }});
+                    }
+                    const chunk = buffer.slice(start, end + 1);
+                    return new Response(chunk, {
+                        status: 206,
+                        statusText: 'Partial Content',
+                        headers: new Headers({
+                            'Content-Type': cachedResponse.headers.get('content-type') || 'audio/mpeg',
+                            'Content-Range': `bytes ${start}-${end}/${total}`,
+                            'Content-Length': chunk.byteLength,
+                            'Accept-Ranges': 'bytes'
+                        })
+                    });
+                }
+                return cachedResponse;
+            }
             return fetch(event.request).catch(() => {
                 if (url.hostname.includes('surahapp.com')) {
                     return new Response(

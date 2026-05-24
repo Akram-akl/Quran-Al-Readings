@@ -424,6 +424,7 @@ const AudioPlayer = {
         this._bumpPlaySession();
         this._hardStopAudio();
         this.audioQueue = [];
+        this.groupedAyahs = [];
         this.playlist = [];
         this.playlistIndex = -1;
         this.maxPlaylistRepeats = 1;
@@ -604,8 +605,9 @@ const AudioPlayer = {
             });
         });
 
-        const isHafs = App.currentReading.startsWith('Hafs');
-        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs));
+        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah);
         if (needsBasmalah) {
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
                 ? config.getBasmalahPath()
@@ -816,8 +818,9 @@ const AudioPlayer = {
             });
         });
 
-        const isHafs = App.currentReading.startsWith('Hafs');
-        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && (suraNo !== 1 || !isHafs)) && (!opts || !opts.skipBasmalah);
+        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah) && (!opts || !opts.skipBasmalah);
         if (needsBasmalah) {
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
                 ? config.getBasmalahPath()

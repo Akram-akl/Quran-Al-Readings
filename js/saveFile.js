@@ -29,13 +29,15 @@ const SaveFile = {
         if (!Filesystem?.writeFile) return { ok: false };
 
         const base64 = await this._blobToBase64(blob);
+        const dir = (blob.type && blob.type.startsWith('image')) ? 'PICTURES' : 'DOCUMENTS';
+        
         const result = await Filesystem.writeFile({
             path: `Quran/${filename}`,
             data: base64,
-            directory: 'DOCUMENTS',
+            directory: dir,
             recursive: true
         });
-        return { ok: true, method: 'filesystem', uri: result.uri };
+        return { ok: true, method: 'filesystem', uri: result.uri, type: blob.type };
     },
 
     async save(blob, filename) {

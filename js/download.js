@@ -127,12 +127,14 @@ const DownloadManager = {
             statusEl.textContent = 'لم يتم العثور على آيات في هذا النطاق';
             return;
         }
-        if (ayahs.length > 50) {
-            statusEl.textContent = 'عفواً، لا يمكن تحميل أكثر من 50 آية دفعة واحدة للحفاظ على استقرار التطبيق.';
+        if (ayahs.length > 300) {
+            statusEl.textContent = 'عفواً، لا يمكن تحميل أكثر من 300 آية دفعة واحدة للحفاظ على استقرار التطبيق.';
             return;
         }
 
         const type = document.getElementById('downloadType').value;
+        this._currentDownloadBlob = null;
+        this._currentDownloadFilename = null;
 
         if (type === 'image') {
             await this._downloadAsImage(ayahs, readingKey, statusEl);
@@ -193,11 +195,15 @@ const DownloadManager = {
                 return;
             }
             const filename = `quran_${readingKey}_${ayahs[0].sura_no}_${ayahs[0].aya_no}.png`;
+            this._currentDownloadBlob = blob;
+            this._currentDownloadFilename = filename;
             const result = await SaveFile.save(blob, filename);
+            
             if (result.ok) {
-                statusEl.textContent = result.method === 'filesystem'
-                    ? 'تم الحفظ في مجلد المستندات/Quran ✓'
+                statusEl.innerHTML = result.method === 'filesystem'
+                    ? 'تم الحفظ في الاستديو (Pictures/Quran) ✓'
                     : 'تم التحميل بنجاح ✓';
+                this._showShareButton(statusEl);
             } else if (result.cancelled) {
                 statusEl.textContent = 'تم الإلغاء';
             } else {
@@ -356,11 +362,16 @@ const DownloadManager = {
             statusEl.textContent = 'جاري تشفير وتجهيز ملف التحميل (WAV)...';
             const wavBlob = this._bufferToWav(mergedBuffer);
             const filename = `quran_${readingKey}_${ayahs[0].sura_no}-${ayahs[0].aya_no}_to_${ayahs[ayahs.length-1].sura_no}-${ayahs[ayahs.length-1].aya_no}.wav`;
+            
+            this._currentDownloadBlob = wavBlob;
+            this._currentDownloadFilename = filename;
+            
             const result = await SaveFile.save(wavBlob, filename);
             if (result.ok) {
-                statusEl.textContent = result.method === 'filesystem'
+                statusEl.innerHTML = result.method === 'filesystem'
                     ? 'تم الحفظ في مجلد المستندات/Quran ✓'
                     : 'تم التحميل بنجاح ✓';
+                this._showShareButton(statusEl);
             } else if (result.cancelled) {
                 statusEl.textContent = 'تم الإلغاء';
             } else {
@@ -373,6 +384,48 @@ const DownloadManager = {
         } finally {
             audioCtx.close();
         }
+    },
+
+    _showShareButton(statusEl) {
+        if (!navigator.share && !window.Capacitor?.Plugins?.Share) return;
+        
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-secondary';
+        shareBtn.style.marginTop = '10px';
+        shareBtn.style.width = '100%';
+        shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+        
+        shareBtn.onclick = async () => {
+            try {
+                if (window.Capacitor?.isNativePlatform?.() === true && window.Capacitor?.Plugins?.Share) {
+                    // For Android/iOS using Capacitor Share plugin + Filesystem URI
+                    const base64Data = await SaveFile._blobToBase64(this._currentDownloadBlob);
+                    const savedFile = await window.Capacitor.Plugins.Filesystem.writeFile({
+                        path: `Quran/share_temp_${Date.now()}.${this._currentDownloadFilename.split('.').pop()}`,
+                        data: base64Data,
+                        directory: 'CACHE'
+                    });
+                    await window.Capacitor.Plugins.Share.share({
+                        title: 'مشاركة',
+                        text: 'ملف من تطبيق القراءات',
+                        url: savedFile.uri,
+                        dialogTitle: 'مشاركة مع'
+                    });
+                } else if (navigator.share) {
+                    // Web Share API
+                    const file = new File([this._currentDownloadBlob], this._currentDownloadFilename, { type: this._currentDownloadBlob.type });
+                    await navigator.share({
+                        files: [file],
+                        title: 'مشاركة الملف',
+                        text: 'تطبيق القراءات الميسرة'
+                    });
+                }
+            } catch (err) {
+                console.warn('Share failed:', err);
+            }
+        };
+        
+        statusEl.appendChild(shareBtn);
     },
 
     _sliceAudioBuffer(audioCtx, buffer, startSec, endSec) {
