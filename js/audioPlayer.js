@@ -717,10 +717,8 @@ const AudioPlayer = {
         // تجهيز مسبق فوري للآية المطلوبة لتبدأ فوراً بعد انتهاء البسملة
         this.preloadAyahImmediate(App.currentReading, ayah);
 
-        // تشغيل البسملة تلقائياً قبل كل سورة (إلا التوبة)
-        const needsBasmalah = ayahNo === 1 && suraNo !== 9;
-
-        if (needsBasmalah) {
+        // تشغيل البسملة تلقائياً قبل أول آية من كل سورة (إلا التوبة)
+        if (ayahNo === 1 && suraNo !== 9) {
             const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
                 ? config.getBasmalahPath()
                 : 'assets/fallback_basmalah.mp3';
