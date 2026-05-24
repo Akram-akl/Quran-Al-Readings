@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v19';
-const SW_VERSION = '19';
+const SHELL_CACHE = 'quran-shell-v20';
+const SW_VERSION = '20';
 
 const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',
@@ -85,15 +85,14 @@ self.addEventListener('fetch', (event) => {
     if (url.origin === location.origin) {
         event.respondWith(
             caches.match(event.request).then((cached) => {
-                return (
-                    cached ||
-                    fetch(event.request).then((res) => {
-                        if (res && res.ok) {
-                            caches.open(SHELL_CACHE).then((cache) => cache.put(event.request, res.clone()));
-                        }
-                        return res;
-                    })
-                );
+                if (cached) return cached;
+                return fetch(event.request).then((res) => {
+                    if (res && res.ok) {
+                        const resClone = res.clone();
+                        caches.open(SHELL_CACHE).then((cache) => cache.put(event.request, resClone));
+                    }
+                    return res;
+                });
             })
         );
         return;
