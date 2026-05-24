@@ -151,9 +151,19 @@ const TagsAndContext = {
         if (posY + menuHeight > screenHeight - pad) {
             posY = y - menuHeight;
         }
+
         if (posY < pad) posY = pad;
-        if (posY + menuHeight > screenHeight - pad) {
-            posY = screenHeight - menuHeight - pad;
+
+        const maxMenuHeight = screenHeight - (pad * 2);
+        if (menuHeight > maxMenuHeight) {
+            menu.style.height = `${maxMenuHeight}px`;
+            menu.style.overflowY = 'auto';
+        } else {
+            menu.style.height = 'auto';
+            menu.style.overflowY = 'visible';
+            if (posY + menuHeight > screenHeight - pad) {
+                posY = screenHeight - menuHeight - pad;
+            }
         }
 
         menu.style.left = `${posX}px`;

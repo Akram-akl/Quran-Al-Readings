@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v5.9'
+const APP_BUILD = 'v5.3'
 
 const App = {
     currentReading: 'Hafs',
@@ -269,7 +269,7 @@ const App = {
         });
 
         try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=19');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=5.3');
             this._swRegistration = reg;
             this._watchSwRegistration(reg);
             await reg.update();
