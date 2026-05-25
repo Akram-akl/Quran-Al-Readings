@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v5.6'
+const APP_BUILD = 'v5.7'
 
 const App = {
     currentReading: 'Hafs',
@@ -75,6 +75,27 @@ const App = {
         if (j) j.onchange = (e) => this.loadPage(this.getJozzStartPage(e.target.value));
         if (t) t.onclick = () => this.TestingMode.toggle();
         if (d) d.onclick = () => document.getElementById('downloadModal').classList.add('active');
+
+        // Font scale controls
+        const fontInc = document.getElementById('fontIncreaseBtn');
+        const fontDec = document.getElementById('fontDecreaseBtn');
+        let currentScale = parseFloat(localStorage.getItem('quran_font_scale')) || 1.0;
+        document.documentElement.style.setProperty('--font-scale', currentScale);
+
+        if (fontInc) {
+            fontInc.onclick = () => {
+                currentScale = Math.min(2.5, currentScale + 0.1);
+                document.documentElement.style.setProperty('--font-scale', currentScale);
+                localStorage.setItem('quran_font_scale', currentScale);
+            };
+        }
+        if (fontDec) {
+            fontDec.onclick = () => {
+                currentScale = Math.max(0.6, currentScale - 0.1);
+                document.documentElement.style.setProperty('--font-scale', currentScale);
+                localStorage.setItem('quran_font_scale', currentScale);
+            };
+        }
 
         const surahInfoBtn = document.getElementById('surahInfoBtn');
         if (surahInfoBtn) {

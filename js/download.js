@@ -201,7 +201,7 @@ const DownloadManager = {
             
             if (result.ok) {
                 statusEl.innerHTML = result.method === 'filesystem'
-                    ? 'تم الحفظ في الاستديو (Pictures/Quran) ✓'
+                    ? 'تم إنشاء الصورة ✓ (اضغط مشاركة لحفظها بالاستديو)'
                     : 'تم التحميل بنجاح ✓';
                 this._showShareButton(statusEl);
             } else if (result.cancelled) {

@@ -66,20 +66,6 @@ const SaveFile = {
         const isNative = window.Capacitor?.isNativePlatform?.() === true;
 
         if (isNative) {
-            const isImage = blob.type && blob.type.startsWith('image');
-            if (isImage) {
-                try {
-                    const shared = await this._saveViaShare(blob, filename);
-                    if (shared.ok) return shared;
-                } catch (e) {
-                    console.warn('Share image failed:', e);
-                }
-                return {
-                    ok: false,
-                    message: 'تعذر الحفظ في المعرض. يمكنك تجربة المشاركة لحفظها.'
-                };
-            }
-
             try {
                 const fs = await this._saveViaFilesystem(blob, filename);
                 if (fs.ok) return fs;

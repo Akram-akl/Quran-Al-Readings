@@ -6,6 +6,7 @@
     --text: #0f172a;
     --border: #e2e8f0;
     --sidebar-width: 280px;
+    --font-scale: 1;
 }
 
 [data-theme="dark"] {
@@ -200,7 +201,7 @@ body {
 
 .ayah-container {
     display: inline;
-    font-size: 2.1rem; /* تصغير طفيف لتناسب السطر */
+    font-size: calc(2.1rem * var(--font-scale)); /* ديناميكي */
     transition: background 0.3s;
     cursor: pointer;
 }
@@ -212,7 +213,7 @@ body {
 .bismillah, .istiazah {
     display: block;
     text-align: center;
-    font-size: 2.2rem;
+    font-size: calc(2.2rem * var(--font-scale));
     color: var(--primary);
     margin: 10px 0; /* تقليل الفراغات العمودية */
 }
@@ -471,6 +472,41 @@ body {
 }
 
 /* Sidebar Tags */
+.toast-error { background: #ef4444; }
+
+/* أزرار القائمة الجانبية (شكل أفخم) */
+.sidebar-btn {
+    width: 100%;
+    margin-bottom: 0.8rem;
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 12px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: calc(1rem * var(--font-scale, 1));
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+.sidebar-btn:hover {
+    background: rgba(16, 185, 129, 0.05); /* primary with opacity */
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+[data-theme="dark"] .sidebar-btn {
+    background: rgba(255,255,255,0.02);
+    border-color: rgba(255,255,255,0.05);
+}
+[data-theme="dark"] .sidebar-btn:hover {
+    background: rgba(255,255,255,0.05);
+    border-color: var(--primary);
+}
+
 .tags-sidebar-container {
     margin-top: 15px;
     direction: rtl;
