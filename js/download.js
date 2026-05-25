@@ -286,8 +286,8 @@ const DownloadManager = {
 
                     // إذا كانت الآية هي الأولى في السورة، نضيف الاستعاذة والبسملة
                     if (ayah.aya_no === 1) {
-                        // الاستعاذة لأول سورة في النطاق فقط
-                        if (i === 0 && j === 0) {
+                        // الاستعاذة لقبل سورة الفاتحة فقط
+                        if (suraNo === 1 && ayah.aya_no === 1) {
                             try {
                                 statusEl.textContent = `جاري إدراج الاستعاذة...`;
                                 const istBuffer = await fetchAndDecode(istiazahUrl);

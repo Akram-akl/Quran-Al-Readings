@@ -92,6 +92,11 @@ const AudioPlayer = {
         // ربط حدث انتهاء الصوت
         this.audio.onended = () => {
             if (this._cancelRequested) return;
+            if (this.isMetaAudio) {
+                this.isMetaAudio = false;
+                this._setPlayerState('paused');
+                return;
+            }
             const config = READINGS_CONFIG[App.currentReading];
             
             // تحقق من وجود قائمة استماع نشطة
@@ -870,6 +875,7 @@ const AudioPlayer = {
     async playIstiazah() {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
+        this.isMetaAudio = true;
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
             ? config.getIstiazahPath() 
@@ -885,6 +891,7 @@ const AudioPlayer = {
         this.playlist = [];
         this.playlistIndex = -1;
         this.playlistReadingKey = "";
+        this.isMetaAudio = true;
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
             ? config.getBasmalahPath()
