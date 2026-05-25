@@ -200,14 +200,17 @@ const DownloadManager = {
             const result = await SaveFile.save(blob, filename);
             
             if (result.ok) {
-                statusEl.innerHTML = result.method === 'filesystem'
-                    ? 'تم إنشاء الصورة ✓ (اضغط مشاركة لحفظها بالاستديو)'
-                    : 'تم التحميل بنجاح ✓';
+                statusEl.innerHTML = result.method === 'gallery'
+                    ? 'تم الحفظ في المعرض ✓'
+                    : result.method === 'filesystem'
+                        ? 'تم الحفظ في مجلد الصور ✓'
+                        : 'تم التحميل بنجاح ✓';
                 this._showShareButton(statusEl);
             } else if (result.cancelled) {
                 statusEl.textContent = 'تم الإلغاء';
             } else {
                 statusEl.textContent = result.message || 'تعذّر حفظ الصورة على هذا الجهاز';
+                this._showShareButton(statusEl);
             }
         } catch (err) {
             statusEl.textContent = 'حدث خطأ أثناء إنشاء الصورة';
@@ -368,14 +371,13 @@ const DownloadManager = {
             
             const result = await SaveFile.save(wavBlob, filename);
             if (result.ok) {
-                statusEl.innerHTML = result.method === 'filesystem'
-                    ? 'تم الحفظ في مجلد المستندات/Quran ✓'
-                    : 'تم التحميل بنجاح ✓';
+                statusEl.innerHTML = 'تم تجهيز الملف الصوتي ✓';
                 this._showShareButton(statusEl);
             } else if (result.cancelled) {
                 statusEl.textContent = 'تم الإلغاء';
             } else {
-                statusEl.textContent = result.message || 'تعذّر حفظ الملف الصوتي على هذا الجهاز';
+                statusEl.textContent = result.message || 'تعذّر حفظ الملف الصوتي';
+                this._showShareButton(statusEl);
             }
 
         } catch (err) {
@@ -387,42 +389,32 @@ const DownloadManager = {
     },
 
     _showShareButton(statusEl) {
-        if (!navigator.share && !window.Capacitor?.Plugins?.Share) return;
+        const hasNativeShare = window.Capacitor?.Plugins?.Share;
+        if (!navigator.share && !hasNativeShare) return;
         
         const shareBtn = document.createElement('button');
         shareBtn.className = 'btn btn-secondary';
-        shareBtn.style.marginTop = '10px';
-        shareBtn.style.width = '100%';
+        shareBtn.style.cssText = 'margin-top:10px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;';
         shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
         
         shareBtn.onclick = async () => {
+            if (!this._currentDownloadBlob) return;
+            shareBtn.disabled = true;
+            shareBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
             try {
-                if (window.Capacitor?.isNativePlatform?.() === true && window.Capacitor?.Plugins?.Share) {
-                    // For Android/iOS using Capacitor Share plugin + Filesystem URI
-                    const base64Data = await SaveFile._blobToBase64(this._currentDownloadBlob);
-                    const savedFile = await window.Capacitor.Plugins.Filesystem.writeFile({
-                        path: `Quran/share_temp_${Date.now()}.${this._currentDownloadFilename.split('.').pop()}`,
-                        data: base64Data,
-                        directory: 'CACHE'
-                    });
-                    await window.Capacitor.Plugins.Share.share({
-                        title: 'مشاركة',
-                        text: 'ملف من تطبيق القراءات',
-                        url: savedFile.uri,
-                        dialogTitle: 'مشاركة مع'
-                    });
-                } else if (navigator.share) {
-                    // Web Share API
-                    const file = new File([this._currentDownloadBlob], this._currentDownloadFilename, { type: this._currentDownloadBlob.type });
-                    await navigator.share({
-                        files: [file],
-                        title: 'مشاركة الملف',
-                        text: 'تطبيق القراءات الميسرة'
-                    });
+                const result = await SaveFile.share(this._currentDownloadBlob, this._currentDownloadFilename);
+                if (result.cancelled) {
+                    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+                } else if (result.ok) {
+                    shareBtn.innerHTML = '<i class="fas fa-check"></i> تمت المشاركة';
+                } else {
+                    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
                 }
             } catch (err) {
                 console.warn('Share failed:', err);
+                shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
             }
+            shareBtn.disabled = false;
         };
         
         statusEl.appendChild(shareBtn);

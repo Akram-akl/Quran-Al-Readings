@@ -208,6 +208,14 @@ body {
 
 .ayah-container.active { background: rgba(16, 185, 129, 0.15); border-radius: 4px; }
 
+/* تظليل عند الضغط - يختفي تدريجياً بعد 15 ثانية */
+.ayah-container.tap-highlight {
+    background: rgba(16, 185, 129, 0.22);
+    border-radius: 6px;
+    outline: 2px solid rgba(16, 185, 129, 0.4);
+    transition: background 1s ease-out, outline 1s ease-out;
+}
+
 .ayah-text { padding: 0 2px; }
 
 .bismillah, .istiazah {

@@ -1,7 +1,7 @@
 /**
  * app.js - النسخة المستقرة
  */
-const APP_BUILD = 'v5.7'
+const APP_BUILD = 'v5.8'
 
 const App = {
     currentReading: 'Hafs',
