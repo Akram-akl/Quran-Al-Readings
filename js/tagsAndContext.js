@@ -28,22 +28,6 @@ const TagsAndContext = {
             }
         });
 
-        // ضغطة بسيطة على الآية → تظليل أخضر فاتح يختفي بعد 15 ثانية
-        area.addEventListener('click', (e) => {
-            const containerEl = e.target.closest('.ayah-container');
-            if (!containerEl) return;
-            if (e.target.closest('#ayahContextMenu')) return;
-
-            // إزالة أي تظليل مؤقت سابق
-            if (this._tapHighlightTimer) clearTimeout(this._tapHighlightTimer);
-            document.querySelectorAll('.ayah-container.tap-highlight').forEach(el => el.classList.remove('tap-highlight'));
-
-            containerEl.classList.add('tap-highlight');
-            this._tapHighlightTimer = setTimeout(() => {
-                containerEl.classList.remove('tap-highlight');
-                this._tapHighlightTimer = null;
-            }, 15000);
-        });
 
         // 2. الضغطة المطولة (Mobile)
         let touchStartX = 0;

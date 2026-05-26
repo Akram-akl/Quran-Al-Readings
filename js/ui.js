@@ -185,8 +185,8 @@ const UI = {
 
             // الاستعاذة والبسملة قبل الآيات عند بداية كل سورة
             if (firstAyahInGroup.aya_no === 1) {
-                // الاستعاذة للرأس الأول بالصفحة فقط لمنع التكرار المزعج
-                if (isFirstSurahOnPage) {
+                // الاستعاذة تُكتب فقط في سورة الفاتحة بناءً على طلب المستخدم
+                if (currentSuraNo === 1) {
                     const ist = document.createElement('div');
                     ist.className = 'istiazah';
                     ist.textContent = 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ';

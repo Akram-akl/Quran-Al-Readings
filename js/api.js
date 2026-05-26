@@ -48,11 +48,13 @@ const SurahAPI = {
 
     // ---------------- Sura Level ----------------
     async getSuraInfo(suraNo) {
-        // Asmaa, Fadael, Nozool, Adad
-        const asmaa = await this.fetchWithCache(`/sura/asmaa-sowar/${suraNo}`);
-        const fadael = await this.fetchWithCache(`/sura/fadael-sowar/${suraNo}`);
-        const nozool = await this.fetchWithCache(`/sura/nozool-sowar/${suraNo}`);
-        const adad = await this.fetchWithCache(`/sura/adad_ayat-sowar/${suraNo}`);
+        // Asmaa, Fadael, Nozool, Adad - تم تعديلها لتجلب بالتوازي (Concurrent fetching) لتقليل وقت الانتظار
+        const [asmaa, fadael, nozool, adad] = await Promise.all([
+            this.fetchWithCache(`/sura/asmaa-sowar/${suraNo}`),
+            this.fetchWithCache(`/sura/fadael-sowar/${suraNo}`),
+            this.fetchWithCache(`/sura/nozool-sowar/${suraNo}`),
+            this.fetchWithCache(`/sura/adad_ayat-sowar/${suraNo}`)
+        ]);
         return { asmaa, fadael, nozool, adad };
     },
 

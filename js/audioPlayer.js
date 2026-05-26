@@ -487,7 +487,7 @@ const AudioPlayer = {
             }
 
             if (!App.isAyahOnPage(track, App.currentPage)) {
-                await App.loadPage(targetPage, true, false, true);
+                await App.loadPage(targetPage, true, false, false);
             }
 
             await this._playPlaylistAyah(track.aya_no, track.sura_no);
@@ -706,7 +706,7 @@ const AudioPlayer = {
         // الانتقال البصري للصفحة فوراً إذا لم تكن معروضة
         if (!App.isAyahOnPage(ayah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(ayah, App.currentPage);
-            await App.loadPage(targetPage, true, false, true);
+            await App.loadPage(targetPage, true, false, false);
             if (!this._isSessionAlive(playSession)) return;
         }
 
@@ -875,6 +875,7 @@ const AudioPlayer = {
     async playIstiazah() {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
+        this._removeHighlight();
         this.isMetaAudio = true;
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
@@ -888,6 +889,7 @@ const AudioPlayer = {
     async playBasmalah() {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
+        this._removeHighlight();
         this.playlist = [];
         this.playlistIndex = -1;
         this.playlistReadingKey = "";
@@ -997,7 +999,7 @@ const AudioPlayer = {
 
         if (!App.isAyahOnPage(nextAyah, App.currentPage)) {
             const targetPage = App.resolvePageForAyah(nextAyah, App.currentPage);
-            await App.loadPage(targetPage, true, false, true);
+            await App.loadPage(targetPage, true, false, false);
             if (!this._isSessionAlive(playSession)) return;
         }
 
@@ -1037,7 +1039,7 @@ const AudioPlayer = {
         try {
             if (!App.isAyahOnPage(prevAyah, App.currentPage)) {
                 const targetPage = App.resolvePageForAyah(prevAyah, App.currentPage);
-                await App.loadPage(targetPage, true, false, true);
+                await App.loadPage(targetPage, true, false, false);
             }
             await this.playAyah(prevAyah.aya_no, prevAyah.sura_no);
         } catch (e) {
@@ -1151,11 +1153,12 @@ const AudioPlayer = {
                 if (!isStale()) {
                     this._setPlayerState('paused');
                     this._showPlayError('انتهت مهلة تحميل الصوت. تحقق من الاتصال.');
+                    this._removeHighlight();
                     reject(new Error('Audio load timeout'));
                 } else {
                     reject(new Error('aborted'));
                 }
-            }, 90000);
+            }, 15000);
 
             this.audio.addEventListener('canplay', onReady, { once: true });
             this.audio.addEventListener('loadeddata', onReady, { once: true });
@@ -1163,6 +1166,10 @@ const AudioPlayer = {
             this.audio.src = finalUrl;
             this.audio.load();
         });
+    },
+
+    _removeHighlight() {
+        this.currentlyHighlighted = null;
     },
 
     _highlight(no, suraNo = App.currentSurah) {
@@ -1173,19 +1180,21 @@ const AudioPlayer = {
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
             const elSurah = parseInt(el.dataset.surah);
-            el.classList.toggle('active', elNo === no && elSurah === suraNo);
+            if (elNo === no && elSurah === suraNo) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
-        const active = document.querySelector('.ayah-container.active');
-        if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
     },
 
     _highlightGroup(ayahNumbers, suraNo = App.currentSurah) {
+        if (!ayahNumbers || ayahNumbers.length === 0) return;
+        const firstNo = ayahNumbers[0];
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
             const elSurah = parseInt(el.dataset.surah);
-            el.classList.toggle('active', ayahNumbers.includes(elNo) && elSurah === suraNo);
+            if (elNo === firstNo && elSurah === suraNo) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
-        const active = document.querySelector('.ayah-container.active');
-        if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 };

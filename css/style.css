@@ -494,7 +494,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: calc(1rem * var(--font-scale, 1));
+    font-size: 1rem;
     font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;

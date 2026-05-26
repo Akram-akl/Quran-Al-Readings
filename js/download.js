@@ -197,21 +197,14 @@ const DownloadManager = {
             const filename = `quran_${readingKey}_${ayahs[0].sura_no}_${ayahs[0].aya_no}.png`;
             this._currentDownloadBlob = blob;
             this._currentDownloadFilename = filename;
-            const result = await SaveFile.save(blob, filename);
+            const url = URL.createObjectURL(blob);
             
-            if (result.ok) {
-                statusEl.innerHTML = result.method === 'gallery'
-                    ? 'تم الحفظ في المعرض ✓'
-                    : result.method === 'filesystem'
-                        ? 'تم الحفظ في مجلد الصور ✓'
-                        : 'تم التحميل بنجاح ✓';
-                this._showShareButton(statusEl);
-            } else if (result.cancelled) {
-                statusEl.textContent = 'تم الإلغاء';
-            } else {
-                statusEl.textContent = result.message || 'تعذّر حفظ الصورة على هذا الجهاز';
-                this._showShareButton(statusEl);
-            }
+            let resultHtml = '<div style="margin-top:15px; color:#10b981;">تم إنشاء الصورة بنجاح ✓</div>';
+            resultHtml += '<div style="font-size:0.85rem; color:#6b7280; margin-bottom:10px;">اضغط مطولاً على الصورة لحفظها في معرض الصور</div>';
+            resultHtml += `<img src="${url}" style="max-width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:15px; border:1px solid #e2e8f0;" />`;
+            
+            statusEl.innerHTML = resultHtml;
+            this._showShareButton(statusEl);
         } catch (err) {
             statusEl.textContent = 'حدث خطأ أثناء إنشاء الصورة';
             console.error(err);
@@ -289,16 +282,7 @@ const DownloadManager = {
 
                     // إذا كانت الآية هي الأولى في السورة، نضيف الاستعاذة والبسملة
                     if (ayah.aya_no === 1) {
-                        // الاستعاذة لقبل سورة الفاتحة فقط
-                        if (suraNo === 1 && ayah.aya_no === 1) {
-                            try {
-                                statusEl.textContent = `جاري إدراج الاستعاذة...`;
-                                const istBuffer = await fetchAndDecode(istiazahUrl);
-                                segmentBuffers.push(istBuffer);
-                            } catch (e) {
-                                console.warn("Failed to load Istiazah, skipping...", e);
-                            }
-                        }
+                        // تمت إزالة الاستعاذة من الصوتيات بناءً على طلب المستخدم
                         
                         // البسملة لجميع السور عدا سورة التوبة (9) وسورة الفاتحة (1)
                         if (suraNo !== 9 && suraNo !== 1) {
