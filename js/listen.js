@@ -138,13 +138,17 @@ const ListenRange = {
             return;
         }
 
+        AudioPlayer.buildPlaylistFromRange(readingKey, ayahs);
+        
         const repeatCountVal = document.getElementById('lsRepeatCount').value;
         AudioPlayer.maxPlaylistRepeats = repeatCountVal === 'infinite' ? Infinity : parseInt(repeatCountVal);
         AudioPlayer.playlistRepeatCount = 1;
-
-        AudioPlayer.buildPlaylistFromRange(readingKey, ayahs);
         AudioPlayer.playlistIndex = 0;
+        
         AudioPlayer._playCurrentTrack();
+
+        const cancelBtn = document.getElementById('cancelActiveModeBtn');
+        if (cancelBtn) cancelBtn.style.display = 'inline-block';
 
         statusEl.textContent = `▶ جاري تشغيل ${ayahs.length} آية`;
         setTimeout(() => this.close(), 1000);

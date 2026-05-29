@@ -32,6 +32,9 @@ const TagsAndContext = {
         // 2. الضغطة المطولة (Mobile)
         let touchStartX = 0;
         let touchStartY = 0;
+        let touchCurrentX = 0;
+        let touchCurrentY = 0;
+        
         area.addEventListener('touchstart', (e) => {
             const wordEl = e.target.closest('.q_word');
             const containerEl = e.target.closest('.ayah-container');
@@ -40,9 +43,15 @@ const TagsAndContext = {
             if (containerEl || istiazahEl || bismillahEl) {
                 touchStartX = e.touches[0].clientX;
                 touchStartY = e.touches[0].clientY;
+                touchCurrentX = touchStartX;
+                touchCurrentY = touchStartY;
+                
                 this.longPressTimer = setTimeout(() => {
-                    this._showMenu(touchStartX, touchStartY, containerEl, wordEl, istiazahEl, bismillahEl);
-                }, 400); // 400ms ضغطة مطولة
+                    const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
+                    if (moveDist < 15) {
+                        this._showMenu(touchStartX, touchStartY, containerEl, wordEl, istiazahEl, bismillahEl);
+                    }
+                }, 700); // 700ms ضغطة مطولة لتجنب التداخل مع التمرير
             }
         }, { passive: true });
 
@@ -50,8 +59,13 @@ const TagsAndContext = {
             clearTimeout(this.longPressTimer);
         });
 
-        area.addEventListener('touchmove', () => {
-            clearTimeout(this.longPressTimer);
+        area.addEventListener('touchmove', (e) => {
+            touchCurrentX = e.touches[0].clientX;
+            touchCurrentY = e.touches[0].clientY;
+            const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
+            if (moveDist > 15) {
+                clearTimeout(this.longPressTimer);
+            }
         });
 
         // إغلاق القائمة عند النقر في أي مكان آخر
@@ -88,6 +102,7 @@ const TagsAndContext = {
             this.selectedWord = "";
             this.selectedWordNo = null;
             this.contextType = "istiazah";
+            this.isAyahNumWord = false;
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
             if (ctxCopyAya) ctxCopyAya.style.display = 'none';
@@ -99,6 +114,7 @@ const TagsAndContext = {
             this.selectedWord = wordEl ? wordEl.textContent.trim().replace(/[ۖۚۛۗۘ]/g, "") : "";
             this.selectedWordNo = wordEl ? parseInt(wordEl.dataset.wordIdx) : null;
             this.contextType = "bismillah";
+            this.isAyahNumWord = false;
             if (ctxSearch) ctxSearch.style.display = 'none';
             if (ctxTag) ctxTag.style.display = 'none';
             if (ctxCopyAya) ctxCopyAya.style.display = 'none';
@@ -123,12 +139,20 @@ const TagsAndContext = {
             if (ctxPlay) ctxPlay.innerHTML = `<i class="fas fa-play"></i> استماع للآية ${ayaNo}`;
             if (!wordEl && ctxSearch) ctxSearch.style.display = 'none';
             
-            // API Features
-            if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'flex';
-            if (wordEl) {
-                if (ctxWordQeraat) ctxWordQeraat.style.display = 'flex';
-                const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
-                if (isHafs && ctxWordMeaning) ctxWordMeaning.style.display = 'flex';
+            // API Features - Hide them if clicking on the ayah number glyph/badge
+            const isAyahNumWord = wordEl && wordEl.dataset.isAyahNumber === "true";
+            this.isAyahNumWord = isAyahNumWord;
+            if (isAyahNumWord) {
+                if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'none';
+                if (ctxWordQeraat) ctxWordQeraat.style.display = 'none';
+                if (ctxWordMeaning) ctxWordMeaning.style.display = 'none';
+            } else {
+                if (ctxAyahTafsir) ctxAyahTafsir.style.display = 'flex';
+                if (wordEl) {
+                    if (ctxWordQeraat) ctxWordQeraat.style.display = 'flex';
+                    const isHafs = App.currentReading && (App.currentReading.toLowerCase().includes('hafs') || App.currentReading.toLowerCase().includes('shubah'));
+                    if (isHafs && ctxWordMeaning) ctxWordMeaning.style.display = 'flex';
+                }
             }
         } else {
             return;
@@ -169,6 +193,12 @@ const TagsAndContext = {
 
         menu.style.left = `${posX}px`;
         menu.style.top = `${posY}px`;
+
+        this._menuOpenedAt = Date.now();
+        this._isMenuJustOpened = true;
+        setTimeout(() => {
+            this._isMenuJustOpened = false;
+        }, 700);
     },
 
     _hideMenu() {
@@ -180,7 +210,8 @@ const TagsAndContext = {
         // زر تشغيل الصوت من القائمة المنبثقة
         const btnPlay = document.getElementById('ctxPlay');
         if (btnPlay) {
-            btnPlay.onclick = () => {
+            btnPlay.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 if (typeof AudioPlayer !== 'undefined' && AudioPlayer.isAudioFetching()) {
                     AudioPlayer.stop();
                     this._hideMenu();
@@ -200,7 +231,8 @@ const TagsAndContext = {
         // زر نسخ الآية
         const ctxCopyAya = document.getElementById('ctxCopyAya');
         if (ctxCopyAya) {
-            ctxCopyAya.onclick = () => {
+            ctxCopyAya.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 if (this.selectedAyah) {
                     const text = this.selectedAyah.aya_text_emlaey || this.selectedAyah.aya_text;
@@ -209,6 +241,22 @@ const TagsAndContext = {
                         ctxCopyAya.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
                         ctxCopyAya.style.color = '#10b981';
                         ctxCopyAya.style.display = 'flex';
+                    let warshLabel = '';
+                    if (posInHizb % 2 === 1) { // positions 1,3,5,7 are thumn
+                        const thumnOrdinal = Math.floor((posInHizb + 1) / 2);
+                        warshLabel = `ثمن ${this.toArabicNumerals(thumnOrdinal)}`;
+                    } else if (posInHizb === 2 || posInHizb === 6) {
+                        warshLabel = 'ربع';
+                    } else if (posInHizb === 4) {
+                        warshLabel = 'نصف الحزب';
+                    } else if (posInHizb === 8) {
+                        warshLabel = `الحزب ${this.toArabicNumerals(hizbNum)}`;
+                    }
+                    hizbText = warshLabel;
+                    if (posInHizb === 8 && idx % 16 === 0) {
+                        const juzNum = Math.floor((idx - 1) / 16) + 1;
+                        hizbText = `الجزء ${this.toArabicNumerals(juzNum)} - ${hizbText}`;
+                    }        this._hideMenu();
                         const menu = document.getElementById('ayahContextMenu');
                         if (menu) menu.style.display = 'block';
                         setTimeout(() => {
@@ -224,7 +272,8 @@ const TagsAndContext = {
         // زر بحث المتشابهات من القائمة المنبثقة
         const btnSearch = document.getElementById('ctxSearch');
         if (btnSearch) {
-            btnSearch.onclick = () => {
+            btnSearch.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 this.promptSearchOptions();
             };
@@ -233,7 +282,8 @@ const TagsAndContext = {
         // زر وسم علامة خاصة من القائمة المنبثقة
         const btnTag = document.getElementById('ctxTag');
         if (btnTag) {
-            btnTag.onclick = () => {
+            btnTag.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 this.populateTagModalDropdown();
                 const modal = document.getElementById('tagInputModal');
@@ -274,7 +324,8 @@ const TagsAndContext = {
         // أزرار API
         const ctxWordQeraat = document.getElementById('ctxWordQeraat');
         if (ctxWordQeraat) {
-            ctxWordQeraat.onclick = () => {
+            ctxWordQeraat.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 if (this.selectedAyah && this.selectedWordNo) {
                     this.showWordQeraat(this.selectedAyah.sura_no, this.selectedAyah.aya_no, this.selectedWordNo);
@@ -284,7 +335,8 @@ const TagsAndContext = {
 
         const ctxWordMeaning = document.getElementById('ctxWordMeaning');
         if (ctxWordMeaning) {
-            ctxWordMeaning.onclick = () => {
+            ctxWordMeaning.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 if (this.selectedAyah && this.selectedWordNo) {
                     this.showWordMeaningAndEerab(this.selectedAyah.sura_no, this.selectedAyah.aya_no, this.selectedWordNo);
@@ -294,7 +346,8 @@ const TagsAndContext = {
 
         const ctxAyahTafsir = document.getElementById('ctxAyahTafsir');
         if (ctxAyahTafsir) {
-            ctxAyahTafsir.onclick = () => {
+            ctxAyahTafsir.onclick = (e) => {
+                if (this._isMenuJustOpened) { e.preventDefault(); return; }
                 this._hideMenu();
                 if (this.selectedAyah) {
                     this.showAyahTafsir(this.selectedAyah.sura_no, this.selectedAyah.aya_no);
@@ -407,7 +460,49 @@ const TagsAndContext = {
             </div>`;
         });
 
-        this.openApiModal('معنى وإعراب الكلمة', headerHtml + tabsHtml + contentHtml, true);
+        // أزرار التنقل بين الكلمات
+        let navHtml = `<div style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">`;
+        navHtml += `<button class="btn btn-secondary btn-sm" onclick="TagsAndContext.navigateWordApi('prev', ${suraNo}, ${ayaNo}, ${wordNo})"><i class="fas fa-chevron-right"></i> الكلمة السابقة</button>`;
+        navHtml += `<button class="btn btn-secondary btn-sm" onclick="TagsAndContext.navigateWordApi('next', ${suraNo}, ${ayaNo}, ${wordNo})">الكلمة التالية <i class="fas fa-chevron-left"></i></button>`;
+        navHtml += `</div>`;
+
+        this.openApiModal('معنى وإعراب الكلمة', headerHtml + tabsHtml + contentHtml + navHtml, true);
+    },
+
+    navigateWordApi(dir, suraNo, ayaNo, wordNo) {
+        let newWordNo = wordNo;
+        let newAyaNo = ayaNo;
+        let newSuraNo = suraNo;
+        
+        const allData = DataHandler.cache[App.currentReading];
+        if (!allData) return;
+        const currentAyaObj = allData.find(a => a.sura_no === suraNo && a.aya_no === ayaNo);
+        if (!currentAyaObj) return;
+
+        const maxWords = currentAyaObj.aya_text.trim().split(/\s+/).length;
+
+        if (dir === 'next') {
+            if (wordNo < maxWords) {
+                newWordNo = wordNo + 1;
+            } else {
+                this.navigateAyahTafsir('next', suraNo, ayaNo);
+                return;
+            }
+        } else {
+            if (wordNo > 1) {
+                newWordNo = wordNo - 1;
+            } else {
+                this.navigateAyahTafsir('prev', suraNo, ayaNo);
+                return;
+            }
+        }
+        
+        // استنتاج نص الكلمة الجديدة
+        const wordsArr = currentAyaObj.aya_text.trim().split(/\s+/);
+        this.selectedWord = wordsArr[newWordNo - 1]?.replace(/[ۖۚۛۗۘ]/g, "") || "";
+        this.selectedWordNo = newWordNo;
+        
+        this.showWordMeaningAndEerab(newSuraNo, newAyaNo, newWordNo);
     },
 
     async showAyahTafsir(suraNo, ayaNo) {
@@ -429,12 +524,10 @@ const TagsAndContext = {
         }
         
         const promises = [
-            SurahAPI.getAyaTafsirMokhtasar(suraNo, tafsirAyaNo),
             SurahAPI.fetchWithCache(`/aya/tafsir-katheer/${suraNo}/${tafsirAyaNo}`),
             SurahAPI.fetchWithCache(`/aya/tafsir-saadi/${suraNo}/${tafsirAyaNo}`),
             SurahAPI.fetchWithCache(`/aya/tafsir-tabary/${suraNo}/${tafsirAyaNo}`),
-            SurahAPI.fetchWithCache(`/aya/tafsir-baghawy/${suraNo}/${tafsirAyaNo}`),
-            SurahAPI.fetchWithCache(`/aya/w-moyassar/${suraNo}/${tafsirAyaNo}`)
+            SurahAPI.fetchWithCache(`/aya/tafsir-baghawy/${suraNo}/${tafsirAyaNo}`)
         ];
         
         if (isHafs) {
@@ -445,17 +538,16 @@ const TagsAndContext = {
         const results = await Promise.all(promises);
         
         const tabs = [
-            { id: 't_mokhtasar', label: 'المختصر', content: this._formatContentWithFootnotes(results[0]?.content) },
+            { id: 't_mokhtasar', label: 'التفسير الميسر', content: this._formatContentWithFootnotes(results[0]?.content) },
             { id: 't_saadi', label: 'السعدي', content: this._formatContentWithFootnotes(results[2]?.content) },
             { id: 't_katheer', label: 'ابن كثير', content: this._formatContentWithFootnotes(results[1]?.content) },
             { id: 't_tabary', label: 'الطبري', content: this._formatContentWithFootnotes(results[3]?.content) },
-            { id: 't_baghawy', label: 'البغوي', content: this._formatContentWithFootnotes(results[4]?.content) },
-            { id: 't_moyassar', label: 'الميسر', content: this._formatContentWithFootnotes(results[5]?.content) }
+            { id: 't_baghawy', label: 'البغوي', content: this._formatContentWithFootnotes(results[4]?.content) }
         ];
         
         if (isHafs) {
-            tabs.push({ id: 't_tajweed', label: 'التجويد', content: this._formatContentWithFootnotes(results[6]?.content) });
-            tabs.push({ id: 't_eerab', label: 'الإعراب', content: this._formatContentWithFootnotes(results[7]?.content) });
+            tabs.push({ id: 't_tajweed', label: 'التجويد', content: this._formatContentWithFootnotes(results[5]?.content) });
+            tabs.push({ id: 't_eerab', label: 'الإعراب', content: this._formatContentWithFootnotes(results[6]?.content) });
         }
 
         let tabsHtml = `<div class="api-tabs" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; margin-bottom:15px; white-space:nowrap;">`;
@@ -467,11 +559,43 @@ const TagsAndContext = {
         let contentHtml = '';
         tabs.forEach((t, i) => {
             contentHtml += `<div id="${t.id}" class="api-tab-content" style="display:${i===0?'block':'none'}">
-                ${t.content || '<p>المعلومات غير متوفرة.</p>'}
+                ${t.content || '<p>المعلومات غير متوفرة لهذا التفسير.</p>'}
             </div>`;
         });
 
-        this.openApiModal(`تفاسير الآية ${ayaNo}`, ayahTextHtml + tabsHtml + contentHtml, true);
+        // أزرار التنقل بين الآيات
+        let navHtml = `<div style="display: flex; justify-content: space-between; margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">`;
+        navHtml += `<button class="btn btn-secondary btn-sm" onclick="TagsAndContext.navigateAyahTafsir('prev', ${suraNo}, ${ayaNo})"><i class="fas fa-chevron-right"></i> الآية السابقة</button>`;
+        navHtml += `<button class="btn btn-secondary btn-sm" onclick="TagsAndContext.navigateAyahTafsir('next', ${suraNo}, ${ayaNo})">الآية التالية <i class="fas fa-chevron-left"></i></button>`;
+        navHtml += `</div>`;
+
+        this.openApiModal(`تفاسير الآية ${ayaNo}`, ayahTextHtml + tabsHtml + contentHtml + navHtml, true);
+    },
+
+    navigateAyahTafsir(dir, suraNo, ayaNo) {
+        let newSura = suraNo;
+        let newAya = ayaNo;
+        const allData = DataHandler.cache[App.currentReading];
+        if (!allData) return;
+        
+        if (dir === 'next') {
+            const next = allData.find(a => (a.sura_no === suraNo && a.aya_no === ayaNo + 1) || (a.sura_no === suraNo + 1 && a.aya_no === 1));
+            if (next) { newSura = next.sura_no; newAya = next.aya_no; this.selectedAyah = next; }
+        } else {
+            if (ayaNo > 1) {
+                const prev = allData.find(a => a.sura_no === suraNo && a.aya_no === ayaNo - 1);
+                if (prev) { newSura = prev.sura_no; newAya = prev.aya_no; this.selectedAyah = prev; }
+            } else if (suraNo > 1) {
+                const prevSuraAyahs = allData.filter(a => a.sura_no === suraNo - 1);
+                if (prevSuraAyahs.length > 0) {
+                    const lastAya = prevSuraAyahs[prevSuraAyahs.length - 1];
+                    newSura = lastAya.sura_no; newAya = lastAya.aya_no; this.selectedAyah = lastAya;
+                }
+            }
+        }
+        if (newSura !== suraNo || newAya !== ayaNo) {
+            this.showAyahTafsir(newSura, newAya);
+        }
     },
 
     populateTagModalDropdown() {
@@ -505,6 +629,16 @@ const TagsAndContext = {
         };
     },
 
+    // تنظيف رقم الآية من نهاية النص لضمان تطابق المتشابهات بين السور والقراءات
+    stripAyahNumber(text) {
+        if (!text) return "";
+        const words = text.trim().split(/\s+/);
+        if (words.length > 1) {
+            words.pop(); // حذف الكلمة الأخيرة التي تمثل رقم الآية بالخط العثماني
+        }
+        return words.join(" ");
+    },
+
     // سؤال المستخدم عن طبيعة البحث (كلمة أم آية)
     promptSearchOptions() {
         const word = this.selectedWord;
@@ -517,10 +651,12 @@ const TagsAndContext = {
         const list = document.getElementById('mutashabihatList');
         if (!modal || !meta || !list) return;
 
+        const showWordSearch = word && !this.isAyahNumWord;
+
         meta.innerHTML = `البحث عن مواضع التكرار والمتشابهات`;
         list.innerHTML = `
             <div class="d-flex flex-column gap-2">
-                ${word ? `<button id="searchWordBtn" class="btn btn-primary w-100"><i class="fas fa-font"></i> بحث عن كلمة "${word}"</button>` : ''}
+                ${showWordSearch ? `<button id="searchWordBtn" class="btn btn-primary w-100"><i class="fas fa-font"></i> بحث عن كلمة "${word}"</button>` : ''}
                 <button id="searchAyahBtn" class="btn btn-success w-100"><i class="fas fa-paragraph"></i> بحث عن الآية كاملة</button>
             </div>
         `;
@@ -538,7 +674,9 @@ const TagsAndContext = {
             const btnA = document.getElementById('searchAyahBtn');
             if (btnA) {
                 btnA.onclick = () => {
-                    this.executeSearch(ayah.aya_text, 'ayah');
+                    // تنظيف النص من رقم الآية العثماني للحصول على الكلمات فقط
+                    const strippedText = this.stripAyahNumber(ayah.aya_text);
+                    this.executeSearch(strippedText, 'ayah');
                 };
             }
         }, 50);
@@ -588,9 +726,10 @@ const TagsAndContext = {
         if (!cleanQuery) return;
 
         const allAyahs = DataHandler.cache[App.currentReading] || [];
-        // البحث فقط بالقراءة المحددة حالياً
+        // البحث فقط بالقراءة المحددة حالياً مع تنظيف الآيات المقارنة من أرقام الآيات لتفادي التداخل
         const matches = allAyahs.filter(a => {
-            const cleanText = this.normalizeText(a.aya_text);
+            const strippedText = this.stripAyahNumber(a.aya_text);
+            const cleanText = this.normalizeText(strippedText);
             if (mode === 'word') {
                 return this.isWordMatch(cleanText, cleanQuery);
             } else {
@@ -605,11 +744,14 @@ const TagsAndContext = {
             return;
         }
 
+        const uthmaniFont = READINGS_CONFIG[App.currentReading]?.fontFamily || 'serif';
+
         list.innerHTML = matches.map(m => {
             const isSelf = m.sura_no === this.selectedAyah.sura_no && m.aya_no === this.selectedAyah.aya_no;
+            // الآية تأتي برقمها الأصلي المدمج بالخط العثماني، لا حاجة لإضافة وسم إضافي مكرر
             return `
                 <div class="search-item" style="${isSelf ? 'border-right: 3px solid var(--primary); background: rgba(6, 78, 59, 0.04);' : ''}">
-                    <p style="font-size: 1.15rem; line-height: 1.8; direction: rtl; font-family: ${READINGS_CONFIG[App.currentReading].fontFamily || 'sans-serif'}">${m.aya_text}</p>
+                    <p style="font-size: 1.3rem; line-height: 2; direction: rtl; text-align: right; font-family: '${uthmaniFont}', sans-serif;">${m.aya_text}</p>
                     <div class="search-item-meta">
                         <span>سورة ${m.sura_name_ar} (آية ${m.aya_no}) - صفحة ${m.page}</span>
                         <button class="btn btn-xs btn-primary" onclick="TagsAndContext.goToAyah(${m.page}, ${m.aya_no}, ${m.sura_no})">

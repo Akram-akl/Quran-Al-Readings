@@ -36,7 +36,10 @@ const App = {
 
         this._bind();
         this._startUpdateChecks();
-        await this.loadPage(1);
+        
+        // استعادة آخر صفحة كان عليها المستخدم
+        let savedPage = parseInt(localStorage.getItem('last_quran_page')) || 1;
+        await this.loadPage(savedPage);
     },
 
     _startUpdateChecks() {
@@ -91,48 +94,42 @@ const App = {
         }
         if (fontDec) {
             fontDec.onclick = () => {
-                currentScale = Math.max(0.6, currentScale - 0.1);
+                currentScale = Math.max(0.4, currentScale - 0.1);
                 document.documentElement.style.setProperty('--font-scale', currentScale);
                 localStorage.setItem('quran_font_scale', currentScale);
             };
         }
 
+        // Swipe Navigation
+        const readingArea = document.getElementById('readingArea');
+        if (readingArea) {
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            readingArea.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+
+            readingArea.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                const diffX = touchEndX - touchStartX;
+                // التأكد من أن السحب طويل بما يكفي ومقصود، لتجنب القفز المتعدد
+                if (Math.abs(diffX) > 80) { 
+                    if (diffX > 0) {
+                        // سحب لليمين -> الصفحة السابقة
+                        if (this.currentPage > 1) this.loadPage(this.currentPage - 1);
+                    } else {
+                        // سحب لليسار -> الصفحة التالية
+                        if (this.currentPage < 604) this.loadPage(this.currentPage + 1);
+                    }
+                }
+            }, {passive: true});
+        }
+
         const surahInfoBtn = document.getElementById('surahInfoBtn');
         if (surahInfoBtn) {
-            surahInfoBtn.onclick = async () => {
-                if (typeof TagsAndContext !== 'undefined') {
-                    TagsAndContext.openApiModal('معلومات السورة', '<div class="loader">جاري جلب المعلومات...</div>');
-                    const info = await SurahAPI.getSuraInfo(this.currentSurah);
-                    
-                    let html = '<div class="api-tabs">';
-                    let contentHtml = '';
-                    let isFirst = true;
-
-                    if (info.asmaa && info.asmaa.content) {
-                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('asmaa')">أسماء السورة</button>`;
-                        contentHtml += `<div id="tab-asmaa" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${TagsAndContext._formatContentWithFootnotes(info.asmaa.content)}</p></div>`;
-                        isFirst = false;
-                    }
-                    if (info.fadael && info.fadael.content) {
-                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('fadael')">الفضائل</button>`;
-                        contentHtml += `<div id="tab-fadael" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${TagsAndContext._formatContentWithFootnotes(info.fadael.content)}</p></div>`;
-                        isFirst = false;
-                    }
-                    if (info.nozool && info.nozool.content) {
-                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('nozool')">النزول</button>`;
-                        contentHtml += `<div id="tab-nozool" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${TagsAndContext._formatContentWithFootnotes(info.nozool.content)}</p></div>`;
-                        isFirst = false;
-                    }
-                    if (info.adad && info.adad.content) {
-                        html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('adad')">الآيات</button>`;
-                        contentHtml += `<div id="tab-adad" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${TagsAndContext._formatContentWithFootnotes(info.adad.content)}</p></div>`;
-                        isFirst = false;
-                    }
-                    
-                    html += '</div>' + contentHtml;
-                    if (isFirst) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
-                    TagsAndContext.openApiModal(`سورة ${document.getElementById('currentSurahTitle').textContent.replace('سورة ', '')}`, html);
-                }
+            surahInfoBtn.onclick = () => {
+                this.showSurahInfo(this.currentSurah);
             };
         }
         
@@ -142,6 +139,70 @@ const App = {
                 alert('تم صنع هذا التطبيق بواسطة أكرم عقل');
             };
         }
+    },
+
+    async showSurahInfo(suraNo) {
+        if (typeof TagsAndContext === 'undefined') return;
+        if (suraNo < 1 || suraNo > 114) return;
+
+        TagsAndContext.openApiModal('معلومات السورة', '<div class="loader">جاري جلب المعلومات...</div>');
+        const info = await SurahAPI.getSuraInfo(suraNo);
+        
+        let html = '<div class="api-tabs">';
+        let contentHtml = '';
+        let isFirst = true;
+
+        if (info.asmaa && info.asmaa.content) {
+            html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('asmaa')">أسماء السورة</button>`;
+            contentHtml += `<div id="tab-asmaa" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-signature"></i> أسماء السورة</h3><p>${TagsAndContext._formatContentWithFootnotes(info.asmaa.content)}</p></div>`;
+            isFirst = false;
+        }
+        if (info.fadael && info.fadael.content) {
+            html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('fadael')">الفضائل</button>`;
+            contentHtml += `<div id="tab-fadael" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-star"></i> فضائل السورة</h3><p>${TagsAndContext._formatContentWithFootnotes(info.fadael.content)}</p></div>`;
+            isFirst = false;
+        }
+        if (info.nozool && info.nozool.content) {
+            html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('nozool')">النزول</button>`;
+            contentHtml += `<div id="tab-nozool" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-map-marker-alt"></i> النزول</h3><p>${TagsAndContext._formatContentWithFootnotes(info.nozool.content)}</p></div>`;
+            isFirst = false;
+        }
+        if (info.adad && info.adad.content) {
+            html += `<button class="api-tab-btn ${isFirst ? 'active' : ''}" onclick="switchApiTab('adad')">الآيات</button>`;
+            contentHtml += `<div id="tab-adad" class="api-tab-content ${isFirst ? 'active' : ''}"><h3 style="color:var(--primary);margin-bottom:5px;"><i class="fas fa-list-ol"></i> عدد الآيات والاختلاف</h3><p>${TagsAndContext._formatContentWithFootnotes(info.adad.content)}</p></div>`;
+            isFirst = false;
+        }
+        
+        html += '</div>' + contentHtml;
+        if (isFirst) html = '<p>المعلومات غير متوفرة لهذه السورة.</p>';
+
+        // إضافة أزرار التنقل بين السور في أسفل معلومات السورة
+        let navHtml = `<div class="surah-nav-buttons" style="display: flex; justify-content: space-between; margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; direction: rtl;">`;
+        if (suraNo > 1) {
+            navHtml += `<button class="btn btn-secondary btn-sm" onclick="App.showSurahInfo(${suraNo - 1})"><i class="fas fa-chevron-right"></i> السورة السابقة</button>`;
+        } else {
+            navHtml += `<div></div>`;
+        }
+        if (suraNo < 114) {
+            navHtml += `<button class="btn btn-secondary btn-sm" onclick="App.showSurahInfo(${suraNo + 1})">السورة التالية <i class="fas fa-chevron-left"></i></button>`;
+        } else {
+            navHtml += `<div></div>`;
+        }
+        navHtml += `</div>`;
+        
+        html += navHtml;
+
+        // جلب اسم السورة لتحديث عنوان المودال
+        let surahName = `السورة ${suraNo}`;
+        const surahSelect = document.getElementById('surahSelect');
+        if (surahSelect) {
+            const opt = surahSelect.querySelector(`option[value="${suraNo}"]`);
+            if (opt) {
+                surahName = opt.textContent.replace(/^\d+\.\s*/, '').trim();
+            }
+        }
+
+        TagsAndContext.openApiModal(`سورة ${surahName}`, html);
     },
 
     getJozzStartPage(jozzNum) {
@@ -206,6 +267,9 @@ const App = {
     async loadPage(page, keepPlaylist = false, forceStop = false, silent = false) {
         if (page < 1 || page > 604) return;
         this.currentPage = page;
+        // حفظ الصفحة للرجوع إليها لاحقاً
+        localStorage.setItem('last_quran_page', page);
+        
         if (!silent) UI.showLoader();
         if (typeof AudioPlayer !== 'undefined' && forceStop) AudioPlayer.stop();
 
@@ -334,5 +398,37 @@ window.switchApiTab = function(tabId, btnElement) {
         tab.classList.add('active');
         tab.style.display = 'block';
     }
+};
+
+window.copyCurrentApiTabContent = function(btnElement) {
+    const activeTab = document.querySelector('.api-tab-content.active') || document.querySelector('.api-tab-content[style*="display: block"]');
+    if (!activeTab) return;
+    
+    // نستخرج النص فقط لتجنب نسخ الأزرار والعناصر المخفية
+    // نقوم أولاً بنسخ العنصر لنزيل منه ما لا نريد نسخه
+    const clone = activeTab.cloneNode(true);
+    const navButtons = clone.querySelectorAll('button, .footnote-section');
+    navButtons.forEach(btn => btn.remove());
+    
+    // Add to DOM temporarily so innerText computes line breaks properly
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    document.body.appendChild(clone);
+    
+    const textToCopy = clone.innerText.trim();
+    
+    document.body.removeChild(clone);
+    
+    if (!textToCopy) return;
+
+    const originalHtml = btnElement.innerHTML;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        btnElement.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+        btnElement.style.color = '#10b981';
+        setTimeout(() => {
+            btnElement.innerHTML = originalHtml;
+            btnElement.style.color = '';
+        }, 1500);
+    }).catch(e => console.error('Failed to copy', e));
 };
 

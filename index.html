@@ -100,7 +100,9 @@
                 <button id="openSidebarBtn" class="btn-icon mobile-only" title="فتح"><i class="fas fa-bars"></i></button>
                 <div class="header-title-wrapper" style="display: flex; align-items: center; gap: 10px;">
                     <h1 id="currentSurahTitle">سورة الفاتحة</h1>
+                    <span id="currentJozzText" style="font-size: 0.9rem; color: var(--text-secondary); margin-right: 5px;">الجزء الأول</span>
                     <button id="surahInfoBtn" class="btn-icon" style="font-size: 1.2rem; color: var(--primary);" title="معلومات السورة"><i class="fas fa-info-circle"></i></button>
+                    <button id="searchCurrentReadingBtn" class="btn-icon" style="font-size: 1.2rem; color: #3b82f6;" title="بحث في الرواية الحالية"><i class="fas fa-search"></i></button>
                 </div>
             </header>
             <div class="reading-container" id="readingArea"></div>
@@ -117,7 +119,7 @@
                     <button id="playPauseBtn" class="btn-play-pause" title="تشغيل"><i class="fas fa-play"></i></button>
                     <button id="nextAyahBtn" class="btn-icon" title="التالي"><i class="fas fa-step-forward"></i></button>
                     <button id="repeatBtn" class="btn-icon" title="تكرار الآية"><i class="fas fa-redo"></i></button>
-                    <button id="cancelRepeatBtn" class="btn btn-danger" style="display:none; margin-right: auto; padding: 5px 10px; font-size: 0.9rem; border-radius: 20px;"><i class="fas fa-times-circle"></i> إنهاء التكرار</button>
+                    <button id="cancelActiveModeBtn" class="cancel-action-btn" style="display:none;" title="إنهاء"><i class="fas fa-stop"></i> إنهاء</button>
                 </div>
 
             </footer>
@@ -268,10 +270,9 @@
     <!-- القائمة المنبثقة الذكية (Context Menu) -->
     <div id="ayahContextMenu" class="custom-context-menu">
         <div class="context-item" id="ctxCopyAya"><i class="fas fa-copy"></i> نسخ الآية</div>
-        <div class="context-item" id="ctxWordQeraat"><i class="fas fa-book-reader"></i> اختلافات القراءات للكلمة</div>
-        <div class="context-item" id="ctxWordMeaning"><i class="fas fa-language"></i> إعراب ومعنى الكلمة</div>
-        <div class="context-item" id="ctxAyahTafsir"><i class="fas fa-book-open"></i> تفاسير ومعلومات الآية</div>
-        <hr style="margin: 5px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+        <div class="context-item" id="ctxWordQeraat" style="display:none"><i class="fas fa-book-reader"></i> اختلافات القراءات للكلمة</div>
+        <div class="context-item" id="ctxWordMeaning" style="display:none"><i class="fas fa-language"></i> إعراب ومعنى الكلمة</div>
+        <div class="context-item" id="ctxAyahTafsir" style="display:none"><i class="fas fa-book-open"></i> تفاسير ومعلومات الآية</div>
         <div class="context-item" id="ctxPlay"><i class="fas fa-play"></i> استماع</div>
         <div class="context-item" id="ctxSearch"><i class="fas fa-search"></i> بحث المتشابهات</div>
         <div class="context-item" id="ctxTag"><i class="fas fa-tag"></i> تحديد علامة خاصة</div>
@@ -281,7 +282,12 @@
     <div id="apiInfoModal" class="modal">
         <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
             <span class="close-modal"><i class="fas fa-times"></i></span>
-            <h2 id="apiInfoTitle" style="color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;">معلومات</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 id="apiInfoTitle" style="color: var(--primary); margin: 0;">معلومات</h2>
+                <button id="copyApiTabBtn" class="btn btn-secondary btn-sm" onclick="copyCurrentApiTabContent(this)" style="display: flex; gap: 5px; align-items: center; font-size: 0.9rem; padding: 5px 10px; border-radius: 6px;">
+                    <i class="fas fa-copy"></i> نسخ المحتوى
+                </button>
+            </div>
             <div id="apiInfoWarning" style="display:none; background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #ffeeba;">
                 <i class="fas fa-exclamation-triangle"></i> التفسير المعروض مبني على رواية "حفص عن عاصم".
             </div>
@@ -361,6 +367,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/config.js?v=3.8"></script>
     <script src="js/dataHandler.js?v=2.9"></script>
+    <script src="js/quranQuarters.js"></script>
     <script src="js/audioMap.js"></script>
     <script src="js/audioPlayer.js?v=5.0"></script>
     <script src="js/api.js?v=2.9"></script>
@@ -369,7 +376,8 @@
     <script src="js/download.js?v=3.8"></script>
     <script src="js/listen.js?v=2.9"></script>
     <script src="js/tagsAndContext.js?v=5.0"></script>
-    <script src="js/ui.js?v=5.0"></script>
+    <script src="js/quranQuarters.js"></script>
+    <script src="js/ui.js?v=6.0"></script>
     <script src="js/app.js?v=5.0"></script>
     <script src="js/offlineManager.js?v=3.7"></script>
 </body>

@@ -6,12 +6,7 @@ const Search = {
         const input = document.getElementById('searchInput');
         const btn = document.getElementById('searchBtn');
 
-        if (btn && input) {
-            btn.onclick = () => this.performSearch(input.value);
-            input.onkeypress = (e) => {
-                if (e.key === 'Enter') this.performSearch(input.value);
-            };
-        }
+        // Bindings are now handled in ui.js depending on the button clicked
     },
 
     normalizeArabic(text) {
@@ -65,14 +60,22 @@ const Search = {
         return ayaNo;
     },
 
-    async performSearch(query) {
+    async performSearch(query, currentReadingOnly = false) {
         if (!query || query.trim().length < 2) return;
 
         const resultsArea = document.getElementById('searchResults');
-        if (resultsArea) resultsArea.innerHTML = '<div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري البحث مقارنة بين الروايات الستة...</div>';
+        if (resultsArea) resultsArea.innerHTML = currentReadingOnly 
+            ? '<div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري البحث في الرواية الحالية...</div>'
+            : '<div class="loader"><i class="fas fa-spinner fa-spin"></i> جاري البحث مقارنة بين الروايات الستة...</div>';
         
         const modal = document.getElementById('searchModal');
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            const titleEl = modal.querySelector('h2');
+            if (titleEl) {
+                titleEl.textContent = currentReadingOnly ? 'بحث في الرواية الحالية' : 'بحث في جميع القراءات';
+            }
+            modal.classList.add('active');
+        }
 
         const normQuery = this.normalizeArabic(query);
         const grouped = {};
@@ -81,7 +84,11 @@ const Search = {
         const activeHafs = App.currentReading.startsWith('Hafs') ? App.currentReading : 'HafsHussary';
         const activeWarsh = App.currentReading.startsWith('Warsh') ? App.currentReading : 'WarshHussary';
         const activeQaloun = App.currentReading.startsWith('Qaloun') ? App.currentReading : 'Qaloun';
-        const readings = [activeHafs, activeWarsh, activeQaloun, 'Duri', 'Susi', 'Shubah'];
+        let readings = [activeHafs, activeWarsh, activeQaloun, 'Duri', 'Susi', 'Shubah'];
+        
+        if (currentReadingOnly) {
+            readings = [App.currentReading];
+        }
 
         // البحث المتوازي عبر كافة القراءات المتوفرة
         for (const key of readings) {
@@ -125,10 +132,10 @@ const Search = {
             return a.sura_no - b.sura_no;
         });
 
-        this.renderResults(resultsArray);
+        this.renderResults(resultsArray, !currentReadingOnly);
     },
 
-    renderResults(results) {
+    renderResults(results, isComparative) {
         const area = document.getElementById('searchResults');
         if (!area) return;
         area.innerHTML = '';
@@ -138,7 +145,6 @@ const Search = {
             return;
         }
 
-        // رندرة النتائج بطريقة مقارنة عصرية وفاخرة
         results.forEach(item => {
             const card = document.createElement('div');
             card.className = 'search-item';
@@ -174,22 +180,42 @@ const Search = {
                 variantDiv.style.paddingBottom = '12px';
                 variantDiv.style.marginBottom = '12px';
                 variantDiv.style.direction = 'rtl';
+                variantDiv.style.flexDirection = 'column';
+                variantDiv.style.alignItems = 'stretch';
                 // إضافة فاصل مرئي بين كل آية والتي تليها
                 if (vIdx < item.variants.length - 1) {
                     variantDiv.style.borderBottom = '1px solid var(--border)';
                 }
-
-                variantDiv.innerHTML = `
-                    <span style="font-size: 0.8rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; min-width: 160px; text-align: center;">
-                        ${v.readingName} (آية ${v.aya_no})
-                    </span>
-                    <span style="flex: 1; text-align: right; font-size: 1.2rem; font-family: ${READINGS_CONFIG[v.readingKey].fontFamily}; color: var(--text); line-height: 1.8;">
-                        ${v.aya_text}
-                    </span>
-                    <button class="btn btn-primary btn-sm" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; border: none; background: var(--primary); color: white; font-weight: bold;" onclick="Search.goTo('${v.readingKey}', ${v.page}, ${v.aya_no}, ${item.sura_no})">
-                        انتقال
-                    </button>
-                `;
+                
+                if (isComparative) {
+                    variantDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.8rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; flex-shrink: 0;">
+                                ${v.readingName} (آية ${v.aya_no})
+                            </span>
+                        <button class="btn btn-primary btn-sm" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; border: none; background: var(--primary); color: white; font-weight: bold; flex-shrink: 0;" onclick="Search.goTo('${v.readingKey}', ${v.page}, ${v.aya_no}, ${item.sura_no})">
+                            <i class="fas fa-location-arrow"></i> انتقال
+                        </button>
+                        </div>
+                        <div class="search-variant-text" style="font-size: 1.35rem; font-family: ${READINGS_CONFIG[v.readingKey].fontFamily}; color: var(--text);">
+                            ${v.aya_text}
+                        </div>
+                    `;
+                } else {
+                    variantDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.8rem; background: var(--secondary); color: white; padding: 4px 10px; border-radius: 8px; font-weight: bold; flex-shrink: 0;">
+                                آية ${v.aya_no}
+                            </span>
+                            <button class="btn btn-secondary btn-sm" style="padding: 6px 16px; font-size: 0.85rem; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; flex-shrink: 0;" onclick="Search.goTo('${v.readingKey}', ${v.page}, ${v.aya_no}, ${item.sura_no})">
+                                <i class="fas fa-location-arrow"></i> انتقال
+                            </button>
+                        </div>
+                        <div class="search-variant-text" style="font-size: 1.35rem; font-family: ${READINGS_CONFIG[v.readingKey].fontFamily}; color: var(--text);">
+                            ${v.aya_text}
+                        </div>
+                    `;
+                }
                 card.appendChild(variantDiv);
             });
 
@@ -217,7 +243,15 @@ const Search = {
         
         App.currentReading = targetReading;
         App.loadPage(page).then(() => {
-            setTimeout(() => AudioPlayer.playAyah(ayah, suraNo), 500);
+            setTimeout(() => {
+                const targetSpan = document.querySelector(`.ayah-container[data-ayah="${ayah}"][data-surah="${suraNo}"]`);
+                if (targetSpan) {
+                    targetSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetSpan.style.transition = 'background-color 0.5s';
+                    targetSpan.style.backgroundColor = 'rgba(59, 130, 246, 0.3)';
+                    setTimeout(() => targetSpan.style.backgroundColor = 'transparent', 2500);
+                }
+            }, 500);
         });
     }
 };

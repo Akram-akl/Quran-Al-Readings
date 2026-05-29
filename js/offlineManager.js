@@ -231,30 +231,83 @@ const OfflineManager = {
         if (!data) data = await DataHandler.loadReading(this.currentReading);
         if (!data) return;
 
-        this.downloadQueue = [];
+        const downloadReadingKey = this.currentReading;
         this._downloadingSurahs = surahsToDownload;
         this._surahItemStats = {};
         
-        const config = READINGS_CONFIG[this.currentReading];
+        const config = READINGS_CONFIG[downloadReadingKey];
         if (!config) return;
-
-        for (const sNo of surahsToDownload) {
-            const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
-            const items = this._queueItemsForSurah(this.currentReading, sNo, ayahs, config);
-            this._surahItemStats[sNo] = { total: items.length, failed: 0 };
-            this.downloadQueue.push(...items);
-        }
-
-        if (this.downloadQueue.length === 0) return;
 
         this.isDownloading = true;
         this.isPaused = false;
         this.cancelRequested = false;
-        this.totalItems = this.downloadQueue.length;
-        this.downloadedItems = 0;
 
         this.updateUIStatus('start');
-        await this.processQueue();
+
+        let totalItemsAll = 0;
+        const surahsDataItems = [];
+        for (const sNo of surahsToDownload) {
+            const ayahs = data.filter(a => parseInt(a.sura_no) === sNo && parseInt(a.aya_no) > 0);
+            const items = this._queueItemsForSurah(downloadReadingKey, sNo, ayahs, config);
+            surahsDataItems.push({ sNo, items });
+            totalItemsAll += items.length;
+        }
+
+        if (totalItemsAll === 0) {
+            this.isDownloading = false;
+            return;
+        }
+
+        this.totalItems = totalItemsAll;
+        this.downloadedItems = 0;
+
+        const downloaded = this._getStoredDownloads();
+        if (!downloaded[downloadReadingKey]) downloaded[downloadReadingKey] = [];
+        const incomplete = [];
+
+        for (const surahData of surahsDataItems) {
+            if (this.cancelRequested) break;
+
+            const sNo = surahData.sNo;
+            const items = surahData.items;
+            this._surahItemStats[sNo] = { total: items.length, failed: 0 };
+            this.downloadQueue = [...items]; // Clone array to be consumed
+
+            this.totalItems = items.length;
+            this.downloadedItems = 0;
+            this.currentDownloadingSurahName = data.find(a => parseInt(a.sura_no) === sNo)?.sura_name_ar || `رقم ${sNo}`;
+
+            // انتظار اكتمال تحميل السورة الحالية قبل البدء بالتالية
+            await this.processQueue();
+
+            if (this.cancelRequested) break;
+
+            // حفظ حالة السورة فور انتهائها
+            const st = this._surahItemStats[sNo];
+            const ok = st && st.failed === 0 && st.total > 0;
+            if (ok && !downloaded[downloadReadingKey].includes(sNo)) {
+                downloaded[downloadReadingKey].push(sNo);
+                this._saveStoredDownloads(downloaded); // Save immediately
+                await this.updateDownloadedList();
+            } else if (!ok) {
+                incomplete.push(sNo);
+            }
+        }
+
+        if (this.cancelRequested) {
+            this.updateUIStatus('stop');
+        } else {
+            const alertBox = document.getElementById('offlineAlertBox');
+            if (incomplete.length > 0 && alertBox) {
+                alertBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> لم تُكتمل تحميلات السور: ${incomplete.join('، ')}. أعد المحاولة مع اتصال أفضل.`;
+                alertBox.style.display = 'block';
+            }
+            
+            this.updateUIStatus('done');
+            await this.populateSurahs();
+        }
+
+        this.isDownloading = false;
     },
 
     async processQueue() {
@@ -301,37 +354,6 @@ const OfflineManager = {
             this.downloadedItems++;
             this.updateUIProgress();
         }
-
-        if (this.cancelRequested) {
-            this.updateUIStatus('stop');
-        } else {
-            const downloaded = this._getStoredDownloads();
-            if (!downloaded[this.currentReading]) downloaded[this.currentReading] = [];
-            const incomplete = [];
-
-            this._downloadingSurahs.forEach(suraNo => {
-                const st = this._surahItemStats[suraNo];
-                const ok = st && st.failed === 0 && st.total > 0;
-                if (ok && !downloaded[this.currentReading].includes(suraNo)) {
-                    downloaded[this.currentReading].push(suraNo);
-                } else if (!ok) {
-                    incomplete.push(suraNo);
-                }
-            });
-            this._saveStoredDownloads(downloaded);
-
-            const alertBox = document.getElementById('offlineAlertBox');
-            if (incomplete.length > 0 && alertBox) {
-                alertBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i> لم تُكتمل تحميلات السور: ${incomplete.join('، ')}. أعد المحاولة مع اتصال أفضل.`;
-                alertBox.style.display = 'block';
-            }
-            
-            this.updateUIStatus('done');
-            await this.populateSurahs();
-            await this.updateDownloadedList();
-        }
-
-        this.isDownloading = false;
     },
 
     togglePause() {
@@ -396,15 +418,22 @@ const OfflineManager = {
     },
 
     updateUIProgress() {
-        const percent = Math.round((this.downloadedItems / this.totalItems) * 100);
+        if (this.totalItems === 0) return;
+        const pct = Math.floor((this.downloadedItems / this.totalItems) * 100);
         const bar = document.getElementById('offlineProgressBar');
-        const text = document.getElementById('offlineProgressPercent');
-        const status = document.getElementById('offlineProgressText');
-        const cfg = READINGS_CONFIG[this.currentReading] || {};
-
-        if (bar) bar.style.width = percent + '%';
-        if (text) text.textContent = percent + '%';
-        if (status) status.textContent = `جاري التحميل (${cfg.reader || cfg.name})...`;
+        if (bar) bar.style.width = `${pct}%`;
+        
+        const percentEl = document.getElementById('offlineProgressPercent');
+        if (percentEl) percentEl.textContent = `${pct}%`;
+        
+        const txt = document.getElementById('offlineProgressText');
+        if (txt) {
+            if (this.currentDownloadingSurahName) {
+                txt.textContent = `جاري تحميل سورة ${this.currentDownloadingSurahName}... (${this.downloadedItems}/${this.totalItems})`;
+            } else {
+                txt.textContent = `جاري التحميل... (${this.downloadedItems}/${this.totalItems})`;
+            }
+        }
     }
 };
 

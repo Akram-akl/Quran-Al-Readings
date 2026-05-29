@@ -164,16 +164,19 @@ const DownloadManager = {
         // إزالة الجزء بين القوسين للحصول على تسمية نظيفة خالية من اسم القارئ في عنوان الصورة
         const cleanName = config.name.replace(/\s*\(.*\)/g, '');
 
-        let html = `<div style="direction:rtl;text-align:center;padding:40px 30px;max-width:800px;background:#fff;font-family:'${config.fontFamily}',serif;">`;
-        html += `<h2 style="color:#10b981;margin-bottom:20px;font-family:sans-serif;">رواية ${cleanName}</h2>`;
+        let html = `<div style="direction:rtl;text-align:center;padding:40px 30px;max-width:800px;background:#ffffff;color:#000000;font-family:'${config.fontFamily}',serif;">`;
+        html += `<h2 style="color:#064e3b;margin-bottom:20px;font-family:sans-serif;border:2px solid #064e3b;border-radius:10px;padding:10px;display:inline-block;">رواية ${cleanName}</h2>`;
 
         let currentSurah = null;
         ayahs.forEach(a => {
             if (a.sura_no !== currentSurah) {
                 currentSurah = a.sura_no;
-                html += `<h3 style="color:#064e3b;margin:15px 0;font-family:sans-serif;">سورة ${a.sura_name_ar}</h3>`;
+                html += `<h3 style="color:#064e3b;margin:25px 0 15px;font-family:sans-serif;font-size:24px;">سورة ${a.sura_name_ar}</h3>`;
+                if (a.sura_no !== 9) {
+                    html += `<div style="font-family:'UthmanicHafs',serif;font-size:28px;margin-bottom:20px;color:#064e3b;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`;
+                }
             }
-            html += `<span style="font-size:28px;line-height:2;">${a.aya_text} </span>`;
+            html += `<span style="font-size:28px;line-height:2.2;color:#000000;">${a.aya_text} </span>`;
         });
         html += '</div>';
         captureArea.innerHTML = html;
@@ -188,7 +191,7 @@ const DownloadManager = {
             }
             await new Promise(r => setTimeout(r, 200));
 
-            const canvas = await html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const canvas = await html2canvas(captureArea, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
             const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
             if (!blob) {
                 statusEl.textContent = 'فشل إنشاء ملف الصورة';
@@ -197,14 +200,26 @@ const DownloadManager = {
             const filename = `quran_${readingKey}_${ayahs[0].sura_no}_${ayahs[0].aya_no}.png`;
             this._currentDownloadBlob = blob;
             this._currentDownloadFilename = filename;
-            const url = URL.createObjectURL(blob);
             
-            let resultHtml = '<div style="margin-top:15px; color:#10b981;">تم إنشاء الصورة بنجاح ✓</div>';
-            resultHtml += '<div style="font-size:0.85rem; color:#6b7280; margin-bottom:10px;">اضغط مطولاً على الصورة لحفظها في معرض الصور</div>';
-            resultHtml += `<img src="${url}" style="max-width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:15px; border:1px solid #e2e8f0;" />`;
+            statusEl.textContent = 'جاري الحفظ في المعرض...';
+            const result = await SaveFile.save(blob, filename);
             
-            statusEl.innerHTML = resultHtml;
-            this._showShareButton(statusEl);
+            if (result.ok) {
+                let resultHtml = '<div style="margin-top:15px; color:#10b981;">تم حفظ الصورة في المعرض بنجاح ✓</div>';
+                const url = URL.createObjectURL(blob);
+                resultHtml += `<img src="${url}" style="max-width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-top:10px; border:1px solid #e2e8f0;" />`;
+                statusEl.innerHTML = resultHtml;
+            } else if (result.cancelled) {
+                statusEl.textContent = 'تم الإلغاء';
+            } else {
+                statusEl.textContent = result.message || 'تعذّر الحفظ التلقائي في المعرض';
+                const url = URL.createObjectURL(blob);
+                let resultHtml = `<div style="margin-top:15px; color:#ef4444;">${statusEl.textContent}</div>`;
+                resultHtml += '<div style="font-size:0.85rem; color:#6b7280; margin-bottom:10px;">استخدم زر الحفظ والمشاركة أدناه لحفظ الصورة:</div>';
+                resultHtml += `<img src="${url}" style="max-width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:15px; border:1px solid #e2e8f0;" />`;
+                statusEl.innerHTML = resultHtml;
+                this._showShareButton(statusEl);
+            }
         } catch (err) {
             statusEl.textContent = 'حدث خطأ أثناء إنشاء الصورة';
             console.error(err);
@@ -232,12 +247,7 @@ const DownloadManager = {
         const segmentBuffers = [];
 
         const hafsConfig = READINGS_CONFIG['Hafs'];
-        const istiazahUrl = (config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
-            ? config.getIstiazahPath() 
-            : hafsConfig.getIstiazahPath();
-        const basmalahUrl = (config.getBasmalahPath && typeof config.getBasmalahPath === 'function') 
-            ? config.getBasmalahPath() 
-            : hafsConfig.getBasmalahPath();
+        const basmalahUrl = 'assets/fallback_basmalah.mp3';
 
         async function fetchAndDecode(url) {
             const resp = await fetch(url, { mode: 'cors' });
@@ -282,10 +292,12 @@ const DownloadManager = {
 
                     // إذا كانت الآية هي الأولى في السورة، نضيف الاستعاذة والبسملة
                     if (ayah.aya_no === 1) {
-                        // تمت إزالة الاستعاذة من الصوتيات بناءً على طلب المستخدم
-                        
-                        // البسملة لجميع السور عدا سورة التوبة (9) وسورة الفاتحة (1)
-                        if (suraNo !== 9 && suraNo !== 1) {
+                        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+                        const isAyahItselfBasmalah = (suraNo === 1 && textToCheck.includes('بسم الله'));
+                        const needsBasmalah = (suraNo !== 9 && !isAyahItselfBasmalah);
+
+                        // البسملة لجميع السور عدا سورة التوبة (9) وسورة الفاتحة (1) إذا لم تكن مدمجة في الرواية
+                        if (needsBasmalah && !config.isMonolithic) {
                             try {
                                 statusEl.textContent = `جاري إدراج البسملة...`;
                                 const basBuffer = await fetchAndDecode(basmalahUrl);
@@ -300,8 +312,16 @@ const DownloadManager = {
                     if (config.isMonolithic) {
                         const timing = timingData.find(t => t.ayah === ayah.aya_no);
                         if (timing) {
-                            const startSec = (timing.start_time / 1000) + (config.timeOffset || 0);
+                            let startSec = (timing.start_time / 1000) + (config.timeOffset || 0);
                             const endSec = (timing.end_time / 1000) + (config.timeOffset || 0);
+                            
+                            const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+                            const isAyahItselfBasmalah = (suraNo === 1 && ayah.aya_no === 1 && textToCheck.includes('بسم الله'));
+                            const needsBasmalah = (ayah.aya_no === 1 && suraNo !== 9 && !isAyahItselfBasmalah);
+                            
+                            if (needsBasmalah) {
+                                startSec = 0; // البسملة المدمجة
+                            }
                             const sliced = this._sliceAudioBuffer(audioCtx, monolithicBuffer, startSec, endSec);
                             if (sliced) segmentBuffers.push(sliced);
                         } else {
@@ -355,7 +375,11 @@ const DownloadManager = {
             
             const result = await SaveFile.save(wavBlob, filename);
             if (result.ok) {
-                statusEl.innerHTML = 'تم تجهيز الملف الصوتي ✓';
+                let msg = 'تم تجهيز الملف الصوتي ✓';
+                if (result.method === 'documents') {
+                    msg += '<br><small style="color:var(--primary);font-size:0.85rem;display:block;margin-top:5px;">تم الحفظ في: ملفات الجهاز &lt; المستندات (Documents) &lt; Quran</small>';
+                }
+                statusEl.innerHTML = msg;
                 this._showShareButton(statusEl);
             } else if (result.cancelled) {
                 statusEl.textContent = 'تم الإلغاء';
@@ -376,10 +400,13 @@ const DownloadManager = {
         const hasNativeShare = window.Capacitor?.Plugins?.Share;
         if (!navigator.share && !hasNativeShare) return;
         
+        const isAudio = this._currentDownloadFilename && this._currentDownloadFilename.endsWith('.wav');
+        const btnText = isAudio ? '<i class="fas fa-share-alt"></i> مشاركة الملف الصوتي' : '<i class="fas fa-share-alt"></i> حفظ في المعرض أو مشاركة';
+
         const shareBtn = document.createElement('button');
         shareBtn.className = 'btn btn-secondary';
         shareBtn.style.cssText = 'margin-top:10px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;';
-        shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+        shareBtn.innerHTML = btnText;
         
         shareBtn.onclick = async () => {
             if (!this._currentDownloadBlob) return;
@@ -388,20 +415,20 @@ const DownloadManager = {
             try {
                 const result = await SaveFile.share(this._currentDownloadBlob, this._currentDownloadFilename);
                 if (result.cancelled) {
-                    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+                    shareBtn.innerHTML = btnText;
                 } else if (result.ok) {
                     shareBtn.innerHTML = '<i class="fas fa-check"></i> تمت المشاركة';
                 } else {
-                    shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+                    shareBtn.innerHTML = btnText;
                 }
             } catch (err) {
-                console.warn('Share failed:', err);
-                shareBtn.innerHTML = '<i class="fas fa-share-alt"></i> مشاركة الملف';
+                console.error(err);
+                shareBtn.innerHTML = btnText;
             }
             shareBtn.disabled = false;
         };
-        
         statusEl.appendChild(shareBtn);
+
     },
 
     _sliceAudioBuffer(audioCtx, buffer, startSec, endSec) {

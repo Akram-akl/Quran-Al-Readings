@@ -99,28 +99,37 @@ const AudioPlayer = {
             }
             const config = READINGS_CONFIG[App.currentReading];
             
-            // تحقق من وجود قائمة استماع نشطة
             if (this.playlist && this.playlist.length > 0 && this.playlistIndex >= 0) {
                 if (this.isTransitioning) return;
-                if (config.isMonolithic) {
-                    // في التشغيل المدمج، يتم الانتقال بواسطة توقيت المزامنة بداخل ontimeupdate
-                    // لذا لا داعي لفعل شيء هنا إلا إذا انتهى السرفر من الملف بالكامل بالخطأ
+                if (this.audioQueue && this.audioQueue.length > 0) {
+                    const s = this._playSession;
+                    const n = this.audioQueue.shift();
+                    const url = typeof n === 'string' ? n : n.url;
+                    const start = typeof n === 'string' ? 0 : n.start;
+                    this._playAudioUrl(url, start, s).catch(() => {
+                        if (this._isSessionAlive(s)) {
+                            this.playlistIndex++;
+                            this._playCurrentTrack();
+                        }
+                    });
+                } else if (config.isMonolithic) {
                     this.playlistIndex++;
                     this._playCurrentTrack();
                 } else {
-                    if (this.audioQueue.length > 0) {
-                        const s = this._playSession;
-                        this._playAudioUrl(this.audioQueue.shift(), 0, s).catch(() => {
-                            if (this._isSessionAlive(s)) this.next();
-                        });
-                    } else {
-                        this.playlistIndex++;
-                        this._playCurrentTrack();
-                    }
+                    this.playlistIndex++;
+                    this._playCurrentTrack();
                 }
             } else {
                 // التشغيل العادي الفردي للآيات
-                if (config.isMonolithic) {
+                if (this.audioQueue && this.audioQueue.length > 0) {
+                    const s = this._playSession;
+                    const n = this.audioQueue.shift();
+                    const url = typeof n === 'string' ? n : n.url;
+                    const start = typeof n === 'string' ? 0 : n.start;
+                    this._playAudioUrl(url, start, s).catch(() => {
+                        if (this._isSessionAlive(s)) this.next();
+                    });
+                } else if (config.isMonolithic) {
                     if (this.stopAtEndOfSura === App.currentSurah) {
                         this.stop();
                         this._updateBtn(false);
@@ -129,14 +138,7 @@ const AudioPlayer = {
                         this.next().catch(() => {});
                     }
                 } else {
-                    if (this.audioQueue.length > 0) {
-                        const s = this._playSession;
-                        this._playAudioUrl(this.audioQueue.shift(), 0, s).catch(() => {
-                            if (this._isSessionAlive(s)) this.next();
-                        });
-                    } else {
-                        this.next();
-                    }
+                    this.next();
                 }
             }
         };
@@ -236,12 +238,14 @@ const AudioPlayer = {
         const repeatBtn = document.getElementById('repeatBtn');
         if (repeatBtn) repeatBtn.onclick = () => this.toggleRepeat();
 
-        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
-        if (cancelRepeatBtn) cancelRepeatBtn.onclick = () => {
+        const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
+        if (cancelActiveModeBtn) cancelActiveModeBtn.onclick = () => {
+            this.stop();
             this.maxPlaylistRepeats = 1;
-            cancelRepeatBtn.style.display = 'none';
+            cancelActiveModeBtn.style.display = 'none';
             const statusEl = document.getElementById('lsStatus');
-            if (statusEl) statusEl.textContent = 'تم إيقاف التكرار، سيتوقف التشغيل بعد انتهاء المقطع الحالي.';
+            if (statusEl) statusEl.textContent = 'تم الإلغاء.';
+            this._showToast('تم إنهاء التشغيل الحالي.');
         };
     },
 
@@ -433,8 +437,8 @@ const AudioPlayer = {
         this.playlist = [];
         this.playlistIndex = -1;
         this.maxPlaylistRepeats = 1;
-        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
-        if (cancelRepeatBtn) cancelRepeatBtn.style.display = 'none';
+        const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
+        if (cancelActiveModeBtn) cancelActiveModeBtn.style.display = 'none';
     },
 
     buildPlaylistFromRange(readingKey, ayahs) {
@@ -466,12 +470,12 @@ const AudioPlayer = {
             }
         }
         
-        const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
-        if (cancelRepeatBtn) {
+        const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
+        if (cancelActiveModeBtn) {
             if (this.maxPlaylistRepeats > 1) {
-                cancelRepeatBtn.style.display = 'inline-block';
+                cancelActiveModeBtn.style.display = 'inline-block';
             } else {
-                cancelRepeatBtn.style.display = 'none';
+                cancelActiveModeBtn.style.display = 'none';
             }
         }
 
@@ -520,6 +524,10 @@ const AudioPlayer = {
         const sSel = document.getElementById('surahSelect');
         if (sSel) sSel.value = suraNo;
 
+        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah);
+
         // --- تشغيل مدمج بداخل قائمة الاستماع ---
         if (config.isMonolithic) {
             this.groupedAyahs = [ayahNo];
@@ -549,7 +557,11 @@ const AudioPlayer = {
             }
 
             const audioUrl = config.getAudioPath(suraNo);
-            const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            let startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            if (needsBasmalah) {
+                startSec = 0; // البدء من الصفر تماماً لتشغيل البسملة المدمجة في الملف
+            }
+
             try {
                 await this._playAudioUrl(audioUrl, startSec, playSession);
             } catch (e) {
@@ -610,14 +622,8 @@ const AudioPlayer = {
             });
         });
 
-        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
-        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
-        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah);
         if (needsBasmalah) {
-            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
-                ? config.getBasmalahPath()
-                : 'assets/fallback_basmalah.mp3';
-            this.audioQueue.unshift(path);
+            this.audioQueue.unshift('assets/fallback_basmalah.mp3');
         }
 
         const firstUrl = this.audioQueue.shift();
@@ -684,8 +690,8 @@ const AudioPlayer = {
             this.groupedAyahs = [];
             this.audioQueue = [];
             this.maxPlaylistRepeats = 1;
-            const cancelRepeatBtn = document.getElementById('cancelRepeatBtn');
-            if (cancelRepeatBtn) cancelRepeatBtn.style.display = 'none';
+            const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
+            if (cancelActiveModeBtn) cancelActiveModeBtn.style.display = 'none';
             this._hardStopAudio();
         }
 
@@ -720,6 +726,10 @@ const AudioPlayer = {
         this.currentlyHighlighted = ayahNo;
         this._highlightSingle(ayahNo, suraNo);
         
+        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
+        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
+        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah) && (!opts || !opts.skipBasmalah);
+
         // --- الهيكل الهجين: نظام السورة المدمجة (Monolithic) ---
         if (config.isMonolithic) {
             this.groupedAyahs = [ayahNo];
@@ -761,7 +771,12 @@ const AudioPlayer = {
                 }
             }
 
-            const startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            let startSec = Math.max(0, (ayahTiming.start_time / 1000) + (config.timeOffset || 0));
+            
+            if (needsBasmalah) {
+                startSec = 0; // البدء من الصفر تماماً لتشغيل البسملة المدمجة في الملف
+            }
+
             try {
                 await this._playAudioUrl(audioUrl, startSec, playSession);
             } catch (e) {
@@ -827,14 +842,8 @@ const AudioPlayer = {
             });
         });
 
-        const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
-        const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
-        const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah) && (!opts || !opts.skipBasmalah);
         if (needsBasmalah) {
-            const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
-                ? config.getBasmalahPath()
-                : 'assets/fallback_basmalah.mp3';
-            this.audioQueue.unshift(path);
+            this.audioQueue.unshift('assets/fallback_basmalah.mp3');
         }
 
         const firstUrl = this.audioQueue.shift();
@@ -876,6 +885,10 @@ const AudioPlayer = {
         const session = this._bumpPlaySession();
         this._hardStopAudio();
         this._removeHighlight();
+        this.playlist = [];
+        this.playlistIndex = -1;
+        this.playlistReadingKey = "";
+        this.currentAyah = null;
         this.isMetaAudio = true;
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getIstiazahPath && typeof config.getIstiazahPath === 'function') 
@@ -893,6 +906,7 @@ const AudioPlayer = {
         this.playlist = [];
         this.playlistIndex = -1;
         this.playlistReadingKey = "";
+        this.currentAyah = null;
         this.isMetaAudio = true;
         const config = READINGS_CONFIG[App.currentReading];
         const path = (config && config.getBasmalahPath && typeof config.getBasmalahPath === 'function')
@@ -948,44 +962,32 @@ const AudioPlayer = {
             if (modal && container) {
                 container.innerHTML = '';
 
-                // 1. خيار تكملة السورة الأولى فقط التي تبدأ منها الصفحة
-                const firstSurah = surahsOnPage[0];
-                const btnPage = document.createElement('button');
-                btnPage.className = 'btn btn-primary w-100 mb-2';
-                btnPage.innerHTML = `<i class="fas fa-file-alt"></i> تكملة سورة ${firstSurah.name} (من آية ${firstSurah.firstAyah})`;
-                btnPage.onclick = () => {
-                    modal.classList.remove('active');
-                    this.keepStopBoundary = true;
-                    this.stopAtEndOfSura = firstSurah.no;
-                    this.playAyah(firstSurah.firstAyah, firstSurah.no);
-                };
-                container.appendChild(btnPage);
-
-                // 2. خيار تشغيل الصفحة بالكامل عبر قائمة التشغيل المجدولة
+                // 1. خيار تشغيل الصفحة بالكامل
                 const btnFullPage = document.createElement('button');
-                btnFullPage.className = 'btn btn-info w-100 mb-2';
-                btnFullPage.innerHTML = `<i class="fas fa-play-circle"></i> تشغيل الصفحة بالكامل (${ayahs.length} آية)`;
+                btnFullPage.className = 'btn btn-primary w-100 mb-2';
+                btnFullPage.innerHTML = `<i class="fas fa-file-alt"></i> بداية الصفحة`;
                 btnFullPage.onclick = () => {
                     modal.classList.remove('active');
-                    this.buildPlaylistFromRange(App.currentReading, ayahs);
-                    this.playlistRepeatCount = 1;
-                    this.maxPlaylistRepeats = 1;
-                    this._playCurrentTrack();
+                    this.keepStopBoundary = false;
+                    this.stopAtEndOfSura = null;
+                    this.playAyah(ayahs[0].aya_no, ayahs[0].sura_no);
                 };
                 container.appendChild(btnFullPage);
 
-                // 3. خيارات السور الأخرى التي تبدأ في هذه الصفحة
-                for (let i = 1; i < surahsOnPage.length; i++) {
-                    const s = surahsOnPage[i];
+                // 2. خيارات السور التي تبدأ في هذه الصفحة
+                surahsOnPage.filter(s => s.firstAyah === 1).forEach((s) => {
                     const btnSurah = document.createElement('button');
                     btnSurah.className = 'btn btn-success w-100 mb-2';
-                    btnSurah.innerHTML = `<i class="fas fa-book-open"></i> بداية سورة ${s.name} (آية 1)`;
+                    btnSurah.innerHTML = `<i class="fas fa-book-open"></i> بداية سورة ${s.name}`;
                     btnSurah.onclick = () => {
                         modal.classList.remove('active');
+                        // Play from this surah's first ayah on this page, and stop at end of this surah
+                        this.keepStopBoundary = true;
+                        this.stopAtEndOfSura = s.no;
                         this.playAyah(s.firstAyah, s.no);
                     };
                     container.appendChild(btnSurah);
-                }
+                });
 
                 modal.classList.add('active');
             } else {
@@ -1170,6 +1172,9 @@ const AudioPlayer = {
 
     _removeHighlight() {
         this.currentlyHighlighted = null;
+        document.querySelectorAll('.ayah-container.active').forEach(el => {
+            el.classList.remove('active');
+        });
     },
 
     _highlight(no, suraNo = App.currentSurah) {
@@ -1177,21 +1182,27 @@ const AudioPlayer = {
     },
 
     _highlightSingle(no, suraNo = App.currentSurah) {
+        this._removeHighlight();
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
             const elSurah = parseInt(el.dataset.surah);
             if (elNo === no && elSurah === suraNo) {
+                el.classList.add('active');
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         });
     },
 
     _highlightGroup(ayahNumbers, suraNo = App.currentSurah) {
+        this._removeHighlight();
         if (!ayahNumbers || ayahNumbers.length === 0) return;
         const firstNo = ayahNumbers[0];
         document.querySelectorAll('.ayah-container').forEach(el => {
             const elNo = parseInt(el.dataset.ayah) || parseInt(el.dataset.no);
             const elSurah = parseInt(el.dataset.surah);
+            if (ayahNumbers.includes(elNo) && elSurah === suraNo) {
+                el.classList.add('active');
+            }
             if (elNo === firstNo && elSurah === suraNo) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }

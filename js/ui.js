@@ -15,6 +15,28 @@ const UI = {
         if (typeof Search !== 'undefined') Search.init();
         if (typeof ListenRange !== 'undefined') ListenRange.init();
         if (typeof DownloadManager !== 'undefined') DownloadManager.init();
+
+        // Handle hardware back button in Android (Capacitor)
+        if (window.Capacitor && window.Capacitor.Plugins.App) {
+            window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
+                const activeModal = document.querySelector('.modal.active');
+                if (activeModal) {
+                    activeModal.classList.remove('active');
+                    return;
+                }
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                    return;
+                }
+                // If nothing is open, we can exit or go back in history
+                if (!canGoBack) {
+                    window.Capacitor.Plugins.App.exitApp();
+                } else {
+                    window.history.back();
+                }
+            });
+        }
     },
 
     _initSidebar() {
@@ -84,7 +106,28 @@ const UI = {
         if (prevBtn) prevBtn.onclick = () => AudioPlayer.prev();
         
         const searchOpen = document.getElementById('searchOpenBtn');
-        if (searchOpen) searchOpen.onclick = () => document.getElementById('searchModal').classList.add('active');
+        if (searchOpen) searchOpen.onclick = () => {
+            const modal = document.getElementById('searchModal');
+            modal.querySelector('h2').textContent = 'بحث في جميع القراءات';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+            const btn = document.getElementById('searchBtn');
+            btn.onclick = () => Search.performSearch(document.getElementById('searchInput').value, false);
+            document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') Search.performSearch(e.target.value, false); };
+            modal.classList.add('active');
+        };
+        
+        const searchCurrentBtn = document.getElementById('searchCurrentReadingBtn');
+        if (searchCurrentBtn) searchCurrentBtn.onclick = () => {
+            const modal = document.getElementById('searchModal');
+            modal.querySelector('h2').textContent = 'بحث في الرواية الحالية';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+            const btn = document.getElementById('searchBtn');
+            btn.onclick = () => Search.performSearch(document.getElementById('searchInput').value, true);
+            document.getElementById('searchInput').onkeypress = (e) => { if (e.key === 'Enter') Search.performSearch(e.target.value, true); };
+            modal.classList.add('active');
+        };
         
         document.querySelectorAll('.close-modal').forEach(b => {
             b.onclick = () => b.closest('.modal').classList.remove('active');
@@ -147,6 +190,11 @@ const UI = {
         }
     },
 
+    toArabicNumerals(n) {
+        const d = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        return String(n).replace(/\d/g, x => d[x]);
+    },
+
     renderAyahs(ayahs, reading) {
         const area = document.getElementById('readingArea');
         if (!area || !ayahs.length) return;
@@ -168,6 +216,25 @@ const UI = {
         });
 
         let isFirstSurahOnPage = true;
+        let lastHizbMarkerText = null;
+
+        // حساب عدد علامات ۞ قبل الصفحة الحالية (للروايات غير حفص/شعبة)
+        const baseReadingForHizb = (reading || '').replace(/Hussary|Minshawi|Jazairi|Dossari|Huthaify/g, '');
+        if (baseReadingForHizb !== 'Hafs' && baseReadingForHizb !== 'Shubah') {
+            const allData = DataHandler.cache[reading];
+            const currentPage = App.currentPage;
+            if (allData && currentPage) {
+                let count = 0;
+                for (const d of allData) {
+                    const dPage = typeof d.page === 'string' && d.page.includes('-') ? parseInt(d.page.split('-')[0]) : parseInt(d.page);
+                    if (dPage >= currentPage) break;
+                    if ((d.aya_text || '').includes('۞')) count++;
+                }
+                this._hizbMarkerCount = count;
+            } else {
+                this._hizbMarkerCount = 0;
+            }
+        }
 
         for (const [suraNo, groupAyahs] of Object.entries(suraGroups)) {
             const currentSuraNo = parseInt(suraNo);
@@ -232,6 +299,82 @@ const UI = {
                     }
                 }
 
+                // إضافة ملحوظة الحزب حسب الرواية الحالية
+                // حفص وشعبة: يستخدمان QURAN_QUARTERS (أرباع)
+                // الروايات الأخرى: يستخدمن عدّ علامة ۞ تصاعدياً (أثمان)
+                const baseReading = (App.currentReading || '').replace(/Hussary|Minshawi|Jazairi|Dossari|Huthaify/g, '');
+                let hizbText = null;
+
+                if ((baseReading === 'Hafs' || baseReading === 'Shubah') && typeof QURAN_QUARTERS !== 'undefined') {
+                    // --- حفص وشعبة: نظام الأرباع (كل حزب = 4 علامات) ---
+                    const quarterIdx = QURAN_QUARTERS.findIndex(q => q.surah === a.sura_no && q.ayah === a.aya_no);
+                    if (quarterIdx !== -1) {
+                        const hizbNum = Math.floor(quarterIdx / 4) + 1;
+                        const part = quarterIdx % 4;
+                        if (part === 0) {
+                            hizbText = `الحزب ${this.toArabicNumerals(hizbNum)}`;
+                            if (quarterIdx % 8 === 0) {
+                                const juzNum = Math.floor(quarterIdx / 8) + 1;
+                                hizbText = `الجزء ${this.toArabicNumerals(juzNum)} - ${hizbText}`;
+                            }
+                        }
+                        else if (part === 1) hizbText = `ربع الحزب ${this.toArabicNumerals(hizbNum)}`;
+                        else if (part === 2) hizbText = `نصف الحزب ${this.toArabicNumerals(hizbNum)}`;
+                        else if (part === 3) hizbText = `ثلاثة أرباع الحزب ${this.toArabicNumerals(hizbNum)}`;
+                    }
+                } else if (finalAyahText.includes('۞')) {
+                    // --- الروايات غير حفص/شعبة: عدّ ۞ تصاعدياً ---
+                    if (!this._hizbMarkerCount) this._hizbMarkerCount = 0;
+                    this._hizbMarkerCount++;
+                    const idx = this._hizbMarkerCount; // الترتيب التصاعدي من بداية المصحف
+                    const posInHizb = ((idx - 1) % 8) + 1; // 1..8
+                    const hizbNum = Math.floor((idx - 1) / 8) + 1;
+
+                    if (baseReading === 'Warsh') {
+                        // ورش: ثمن، ربع، ثمن، نصف الحزب، ثمن، ربع، ثمن، الحزب (+ أجزاء)
+                        // Use Arabic numerals for thumn numbers (ثمن٢, ثمن٣, ...)
+                        let warshLabel = '';
+                        if (posInHizb % 2 === 1) { // positions 1,3,5,7 are thumn
+                            const thumnOrdinal = Math.floor((posInHizb + 1) / 2);
+                            warshLabel = `ثمن${this.toArabicNumerals(thumnOrdinal)}`;
+                        } else if (posInHizb === 2 || posInHizb === 6) {
+                            warshLabel = 'ربع';
+                        } else if (posInHizb === 4) {
+                            warshLabel = 'نصف الحزب';
+                        } else if (posInHizb === 8) {
+                            warshLabel = `الحزب${this.toArabicNumerals(hizbNum)}`;
+                        }
+                        hizbText = warshLabel;
+                        if (posInHizb === 8 && idx % 16 === 0) {
+                            const juzNum = Math.floor((idx - 1) / 16) + 1;
+                            hizbText = `الجزء${this.toArabicNumerals(juzNum)}-${hizbText}`;
+                        } else if (baseReading === 'Qaloun') {
+                        // قالون: مثل ورش لكن بدون أجزاء
+                        const qalounLabels = ['ثمن', 'ربع', 'ثمن', 'نصف', 'ثمن', 'ربع', 'ثمن', `الحزب ${this.toArabicNumerals(hizbNum)}`];
+                        hizbText = qalounLabels[posInHizb - 1];
+                    } else if (baseReading === 'Duri' || baseReading === 'Susi') {
+                        // الدوري والسوسي: ثمن2، ثمن3 ... ثمن8، الحزب
+                        if (posInHizb === 8) {
+                            hizbText = `الحزب${this.toArabicNumerals(hizbNum)}`;
+                            if (idx % 16 === 0) {
+                                const juzNum = Math.floor((idx - 1) / 16) + 1;
+                                hizbText = `الجزء${this.toArabicNumerals(juzNum)}-${hizbText}`;
+                            }
+                        } else {
+                            // ثمن positions start from 2
+                            const thumnOrdinal = posInHizb + 1; // posInHizb 1->2, 2->3, ...,7->8
+                            hizbText = `ثمن${this.toArabicNumerals(thumnOrdinal)}`;
+                        }
+                    } else {
+                        // أي رواية أخرى: نظام أثمان عام
+                        hizbText = posInHizb === 8 ? `الحزب ${this.toArabicNumerals(hizbNum)}` : `ثمن ${this.toArabicNumerals(posInHizb)}`;
+                    }
+                }
+
+                if (hizbText) {
+                    lastHizbMarkerText = hizbText;
+                }
+
                 span.className = 'ayah-container';
                 
                 span.setAttribute('data-ayah', a.aya_no);
@@ -240,19 +383,30 @@ const UI = {
                 
                 // تغليف كل كلمة قرآنية بـ span (تصفية الفراغات لتجنب مسافات عريضة بين الكلمات)
                 const words = finalAyahText.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
-                const formattedText = words.map((w, i) => `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`).join(' ');
+                let ayahNumberWord = '';
+                let formattedWords = '';
+                let formattedNumber = '';
+
+                if (words.length > 0) {
+                    ayahNumberWord = words.pop();
+                    formattedWords = words.map((w, i) => {
+                        return `<span class="q_word" data-word-idx="${i + 1}">${w}</span>`;
+                    }).join(' ');
+                    formattedNumber = `<span class="q_word" data-word-idx="${words.length + 1}" data-is-ayah-number="true">${ayahNumberWord}</span>`;
+                }
 
                 // تطبيق وضع الاختبار التفاعلي (النقرة الأولى للكشف، الثانية للتشغيل)
                 if (typeof App !== 'undefined' && App.TestingMode && App.TestingMode.isActive && !isB) {
                     span.classList.add('hidden-ayah');
-                    span.innerHTML = `<span class="ayah-text" style="filter: blur(7px); user-select: none; cursor: pointer;" onclick="
+                    span.innerHTML = `<span class="ayah-text" style="user-select: none; cursor: pointer;" onclick="
                         if (this.parentElement.classList.contains('hidden-ayah')) {
                             this.parentElement.classList.remove('hidden-ayah');
-                            this.style.filter = 'none';
+                            const hiddenSpan = this.querySelector('.ayah-words-hidden');
+                            if (hiddenSpan) hiddenSpan.style.filter = 'none';
                         }
-                    ">${formattedText}</span> `;
+                    "><span class="ayah-words-hidden" style="filter: blur(7px);">${formattedWords}</span> ${formattedNumber}</span> `;
                 } else {
-                    span.innerHTML = `<span class="ayah-text">${formattedText}</span> `;
+                    span.innerHTML = `<span class="ayah-text">${formattedWords} ${formattedNumber}</span> `;
                 }
                 textBlock.appendChild(span);
             });
@@ -263,9 +417,18 @@ const UI = {
             isFirstSurahOnPage = false;
         }
 
+        if (lastHizbMarkerText) {
+            const footerMarker = document.createElement('div');
+            footerMarker.className = 'page-hizb-footer';
+            footerMarker.innerHTML = `<i class="fas fa-bookmark" style="color:var(--primary); margin-left:5px; font-size:1.1em;"></i> ${lastHizbMarkerText}`;
+            area.appendChild(footerMarker);
+        }
+
         area.scrollTop = 0;
         const title = document.getElementById('currentSurahTitle');
         if (title) title.textContent = `سورة ${ayahs[0].sura_name_ar}`;
+        const jozzText = document.getElementById('currentJozzText');
+        if (jozzText && ayahs[0].jozz) jozzText.textContent = `الجزء ${ayahs[0].jozz}`;
     },
 
     _isBismillah(a) {

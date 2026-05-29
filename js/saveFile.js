@@ -15,44 +15,78 @@ const SaveFile = {
         });
     },
 
-    /** حفظ صورة مباشرة في معرض الأندرويد عبر MediaStore */
+    /** طلب إذن التخزين عند الحاجة (Android) */
+    async _requestStoragePermission() {
+        try {
+            const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+            if (Filesystem) {
+                await Filesystem.requestPermissions();
+            }
+        } catch (e) {
+            console.warn('Filesystem permission request failed:', e);
+        }
+        try {
+            const Media = window.Capacitor?.Plugins?.Media;
+            if (Media && Media.requestPermissions) {
+                await Media.requestPermissions();
+            }
+        } catch (e) {
+            console.warn('Media permission request failed:', e);
+        }
+        return true;
+    },
+
+    /** حفظ صورة مباشرة في معرض الأندرويد */
     async _saveImageToGallery(blob, filename) {
         const isNative = window.Capacitor?.isNativePlatform?.() === true;
         if (!isNative) return { ok: false };
 
-        // محاولة استخدام @capacitor-community/media (أفضل طريقة)
+        const Filesystem = window.Capacitor?.Plugins?.Filesystem;
         const Media = window.Capacitor?.Plugins?.Media;
+        const GallerySaver = window.Capacitor?.Plugins?.GallerySaver;
+
+        // اطلب الإذن أولاً
+        await this._requestStoragePermission();
+
+        // الخيار الأول والأقوى: استخدام البلجن الأصلي المخصص GallerySaver الذي يتعامل مع المعرض مباشرة
+        if (GallerySaver?.saveImage) {
+            try {
+                const base64Data = await this._blobToBase64(blob);
+                const res = await GallerySaver.saveImage({
+                    base64Data: base64Data,
+                    fileName: filename
+                });
+                if (res && res.success) {
+                    console.log('[SaveFile] GallerySaver success path:', res.path);
+                    return { ok: true, method: 'custom-gallery-saver' };
+                }
+            } catch (err) {
+                console.warn('[SaveFile] Custom GallerySaver failed:', JSON.stringify(err));
+            }
+        }
+
+        // الخيار الثاني: Media plugin (الاحتياطي)
         if (Media?.savePhoto) {
             try {
-                // أولاً: احفظ الملف في CACHE للحصول على URI
                 const base64Data = await this._blobToBase64(blob);
-                const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+                const tempName = `quran_temp_${Date.now()}.png`;
                 const tempFile = await Filesystem.writeFile({
-                    path: `quran_temp_${Date.now()}.png`,
+                    path: tempName,
                     data: base64Data,
                     directory: 'CACHE',
                     recursive: true
                 });
-
-                // ثانياً: أضفه للمعرض باستخدام Media plugin
+                console.log('[SaveFile] temp URI:', tempFile.uri);
                 await Media.savePhoto({ path: tempFile.uri });
-
-                // احذف الملف المؤقت
-                try {
-                    await Filesystem.deleteFile({
-                        path: `quran_temp_${Date.now()}.png`,
-                        directory: 'CACHE'
-                    });
-                } catch (_) { /* لا يهم */ }
-
-                return { ok: true, method: 'gallery' };
+                // حذف الملف المؤقت
+                try { await Filesystem.deleteFile({ path: tempName, directory: 'CACHE' }); } catch (_) {}
+                return { ok: true, method: 'media-plugin' };
             } catch (err) {
-                console.warn('Media.savePhoto failed:', err);
+                console.warn('[SaveFile] Media.savePhoto failed:', JSON.stringify(err));
             }
         }
 
-        // احتياط: استخدام Filesystem مع PICTURES
-        const Filesystem = window.Capacitor?.Plugins?.Filesystem;
+        // الطريقة الثانية: حفظ مباشر في PICTURES
         if (Filesystem?.writeFile) {
             try {
                 const base64 = await this._blobToBase64(blob);
@@ -62,14 +96,15 @@ const SaveFile = {
                     directory: 'PICTURES',
                     recursive: true
                 });
-                return { ok: true, method: 'filesystem' };
+                return { ok: true, method: 'filesystem-pictures' };
             } catch (e) {
-                console.warn('Filesystem PICTURES save failed:', e);
+                console.warn('[SaveFile] Filesystem PICTURES failed:', JSON.stringify(e));
             }
         }
 
-        return { ok: false };
+        return { ok: false, message: 'فشل الحفظ: تحقق من الأذونات في الإعدادات' };
     },
+
 
     /** مشاركة ملف عبر Share plugin أو Web Share API */
     async share(blob, filename) {
@@ -126,17 +161,17 @@ const SaveFile = {
                 return { ok: false, message: 'تعذّر الحفظ في المعرض. حاول مجدداً أو استخدم المشاركة.' };
             }
 
-            // للملفات الصوتية: احفظ في CACHE وشارك
+            // للملفات الصوتية: احفظ في DOCUMENTS وشارك
             try {
                 const Filesystem = window.Capacitor?.Plugins?.Filesystem;
                 const base64 = await this._blobToBase64(blob);
                 const result = await Filesystem.writeFile({
                     path: `Quran/${filename}`,
                     data: base64,
-                    directory: 'CACHE',
+                    directory: 'DOCUMENTS',
                     recursive: true
                 });
-                return { ok: true, method: 'cache', uri: result.uri };
+                return { ok: true, method: 'documents', uri: result.uri };
             } catch (e) {
                 console.warn('Audio save to cache failed:', e);
             }
