@@ -241,22 +241,6 @@ const TagsAndContext = {
                         ctxCopyAya.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
                         ctxCopyAya.style.color = '#10b981';
                         ctxCopyAya.style.display = 'flex';
-                    let warshLabel = '';
-                    if (posInHizb % 2 === 1) { // positions 1,3,5,7 are thumn
-                        const thumnOrdinal = Math.floor((posInHizb + 1) / 2);
-                        warshLabel = `ثمن ${this.toArabicNumerals(thumnOrdinal)}`;
-                    } else if (posInHizb === 2 || posInHizb === 6) {
-                        warshLabel = 'ربع';
-                    } else if (posInHizb === 4) {
-                        warshLabel = 'نصف الحزب';
-                    } else if (posInHizb === 8) {
-                        warshLabel = `الحزب ${this.toArabicNumerals(hizbNum)}`;
-                    }
-                    hizbText = warshLabel;
-                    if (posInHizb === 8 && idx % 16 === 0) {
-                        const juzNum = Math.floor((idx - 1) / 16) + 1;
-                        hizbText = `الجزء ${this.toArabicNumerals(juzNum)} - ${hizbText}`;
-                    }        this._hideMenu();
                         const menu = document.getElementById('ayahContextMenu');
                         if (menu) menu.style.display = 'block';
                         setTimeout(() => {
@@ -524,6 +508,7 @@ const TagsAndContext = {
         }
         
         const promises = [
+            SurahAPI.getAyaTafsirMokhtasar(suraNo, tafsirAyaNo),
             SurahAPI.fetchWithCache(`/aya/tafsir-katheer/${suraNo}/${tafsirAyaNo}`),
             SurahAPI.fetchWithCache(`/aya/tafsir-saadi/${suraNo}/${tafsirAyaNo}`),
             SurahAPI.fetchWithCache(`/aya/tafsir-tabary/${suraNo}/${tafsirAyaNo}`),

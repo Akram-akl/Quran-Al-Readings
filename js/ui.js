@@ -331,39 +331,27 @@ const UI = {
                     const hizbNum = Math.floor((idx - 1) / 8) + 1;
 
                     if (baseReading === 'Warsh') {
-                        // ورش: ثمن، ربع، ثمن، نصف الحزب، ثمن، ربع، ثمن، الحزب (+ أجزاء)
-                        // Use Arabic numerals for thumn numbers (ثمن٢, ثمن٣, ...)
-                        let warshLabel = '';
-                        if (posInHizb % 2 === 1) { // positions 1,3,5,7 are thumn
-                            const thumnOrdinal = Math.floor((posInHizb + 1) / 2);
-                            warshLabel = `ثمن${this.toArabicNumerals(thumnOrdinal)}`;
-                        } else if (posInHizb === 2 || posInHizb === 6) {
-                            warshLabel = 'ربع';
-                        } else if (posInHizb === 4) {
-                            warshLabel = 'نصف الحزب';
-                        } else if (posInHizb === 8) {
-                            warshLabel = `الحزب${this.toArabicNumerals(hizbNum)}`;
-                        }
-                        hizbText = warshLabel;
+                        // ورش: ثمن، ربع، ثمن، نصف الحزب، ثمن، ربع، ثمن، الحزب + أجزاء
+                        const warshLabels = ['ثمن', 'ربع', 'ثمن', 'نصف الحزب', 'ثمن', 'ربع', 'ثمن', `الحزب ${this.toArabicNumerals(hizbNum)}`];
+                        hizbText = warshLabels[posInHizb - 1];
                         if (posInHizb === 8 && idx % 16 === 0) {
                             const juzNum = Math.floor((idx - 1) / 16) + 1;
-                            hizbText = `الجزء${this.toArabicNumerals(juzNum)}-${hizbText}`;
-                        } else if (baseReading === 'Qaloun') {
+                            hizbText = `الجزء ${this.toArabicNumerals(juzNum)} - ${hizbText}`;
+                        }
+                    } else if (baseReading === 'Qaloun') {
                         // قالون: مثل ورش لكن بدون أجزاء
                         const qalounLabels = ['ثمن', 'ربع', 'ثمن', 'نصف', 'ثمن', 'ربع', 'ثمن', `الحزب ${this.toArabicNumerals(hizbNum)}`];
                         hizbText = qalounLabels[posInHizb - 1];
                     } else if (baseReading === 'Duri' || baseReading === 'Susi') {
-                        // الدوري والسوسي: ثمن2، ثمن3 ... ثمن8، الحزب
+                        // الدوري والسوسي: ثمن ٢، ثمن ٣ ... ثمن ٨، الحزب
                         if (posInHizb === 8) {
-                            hizbText = `الحزب${this.toArabicNumerals(hizbNum)}`;
+                            hizbText = `الحزب ${this.toArabicNumerals(hizbNum)}`;
                             if (idx % 16 === 0) {
                                 const juzNum = Math.floor((idx - 1) / 16) + 1;
-                                hizbText = `الجزء${this.toArabicNumerals(juzNum)}-${hizbText}`;
+                                hizbText = `الجزء ${this.toArabicNumerals(juzNum)} - ${hizbText}`;
                             }
                         } else {
-                            // ثمن positions start from 2
-                            const thumnOrdinal = posInHizb + 1; // posInHizb 1->2, 2->3, ...,7->8
-                            hizbText = `ثمن${this.toArabicNumerals(thumnOrdinal)}`;
+                            hizbText = `ثمن ${this.toArabicNumerals(posInHizb + 1)}`;
                         }
                     } else {
                         // أي رواية أخرى: نظام أثمان عام
