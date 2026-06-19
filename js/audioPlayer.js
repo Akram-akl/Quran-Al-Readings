@@ -65,6 +65,24 @@ const AudioPlayer = {
         this.audio.crossOrigin = 'anonymous';
         this._guardPlayButtonNoSpinner();
 
+        // تفعيل وضع الخلفية إذا كان متاحاً في التطبيق (Android/iOS)
+        if (typeof cordova !== 'undefined' && cordova.plugins && cordova.plugins.backgroundMode) {
+            cordova.plugins.backgroundMode.setDefaults({
+                title: 'القرآن الكريم',
+                text: 'التلاوة تعمل في الخلفية',
+                icon: 'ic_launcher',
+                color: 'F14F4D',
+                resume: true,
+                hidden: false,
+                bigText: true
+            });
+            cordova.plugins.backgroundMode.enable();
+            
+            cordova.plugins.backgroundMode.on('activate', function() {
+                cordova.plugins.backgroundMode.disableWebViewOptimizations(); 
+            });
+        }
+
         this.audio.addEventListener('waiting', () => {
             if (this._cancelRequested || this.audio.paused || !this.currentAyah) return;
         });
@@ -1181,13 +1199,13 @@ const AudioPlayer = {
                 cleanup();
                 if (!isStale()) {
                     this._setPlayerState('paused');
-                    this._showPlayError('انتهت مهلة تحميل الصوت. تحقق من الاتصال.');
+                    this._showPlayError('انتهت مهلة تحميل الصوت (تم زيادة المهلة لـ 45 ثانية). تحقق من الاتصال بالإنترنت.');
                     this._removeHighlight();
                     reject(new Error('Audio load timeout'));
                 } else {
                     reject(new Error('aborted'));
                 }
-            }, 15000);
+            }, 45000);
 
             this.audio.addEventListener('canplay', onReady, { once: true });
             this.audio.addEventListener('loadeddata', onReady, { once: true });
