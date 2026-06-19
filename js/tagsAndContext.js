@@ -29,11 +29,14 @@ const TagsAndContext = {
         });
 
 
-        // 2. الضغطة المطولة (Mobile)
+
+        // 2. الضغطة المطولة (Mobile) + تأثير اللمس على الكلمة
         let touchStartX = 0;
         let touchStartY = 0;
         let touchCurrentX = 0;
         let touchCurrentY = 0;
+        let _wordTouchTimer = null;
+        let _lastTouchedWord = null;
         
         area.addEventListener('touchstart', (e) => {
             const wordEl = e.target.closest('.q_word');
@@ -45,6 +48,20 @@ const TagsAndContext = {
                 touchStartY = e.touches[0].clientY;
                 touchCurrentX = touchStartX;
                 touchCurrentY = touchStartY;
+                
+                // تأثير الكلمة المضغوطة - يختفي بعد 10 ثوانٍ
+                if (wordEl) {
+                    if (_lastTouchedWord && _lastTouchedWord !== wordEl) {
+                        _lastTouchedWord.classList.remove('word-touched');
+                    }
+                    if (_wordTouchTimer) clearTimeout(_wordTouchTimer);
+                    wordEl.classList.add('word-touched');
+                    _lastTouchedWord = wordEl;
+                    _wordTouchTimer = setTimeout(() => {
+                        wordEl.classList.remove('word-touched');
+                        _lastTouchedWord = null;
+                    }, 10000);
+                }
                 
                 this.longPressTimer = setTimeout(() => {
                     const moveDist = Math.hypot(touchCurrentX - touchStartX, touchCurrentY - touchStartY);
@@ -238,14 +255,12 @@ const TagsAndContext = {
                     const text = this.selectedAyah.aya_text_emlaey || this.selectedAyah.aya_text;
                     navigator.clipboard.writeText(text).then(() => {
                         const originalHtml = ctxCopyAya.innerHTML;
-                        ctxCopyAya.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
-                        ctxCopyAya.style.color = '#10b981';
+                        ctxCopyAya.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
                         ctxCopyAya.style.display = 'flex';
                         const menu = document.getElementById('ayahContextMenu');
                         if (menu) menu.style.display = 'block';
                         setTimeout(() => {
                             ctxCopyAya.innerHTML = originalHtml;
-                            ctxCopyAya.style.color = '';
                             this._hideMenu();
                         }, 1000);
                     }).catch(e => console.error('Copy failed', e));

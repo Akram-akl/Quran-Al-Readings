@@ -117,6 +117,7 @@
                 <div class="player-controls">
                     <button id="prevAyahBtn" class="btn-icon" title="السابق"><i class="fas fa-step-backward"></i></button>
                     <button id="playPauseBtn" class="btn-play-pause" title="تشغيل"><i class="fas fa-play"></i></button>
+                    <button id="stopBtn" class="btn-icon" title="إنهاء"><i class="fas fa-stop"></i></button>
                     <button id="nextAyahBtn" class="btn-icon" title="التالي"><i class="fas fa-step-forward"></i></button>
                     <button id="repeatBtn" class="btn-icon" title="تكرار الآية"><i class="fas fa-redo"></i></button>
                     <button id="cancelActiveModeBtn" class="cancel-action-btn" style="display:none;" title="إنهاء"><i class="fas fa-stop"></i> إنهاء</button>
@@ -284,8 +285,8 @@
             <span class="close-modal"><i class="fas fa-times"></i></span>
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px;">
                 <h2 id="apiInfoTitle" style="color: var(--primary); margin: 0;">معلومات</h2>
-                <button id="copyApiTabBtn" class="btn btn-secondary btn-sm" onclick="copyCurrentApiTabContent(this)" style="display: flex; gap: 5px; align-items: center; font-size: 0.9rem; padding: 5px 10px; border-radius: 6px;">
-                    <i class="fas fa-copy"></i> نسخ المحتوى
+                <button id="copyApiTabBtn" onclick="copyCurrentApiTabContent(this)" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; opacity: 0.7; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">
+                    <i class="fas fa-copy" style="font-size: 0.65rem;"></i> نسخ
                 </button>
             </div>
             <div id="apiInfoWarning" style="display:none; background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #ffeeba;">
@@ -328,14 +329,7 @@
                 <select id="offlineSurahSelect" class="form-control mb-2"></select>
                 <div class="d-flex gap-2">
                     <button id="offlineDlSurahBtn" class="btn btn-primary flex-grow-1"><i class="fas fa-download"></i> تحميل السورة</button>
-                    <button id="offlineDlAllBtn" class="btn btn-warning flex-grow-1"><i class="fas fa-download"></i> تحميل الكل</button>
-                </div>
-                <div id="offlineConfirmBox" style="display:none; background:#fff3cd; border:1px solid #ffeeba; color:#856404; padding:10px; border-radius:5px; margin-top:10px;">
-                    <p style="margin:0 0 10px 0; font-size:0.9rem;">تنبيه: تحميل القرآن كاملاً سيستغرق وقتاً طويلاً ومساحة تخزين كبيرة (قرابة 1 جيجابايت). هل تود المتابعة؟</p>
-                    <div class="d-flex gap-2">
-                        <button id="offlineConfirmYesBtn" class="btn btn-success flex-grow-1 btn-sm">نعم، تابع التحميل</button>
-                        <button id="offlineConfirmNoBtn" class="btn btn-secondary flex-grow-1 btn-sm">إلغاء</button>
-                    </div>
+                    <button id="offlineDlAllBtn" class="btn btn-warning flex-grow-1"><i class="fas fa-database"></i> تحميل المصحف كاملاً</button>
                 </div>
                 <div id="offlineAlertBox" style="display:none; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; padding:10px; border-radius:5px; margin-top:10px; font-size:0.9rem;">
                 </div>

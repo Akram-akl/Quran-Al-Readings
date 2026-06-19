@@ -100,29 +100,76 @@ const App = {
             };
         }
 
-        // Swipe Navigation
+        // Swipe Navigation (أجهزة اللمس فقط)
         const readingArea = document.getElementById('readingArea');
-        if (readingArea) {
+        if (readingArea && ('ontouchstart' in window)) {
             let touchStartX = 0;
-            let touchEndX = 0;
-            
+            let isSwiping = false;
+            const SWIPE_THRESHOLD = 70;
+
             readingArea.addEventListener('touchstart', e => {
                 touchStartX = e.changedTouches[0].screenX;
+                isSwiping = false;
             }, {passive: true});
 
             readingArea.addEventListener('touchend', e => {
-                touchEndX = e.changedTouches[0].screenX;
+                if (isSwiping) return;
+                const touchEndX = e.changedTouches[0].screenX;
                 const diffX = touchEndX - touchStartX;
-                // التأكد من أن السحب طويل بما يكفي ومقصود، لتجنب القفز المتعدد
-                if (Math.abs(diffX) > 80) { 
-                    if (diffX > 0) {
-                        // سحب لليمين -> الصفحة السابقة
-                        if (this.currentPage > 1) this.loadPage(this.currentPage - 1);
-                    } else {
-                        // سحب لليسار -> الصفحة التالية
-                        if (this.currentPage < 604) this.loadPage(this.currentPage + 1);
+
+                if (Math.abs(diffX) < SWIPE_THRESHOLD) return;
+                isSwiping = true;
+
+                // المصحف عربي: سحب لليمين = الصفحة التالية، سحب لليسار = الصفحة السابقة
+                let targetPage = null;
+                let slideDirection = 0; // 1 = يخرج يمين، -1 = يخرج يسار
+
+                if (diffX > 0) {
+                    // سحب لليمين -> الصفحة التالية
+                    if (this.currentPage < 604) {
+                        targetPage = this.currentPage + 1;
+                        slideDirection = 1;  // المحتوى القديم يخرج لليمين
+                    }
+                } else {
+                    // سحب لليسار -> الصفحة السابقة
+                    if (this.currentPage > 1) {
+                        targetPage = this.currentPage - 1;
+                        slideDirection = -1; // المحتوى القديم يخرج لليسار
                     }
                 }
+
+                if (targetPage === null) { isSwiping = false; return; }
+
+                // تأثير الانزلاق: المحتوى الحالي ينزلق للخارج
+                readingArea.classList.remove('page-slide-in');
+                readingArea.classList.add('page-slide-out');
+                readingArea.style.transform = `translateX(${slideDirection * 100}%)`;
+                readingArea.style.opacity = '0';
+
+                setTimeout(async () => {
+                    // تحميل الصفحة الجديدة (بدون حركة)
+                    readingArea.classList.remove('page-slide-out');
+                    readingArea.style.transition = 'none';
+                    readingArea.style.transform = `translateX(${-slideDirection * 60}%)`;
+                    readingArea.style.opacity = '0';
+
+                    await this.loadPage(targetPage);
+
+                    // انتظار إطار واحد ثم تحريك المحتوى الجديد للداخل
+                    requestAnimationFrame(() => {
+                        readingArea.classList.add('page-slide-in');
+                        readingArea.style.transition = '';
+                        readingArea.style.transform = 'translateX(0)';
+                        readingArea.style.opacity = '1';
+
+                        setTimeout(() => {
+                            readingArea.classList.remove('page-slide-in');
+                            readingArea.style.transform = '';
+                            readingArea.style.opacity = '';
+                            isSwiping = false;
+                        }, 280);
+                    });
+                }, 260);
             }, {passive: true});
         }
 
@@ -361,7 +408,7 @@ const App = {
         });
 
         try {
-            const reg = await navigator.serviceWorker.register('./sw.js?v=5.4');
+            const reg = await navigator.serviceWorker.register('./sw.js?v=5.9');
             this._swRegistration = reg;
             this._watchSwRegistration(reg);
             await reg.update();
@@ -423,12 +470,12 @@ window.copyCurrentApiTabContent = function(btnElement) {
 
     const originalHtml = btnElement.innerHTML;
     navigator.clipboard.writeText(textToCopy).then(() => {
-        btnElement.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
-        btnElement.style.color = '#10b981';
+        btnElement.innerHTML = '<i class="fas fa-check"></i> تم';
+        btnElement.style.opacity = '1';
         setTimeout(() => {
             btnElement.innerHTML = originalHtml;
-            btnElement.style.color = '';
-        }, 1500);
+            btnElement.style.opacity = '';
+        }, 1200);
     }).catch(e => console.error('Failed to copy', e));
 };
 

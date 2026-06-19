@@ -25,6 +25,12 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* إزالة التأثير الأزرق اللمسي الافتراضي من المتصفح (Android/iOS) */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: var(--bg);
@@ -743,12 +749,22 @@ body {
     -webkit-user-select: none;
     -webkit-touch-callout: none;
 }
+/* تأثير المرور على الحاسوب فقط */
 .q_word:hover {
     background: rgba(6, 78, 59, 0.15);
     color: var(--primary);
 }
 [data-theme="dark"] .q_word:hover {
     background: rgba(16, 185, 129, 0.15);
+}
+/* تأثير اللمس على الهاتف (يختفي بعد 10 ثواني) */
+.q_word.word-touched {
+    background: rgba(6, 78, 59, 0.18);
+    color: var(--primary);
+    transition: background 0.3s, color 0.3s;
+}
+[data-theme="dark"] .q_word.word-touched {
+    background: rgba(16, 185, 129, 0.18);
 }
 
 /* Mutashabihat and other styles */
@@ -806,6 +822,18 @@ body {
 
 /* Prevent Selection */
 #readingArea { user-select: none; -webkit-user-select: none; }
+
+/* --- Swipe Slide Transition --- */
+#readingArea {
+    overflow-x: hidden; /* يمنع الانزلاق الأفقي فقط - يبقي التمرير العمودي */
+    overflow-y: auto;
+}
+#readingArea.page-slide-out {
+    transition: transform 0.25s ease-in, opacity 0.25s ease-in;
+}
+#readingArea.page-slide-in {
+    transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+}
 
 
 /* Sticky Modal Headers */

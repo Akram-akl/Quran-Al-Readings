@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'quran-shell-v5.8';
-const SW_VERSION = 'v5.8';
+const SHELL_CACHE = 'quran-shell-v5.9';
+const SW_VERSION = 'v5.9';
 
 const STATIC_ASSETS = [
     './fonts/uthmanic_hafs_v20.ttf',
@@ -103,7 +103,7 @@ self.addEventListener('fetch', (event) => {
         caches.match(event.request).then(async (cachedResponse) => {
             if (cachedResponse) {
                 const rangeHeader = event.request.headers.get('range');
-                if (rangeHeader && cachedResponse.headers.has('content-length') && cachedResponse.status === 200) {
+                if (rangeHeader && cachedResponse.status === 200) {
                     const buffer = await cachedResponse.clone().arrayBuffer();
                     const total = buffer.byteLength;
                     const parts = rangeHeader.replace(/bytes=/, "").split("-");

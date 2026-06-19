@@ -16,10 +16,10 @@ const OfflineManager = {
         if (btn) btn.addEventListener('click', () => this.openModal());
 
         const dlSurahBtn = document.getElementById('offlineDlSurahBtn');
-        if (dlSurahBtn) dlSurahBtn.addEventListener('click', () => this.startDownload(false));
-        
+        if (dlSurahBtn) dlSurahBtn.addEventListener('click', () => this.startDownload());
+
         const dlAllBtn = document.getElementById('offlineDlAllBtn');
-        if (dlAllBtn) dlAllBtn.addEventListener('click', () => this.startDownload(true));
+        if (dlAllBtn) dlAllBtn.addEventListener('click', () => this.startDownloadAll());
         
         const pauseBtn = document.getElementById('offlinePauseBtn');
         if (pauseBtn) pauseBtn.addEventListener('click', () => this.togglePause());
@@ -35,14 +35,6 @@ const OfflineManager = {
                 this.updateDownloadedList();
             });
         }
-        
-        const confirmYes = document.getElementById('offlineConfirmYesBtn');
-        if (confirmYes) confirmYes.addEventListener('click', () => this.executeDownloadAll());
-        
-        const confirmNo = document.getElementById('offlineConfirmNoBtn');
-        if (confirmNo) confirmNo.addEventListener('click', () => {
-            document.getElementById('offlineConfirmBox').style.display = 'none';
-        });
 
         const modal = document.getElementById('offlineLibModal');
         if (modal) {
@@ -72,7 +64,6 @@ const OfflineManager = {
         if (rSel) rSel.value = this.currentReading;
         
         document.getElementById('offlineAlertBox').style.display = 'none';
-        document.getElementById('offlineConfirmBox').style.display = 'none';
         
         await this.populateSurahs();
         await this.updateDownloadedList();
@@ -144,16 +135,11 @@ const OfflineManager = {
         listEl.innerHTML = html;
     },
 
-    async startDownload(allSurahs) {
+    async startDownload() {
         if (this.isDownloading) return;
         
         const alertBox = document.getElementById('offlineAlertBox');
         if (alertBox) alertBox.style.display = 'none';
-
-        if (allSurahs) {
-            document.getElementById('offlineConfirmBox').style.display = 'block';
-            return;
-        }
 
         const sel = document.getElementById('offlineSurahSelect');
         if (!sel) return;
@@ -170,34 +156,52 @@ const OfflineManager = {
         
         await this._startProcess([suraNo]);
     },
-    
-    async executeDownloadAll() {
-        document.getElementById('offlineConfirmBox').style.display = 'none';
-        let data = DataHandler.cache[this.currentReading];
-        if (!data) data = await DataHandler.loadReading(this.currentReading);
-        if (!data) return;
-        const all = [...new Set(DataHandler.getSurahs(data).map(s => s.number))];
-        const existing = this._getStoredDownloads()[this.currentReading] || [];
-        const surahsToDownload = all.filter(s => !existing.includes(s));
+
+    async startDownloadAll() {
+        if (this.isDownloading) return;
+        
+        const alertBox = document.getElementById('offlineAlertBox');
+        if (alertBox) alertBox.style.display = 'none';
+
+        const cfg = READINGS_CONFIG[this.currentReading] || {};
+        if (!confirm(`هل أنت متأكد من تحميل المصحف كاملاً للرواية المختارة (${cfg.name})؟ قد يستهلك هذا أكثر من 1.5 جيجابايت من المساحة.`)) {
+            return;
+        }
+
+        const downloaded = this._getStoredDownloads()[this.currentReading] || [];
+        const allSurahs = Array.from({length: 114}, (_, i) => i + 1);
+        const surahsToDownload = allSurahs.filter(s => !downloaded.includes(s));
+
         if (surahsToDownload.length === 0) {
-            const alertBox = document.getElementById('offlineAlertBox');
             if (alertBox) {
-                alertBox.textContent = 'كل السور محمّلة مسبقاً لهذا القارئ.';
+                alertBox.innerHTML = `<i class="fas fa-check-circle"></i> جميع سور القرآن محمّلة مسبقاً لـ <strong>${cfg.reader || cfg.name}</strong>.`;
                 alertBox.style.display = 'block';
             }
             return;
         }
+        
         await this._startProcess(surahsToDownload);
     },
 
     _queueItemsForSurah(readingKey, sNo, ayahs, config) {
         const items = [];
+
+        // إضافة روابط التفسير الميسر ومعلومات السورة
+        const isHafs = readingKey && (readingKey.toLowerCase().includes('hafs') || readingKey.toLowerCase().includes('shubah'));
         for (const ayah of ayahs) {
-            const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${ayah.aya_no}`;
+            let tafsirAyaNo = ayah.aya_no;
+            if (parseInt(sNo) === 1 && !isHafs) {
+                const aNo = parseInt(ayah.aya_no);
+                if (aNo >= 1 && aNo <= 5) tafsirAyaNo = aNo + 1;
+                else if (aNo === 6 || aNo === 7) tafsirAyaNo = 7;
+            }
+            const tafsirUrl = `https://dev.surahapp.com/api/v1/aya/tafsir-mokhtasar/${sNo}/${tafsirAyaNo}`;
             items.push({ type: 'api', url: tafsirUrl, sura: sNo });
         }
         items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/asmaa-sowar/${sNo}`, sura: sNo });
         items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/fadael-sowar/${sNo}`, sura: sNo });
+        items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/nozool-sowar/${sNo}`, sura: sNo });
+        items.push({ type: 'api', url: `https://dev.surahapp.com/api/v1/sura/adad_ayat-sowar/${sNo}`, sura: sNo });
 
         if (config.isMonolithic) {
             const audioUrl = config.getAudioPath(sNo);
@@ -265,33 +269,43 @@ const OfflineManager = {
         if (!downloaded[downloadReadingKey]) downloaded[downloadReadingKey] = [];
         const incomplete = [];
 
-        for (const surahData of surahsDataItems) {
-            if (this.cancelRequested) break;
+        // تفعيل وضع الخلفية إذا كان متاحاً
+        if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+            cordova.plugins.backgroundMode.enable();
+            cordova.plugins.backgroundMode.on('activate', function() {
+                cordova.plugins.backgroundMode.disableWebViewOptimizations(); 
+            });
+        }
 
-            const sNo = surahData.sNo;
-            const items = surahData.items;
+        for (const { sNo, items } of surahsDataItems) {
+            this.downloadQueue = items;
             this._surahItemStats[sNo] = { total: items.length, failed: 0 };
-            this.downloadQueue = [...items]; // Clone array to be consumed
-
-            this.totalItems = items.length;
-            this.downloadedItems = 0;
+            
             this.currentDownloadingSurahName = data.find(a => parseInt(a.sura_no) === sNo)?.sura_name_ar || `رقم ${sNo}`;
-
-            // انتظار اكتمال تحميل السورة الحالية قبل البدء بالتالية
+            
+            // تحديث الواجهة فوراً باسم السورة ونسبة 0% قبل بدء المعالجة
+            this.updateUIProgress();
+            
             await this.processQueue();
+            
+            if (this.cancelRequested) {
+                break; // إيقاف الانتقال للسور التالية إذا تم الإلغاء
+            }
 
-            if (this.cancelRequested) break;
-
-            // حفظ حالة السورة فور انتهائها
             const st = this._surahItemStats[sNo];
             const ok = st && st.failed === 0 && st.total > 0;
             if (ok && !downloaded[downloadReadingKey].includes(sNo)) {
                 downloaded[downloadReadingKey].push(sNo);
-                this._saveStoredDownloads(downloaded); // Save immediately
+                this._saveStoredDownloads(downloaded);
                 await this.updateDownloadedList();
             } else if (!ok) {
                 incomplete.push(sNo);
             }
+        }
+
+        // إيقاف وضع الخلفية بعد الانتهاء
+        if (window.cordova && cordova.plugins && cordova.plugins.backgroundMode) {
+            cordova.plugins.backgroundMode.disable();
         }
 
         if (this.cancelRequested) {
@@ -348,7 +362,11 @@ const OfflineManager = {
                 console.error(`Failed to download ${item.url}:`, e);
             }
             if (itemFailed && this._surahItemStats[item.sura]) {
-                this._surahItemStats[item.sura].failed++;
+                if (item.type !== 'api') {
+                    this._surahItemStats[item.sura].failed++;
+                } else {
+                    console.warn(`Non-critical API download failed: ${item.url}`);
+                }
             }
             
             this.downloadedItems++;
@@ -376,10 +394,14 @@ const OfflineManager = {
     async deleteSurah(readingKey, suraNo) {
         const downloaded = this._getStoredDownloads();
         if (!downloaded[readingKey]) return;
-        await this._purgeSurahFromCache(readingKey, suraNo);
+        
+        // مسح من localStorage أولاً لضمان الإزالة حتى لو فشل الكاش
         downloaded[readingKey] = downloaded[readingKey].filter(s => s !== suraNo);
         if (downloaded[readingKey].length === 0) delete downloaded[readingKey];
         this._saveStoredDownloads(downloaded);
+        
+        await this._purgeSurahFromCache(readingKey, suraNo);
+        
         await this.updateDownloadedList();
         if (readingKey === this.currentReading) await this.populateSurahs();
     },
@@ -395,7 +417,17 @@ const OfflineManager = {
         const ayahs = data.filter(a => parseInt(a.sura_no) === suraNo && parseInt(a.aya_no) > 0);
         const items = this._queueItemsForSurah(readingKey, suraNo, ayahs, config);
         const cache = await caches.open(this.cacheName);
-        await Promise.all(items.map(item => cache.delete(item.url, { ignoreSearch: true })));
+        
+        // ignoreSearch لا يعمل مع cache.delete، لذا نستخدم cache.matchAll أو استخراج كل المفاتيح
+        const cacheKeys = await cache.keys();
+        const itemsUrls = items.map(i => i.url.split('?')[0]); // بدون المعاملات
+        
+        const deletePromises = cacheKeys.filter(req => {
+            const reqUrl = req.url.split('?')[0];
+            return itemsUrls.includes(reqUrl);
+        }).map(req => cache.delete(req));
+        
+        await Promise.all(deletePromises);
     },
 
     updateUIStatus(state) {
@@ -405,10 +437,18 @@ const OfflineManager = {
         const stopBtn = document.getElementById('offlineStopBtn');
 
         if (state === 'start') {
+            // تصفير عناصر شريط التقدم فوراً لمسح السور السابقة
+            const bar = document.getElementById('offlineProgressBar');
+            if (bar) bar.style.width = '0%';
+            const percentEl = document.getElementById('offlineProgressPercent');
+            if (percentEl) percentEl.textContent = '0%';
+            const txt = document.getElementById('offlineProgressText');
+            if (txt) txt.textContent = 'جاري البدء...';
+
             if (progressC) progressC.style.display = 'block';
             if (dlBtns) dlBtns.style.display = 'none';
-            if (pauseBtn) pauseBtn.style.display = 'inline-block';
-            if (stopBtn) stopBtn.style.display = 'inline-block';
+            if (pauseBtn) pauseBtn.style.display = 'inline-flex';
+            if (stopBtn) stopBtn.style.display = 'inline-flex';
         } else {
             if (progressC) progressC.style.display = 'none';
             if (dlBtns) dlBtns.style.display = 'flex';
@@ -440,3 +480,5 @@ const OfflineManager = {
 document.addEventListener('DOMContentLoaded', () => {
     OfflineManager.init();
 });
+
+window.OfflineManager = OfflineManager;

@@ -172,9 +172,12 @@ const AudioPlayer = {
                         this.currentlyHighlighted = activeAyaNo;
                         const allAyahs = DataHandler.cache[App.currentReading];
                         if (allAyahs) {
-                            this.currentAyah = allAyahs.find(a => a.aya_no === activeAyaNo && a.sura_no === App.currentSurah);
+                            // استخدم سورة الآية الحالية (this.currentAyah) وليس App.currentSurah
+                            const activeSurahNo = this.currentAyah ? this.currentAyah.sura_no : App.currentSurah;
+                            this.currentAyah = allAyahs.find(a => a.aya_no === activeAyaNo && a.sura_no === activeSurahNo);
                         }
-                        this._highlightSingle(activeAyaNo, App.currentSurah);
+                        const highlightSurah = this.currentAyah ? this.currentAyah.sura_no : App.currentSurah;
+                        this._highlightSingle(activeAyaNo, highlightSurah);
                     }
                     
                     // منطق التكرار التلقائي للآية في قائمة الاستماع
@@ -237,6 +240,12 @@ const AudioPlayer = {
 
         const repeatBtn = document.getElementById('repeatBtn');
         if (repeatBtn) repeatBtn.onclick = () => this.toggleRepeat();
+
+        const stopBtn = document.getElementById('stopBtn');
+        if (stopBtn) stopBtn.onclick = () => {
+            this.stop();
+            this._showToast('تم إنهاء التشغيل.');
+        };
 
         const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
         if (cancelActiveModeBtn) cancelActiveModeBtn.onclick = () => {
@@ -437,6 +446,8 @@ const AudioPlayer = {
         this.playlist = [];
         this.playlistIndex = -1;
         this.maxPlaylistRepeats = 1;
+        this.currentAyah = null;
+        this._removeHighlight();
         const cancelActiveModeBtn = document.getElementById('cancelActiveModeBtn');
         if (cancelActiveModeBtn) cancelActiveModeBtn.style.display = 'none';
     },
@@ -518,6 +529,10 @@ const AudioPlayer = {
         App.currentSurah = suraNo;
         this.currentlyHighlighted = ayahNo;
         this._highlightSingle(ayahNo, suraNo);
+
+        const surahTitle = `سورة ${ayah.sura_name_ar}`;
+        const readerName = config.name || 'تطبيق القراءات';
+        this._updateMediaSession(surahTitle + ' - الآية ' + ayahNo, readerName);
 
         const title = document.getElementById('currentSurahTitle');
         if (title) title.textContent = `سورة ${ayah.sura_name_ar}`;
@@ -726,6 +741,10 @@ const AudioPlayer = {
         this.currentlyHighlighted = ayahNo;
         this._highlightSingle(ayahNo, suraNo);
         
+        const surahTitle = `سورة ${ayah.sura_name_ar}`;
+        const readerName = config.name || 'تطبيق القراءات';
+        this._updateMediaSession(surahTitle + ' - الآية ' + ayahNo, readerName);
+        
         const textToCheck = (ayah.aya_text_emlaey || ayah.aya_text || '').replace(/[^\u0621-\u064A\s]/g, '');
         const isAyahItselfBasmalah = (suraNo === 1 && ayahNo === 1 && textToCheck.includes('بسم الله'));
         const needsBasmalah = (ayahNo === 1 && suraNo !== 9 && !isAyahItselfBasmalah) && (!opts || !opts.skipBasmalah);
@@ -930,7 +949,15 @@ const AudioPlayer = {
         const isCurrentAyahOnPage = this.currentAyah && typeof UI !== 'undefined' && UI.currentPageAyahs && 
             UI.currentPageAyahs.some(a => a.sura_no === this.currentAyah.sura_no && a.aya_no === this.currentAyah.aya_no);
 
-        if (this.audio.src && this.audio.src !== window.location.href && isCurrentAyahOnPage) {
+        if (this.audio.src && this.audio.src !== window.location.href && this.currentAyah) {
+            if (!isCurrentAyahOnPage) {
+                // Return to the original page
+                const targetPage = App.resolvePageForAyah(this.currentAyah, App.currentPage);
+                App.loadPage(targetPage, true, false, false).then(() => {
+                    if (this.audio.paused) this.audio.play();
+                });
+                return;
+            }
             if (this.audio.paused) this.audio.play();
             else this.audio.pause();
         } else {

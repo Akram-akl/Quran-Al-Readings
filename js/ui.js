@@ -202,8 +202,11 @@ const UI = {
         area.innerHTML = '';
         const config = READINGS_CONFIG[reading];
 
-        // فرز الآيات لضمان الترتيب الصحيح حسب aya_no
-        const sortedAyahs = ayahs.slice().sort((a, b) => a.aya_no - b.aya_no);
+        // فرز الآيات لضمان الترتيب الصحيح حسب رقم السورة ثم رقم الآية
+        const sortedAyahs = ayahs.slice().sort((a, b) => {
+            if (a.sura_no !== b.sura_no) return a.sura_no - b.sura_no;
+            return a.aya_no - b.aya_no;
+        });
         this.currentPageAyahs = sortedAyahs; // حفظ آيات الصفحة الحالية للاستماع المتتابع
 
         // تقسيم آيات الصفحة الحالية إلى مجموعات حسب رقم السورة (دعم تداخل السور وجزء عم)
